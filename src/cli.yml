@@ -1,0 +1,37 @@
+name: fuzzy
+version: "0.1"
+author: Bharadwaj Machiraju <@tunnelshade_>
+about: Does lazy & fuzzy work for you
+
+args:
+  - verbose:
+      help: Enable debug logging
+      short: v
+      long: verbose
+      global: true
+
+subcommands:
+  - master:
+      about: Master that can manage workers
+      version: "0.1"
+      subcommands:
+        - start:
+            about: Start a master agent
+            args:
+              - listen_addr:
+                  help: Address to listen for worker connections (127.0.0.1:12700)
+                  index: 1
+  - worker:
+      about: Workers that perform actual fuzzy computations
+      version: "0.1"
+      subcommands:
+        - start:
+            about: Start a worker agent
+            args:
+              - connect_addr:
+                  help: master address to connect (127.0.0.1:12700)
+                  index: 1
+              - id:
+                  help: Identifier for this worker agent
+                  long: id
+                  takes_value: true

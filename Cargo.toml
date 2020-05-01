@@ -12,7 +12,10 @@ clap = { git = "https://github.com/clap-rs/clap/", features = ["yaml"] }
 log = "0.4"
 num_cpus = "1.0"
 pretty_env_logger = "0.4"
+tokio = { version = "0.2", features = ["full"] }
+tonic = "0.2"
+prost = "0.6"
 uuid = { version = "0.8", features = ["v4"] }
 
 [build-dependencies]
-capnpc = "0.12"
+tonic-build = "0.2"

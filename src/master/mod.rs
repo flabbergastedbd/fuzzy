@@ -1,49 +1,45 @@
+use tonic::transport::Server;
+use std::net::SocketAddr;
 use clap::ArgMatches;
 use log::{info, debug};
-use tonic::transport::server::Server;
 
-use crate::worker::Worker;
+use crate::db::DbBroker;
+use crate::xpc::stats_server::StatsServer;
 
-mod heartbeat;
-use heartbeat::comms::master_server::MasterServer as MasterCommsServer;
+mod stats;
 
 #[derive(Debug)]
 pub struct Master {
-    workers: Vec<Worker>,
-    comms: heartbeat::CommsService,
+    listen_addr: SocketAddr,
 }
 
 impl Master {
     fn new(listen_address: &str) -> Master {
         debug!("Initializing new master");
-
-        // Create sub services
-        let comms = heartbeat::CommsService::new(listen_address.parse()
-            .expect("Invalid listen address provided"));
-
-        // Initialize Master struct
+        // Initialize Master struct which exists for full lifetime
         let master = Master {
-            workers: Vec::new(),
-            comms,
+            listen_addr: listen_address.parse().expect("Invalid listen address provided"),
         };
         master
     }
 
     #[tokio::main]
-    pub async fn start(&self) -> Result<(), Box<dyn std::error::Error>> {
-        let comms = MasterCommsServer::new(self.comms);
+    async fn main_loop(&self) -> Result<(), Box<dyn std::error::Error>> {
 
+        // Initialize all grpc services
+        let db_broker = DbBroker::new().await?;
+        let stats_service = stats::StatsService::new(db_broker);
+
+        debug!("Starting master event loop on {}", self.listen_addr);
         Server::builder()
-            .add_service(comms)
-            .serve(self.comms.get_listen_addr())
+            .add_service(StatsServer::new(stats_service))
+            .serve(self.listen_addr)
             .await?;
 
         Ok(())
     }
 }
 
-
-#[allow(unused_must_use)]
 pub fn main(arg_matches: &ArgMatches) {
     debug!("Master main function launched");
 
@@ -52,8 +48,9 @@ pub fn main(arg_matches: &ArgMatches) {
             info!("Starting master agent");
             let master = Master::new(sub_matches.value_of("listen_addr").unwrap());
 
-            debug!("Starting main tokio loop");
-            master.start();
+            if let Err(e) = master.main_loop() {
+                panic!("{}", e);
+            }
         },
         _ => {}
     }

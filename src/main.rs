@@ -2,6 +2,8 @@ use log::debug;
 use clap::{App, load_yaml};
 use pretty_env_logger;
 
+mod db;
+mod xpc;
 mod master;
 mod worker;
 

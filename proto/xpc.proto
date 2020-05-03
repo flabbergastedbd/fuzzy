@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package xpc;
+
+// Way to collect hearbeats from all workers
+service Stats {
+    rpc Submit(HeartbeatRequest) returns (HeartbeatResponse);
+}
+
+message HeartbeatResponse {
+    bool status = 1;
+}
+
+message HeartbeatRequest {
+    uint32 cpus = 1;
+    string workerId = 2;
+    string name = 3;
+}

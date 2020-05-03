@@ -4,27 +4,30 @@ use clap::ArgMatches;
 use log::{info, debug};
 use num_cpus;
 use uuid::Uuid;
+use postgres_types::{ToSql, FromSql};
 
-#[derive(Debug)]
+#[derive(Debug, ToSql, FromSql)]
+#[postgres(name = "worker")]
 pub struct Worker {
-    id: Uuid,
-    name: Option<String>,
-    cpus: u8,
-    connect_addr: Option<String>,
+    pub id: Uuid,
+    pub name: Option<String>,
+    pub cpus: u32,
+    // pub connect_addr: Option<String>,
 }
 
 impl Worker {
-    pub fn new() -> Worker {
+    pub fn new() -> Box<Worker> {
         debug!("Creating new worker object");
-        let worker = Worker {
+        let worker = Box::new(Worker {
             id: Uuid::new_v4(),
             name: None,
-            cpus: num_cpus::get() as u8,
-            connect_addr: None,
-        };
+            cpus: num_cpus::get() as u32,
+            // connect_addr: None,
+        });
         worker
     }
 
+    // Assign given name to this worker
     pub fn name(mut self, name: Option<&str>) -> Worker {
         if let Some(custom_name) = name {
             self.name = Some(String::from(custom_name));
@@ -32,12 +35,23 @@ impl Worker {
         self
     }
 
+    // Assign given name to this worker
+    pub fn id(mut self, id: Option<&str>) -> Worker {
+        if let Some(custom_id) = id {
+            self.id = Uuid::parse_str(custom_id).unwrap();
+        }
+        self
+    }
+
+    /*
+    // Assign given address for this worker
     pub fn connect_addr(mut self, connect_addr: Option<&str>) -> Worker {
         if let Some(addr) = connect_addr {
             self.connect_addr = Some(String::from(addr));
         }
         self
     }
+    */
 }
 
 impl fmt::Display for Worker {
@@ -62,8 +76,9 @@ pub fn main(arg_matches: &ArgMatches) {
         ("start", Some(sub_matches)) => {
             info!("Starting worker agent");
             let w = Worker::new()
-                        .name(sub_matches.value_of("name"))
-                        .connect_addr(sub_matches.value_of("connect_addr"));
+                        .id(sub_matches.value_of("id"))
+                        .name(sub_matches.value_of("name"));
+                        //.connect_addr(sub_matches.value_of("connect_addr"));
             // Set name if provided
             info!("{}", w);
         },

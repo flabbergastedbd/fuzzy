@@ -21,10 +21,6 @@ subcommands:
               - listen_addr:
                   help: Address to listen for worker connections (127.0.0.1:12700)
                   index: 1
-              - name:
-                  help: Identifier for this worker agent
-                  long: name
-                  takes_value: true
   - worker:
       about: Workers that perform actual fuzzy computations
       version: "0.1"
@@ -38,4 +34,8 @@ subcommands:
               - name:
                   help: Identifier for this worker agent
                   long: name
+                  takes_value: true
+              - id:
+                  help: Incase of restarting an old agent
+                  long: id
                   takes_value: true

@@ -1,7 +1,7 @@
-use tonic::transport::Server;
-use std::net::SocketAddr;
 use clap::ArgMatches;
 use log::{info, debug};
+use std::net::SocketAddr;
+use tonic::transport::Server;
 
 use crate::db::DbBroker;
 use crate::xpc::stats_server::StatsServer;

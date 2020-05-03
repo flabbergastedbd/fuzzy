@@ -7,6 +7,10 @@ mod xpc;
 mod master;
 mod worker;
 
+use diesel::prelude::*;
+pub mod schema;
+pub mod models;
+
 fn main() {
     // Logger initialization is first
     pretty_env_logger::init();

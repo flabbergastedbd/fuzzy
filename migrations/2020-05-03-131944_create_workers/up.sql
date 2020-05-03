@@ -1,0 +1,9 @@
+-- Your SQL goes here
+CREATE TABLE workers (
+	id UUID PRIMARY KEY,
+	name VARCHAR(100),
+	cpus INT NOT NULL DEFAULT 0,
+	active BOOLEAN NOT NULL DEFAULT TRUE,
+	created TIMESTAMP,
+	updated TIMESTAMP
+)

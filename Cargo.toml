@@ -13,11 +13,10 @@ log = "0.4"
 num_cpus = "1.0"
 pretty_env_logger = "0.4"
 tokio = { version = "0.2", features = ["full"] }
-tokio-postgres = { version = "0.5", features = ["runtime", "with-bit-vec-0_6", "with-chrono-0_4", "with-serde_json-1", "with-uuid-0_8", "with-time-0_2"] }
-postgres-types = { version = "0.1", features = ["derive"] }
 tonic = "0.2"
 prost = "0.6"
 uuid = { version = "0.8", features = ["v4"] }
+diesel = { version = "1.4", features = ["postgres"] }
 
 [build-dependencies]
 tonic-build = "0.2"

@@ -1,32 +1,32 @@
+use std::sync::Arc;
+use std::error::Error;
 use std::fmt;
 
 use clap::ArgMatches;
-use log::{info, debug};
+use log::{error, info, debug};
 use num_cpus;
 use uuid::Uuid;
+use tokio::{task, time, sync::RwLock};
 
-#[derive(Debug)]
-pub struct Worker {
-    pub id: Uuid,
-    pub name: Option<String>,
-    pub cpus: u32,
-    // pub connect_addr: Option<String>,
-}
+use crate::models::Worker;
+
+mod dispatcher;
 
 impl Worker {
-    pub fn new() -> Box<Worker> {
+    pub fn new() -> Self {
         debug!("Creating new worker object");
-        let worker = Box::new(Worker {
+        let worker = Worker {
             id: Uuid::new_v4(),
             name: None,
-            cpus: num_cpus::get() as u32,
+            cpus: num_cpus::get() as i32,
+            active: true,
             // connect_addr: None,
-        });
+        };
         worker
     }
 
     // Assign given name to this worker
-    pub fn name(mut self, name: Option<&str>) -> Worker {
+    pub fn name(mut self, name: Option<&str>) -> Self {
         if let Some(custom_name) = name {
             self.name = Some(String::from(custom_name));
         }
@@ -34,7 +34,7 @@ impl Worker {
     }
 
     // Assign given name to this worker
-    pub fn id(mut self, id: Option<&str>) -> Worker {
+    pub fn id(mut self, id: Option<&str>) -> Self {
         if let Some(custom_id) = id {
             self.id = Uuid::parse_str(custom_id).unwrap();
         }
@@ -66,6 +66,15 @@ impl fmt::Display for Worker {
     }
 }
 
+#[tokio::main]
+pub async fn main_loop(worker: Arc<RwLock<Worker>>, connect_addr: &str) -> Result<(), Box<dyn Error>> {
+    let address = Arc::new(String::from(connect_addr));
+    // Launch periodic heartbeat dispatcher
+    dispatcher::periodic_heartbeat(address, worker).await?;
+
+    Ok(())
+}
+
 // Called from main if woker subcommand found, parameters can be seen in src/cli.yml
 pub fn main(arg_matches: &ArgMatches) {
     debug!("Worker main function launched");
@@ -74,11 +83,14 @@ pub fn main(arg_matches: &ArgMatches) {
         ("start", Some(sub_matches)) => {
             info!("Starting worker agent");
             let w = Worker::new()
-                        .id(sub_matches.value_of("id"))
-                        .name(sub_matches.value_of("name"));
-                        //.connect_addr(sub_matches.value_of("connect_addr"));
-            // Set name if provided
-            info!("{}", w);
+                .id(sub_matches.value_of("id"))
+                .name(sub_matches.value_of("name"));
+
+            // Start main loop
+            if let Err(e) = main_loop(Arc::new(RwLock::new(w)), sub_matches.value_of("connect_addr").unwrap()) {
+                error!("{}", e);
+                panic!("Failed to start main loop")
+            }
         },
         _ => {}
     }

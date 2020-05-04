@@ -12,7 +12,7 @@ message HeartbeatResponse {
 }
 
 message HeartbeatRequest {
-    uint32 cpus = 1;
+    int32 cpus = 1;
     string workerId = 2;
     string name = 3;
 }

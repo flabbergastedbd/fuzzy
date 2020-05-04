@@ -40,7 +40,7 @@ impl Collector for CollectorService {
             .execute(&conn);
 
         if let Err(e) = rows_inserted {
-            error!("{}", e);
+            error!("Unable to update db: {}", e);
         }
 
         Ok(Response::new(HeartbeatResponse { status: true }))

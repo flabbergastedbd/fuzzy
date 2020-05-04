@@ -4,9 +4,9 @@ use std::net::SocketAddr;
 use tonic::transport::Server;
 
 use crate::db::DbBroker;
-use crate::xpc::stats_server::StatsServer;
+use crate::xpc::collector_server::CollectorServer;
 
-mod stats;
+mod collector;
 
 #[derive(Debug)]
 pub struct Master {
@@ -26,13 +26,13 @@ impl Master {
     #[tokio::main]
     async fn main_loop(&self) -> Result<(), Box<dyn std::error::Error>> {
 
-        // Initialize all grpc services
-        let db_broker = DbBroker::new().await?;
-        let stats_service = stats::StatsService::new(db_broker);
+        let db_broker = DbBroker::new();
+        // Initialize all grpc services with database handle
+        let collector_service = collector::CollectorService::new(db_broker);
 
         debug!("Starting master event loop on {}", self.listen_addr);
         Server::builder()
-            .add_service(StatsServer::new(stats_service))
+            .add_service(CollectorServer::new(collector_service))
             .serve(self.listen_addr)
             .await?;
 

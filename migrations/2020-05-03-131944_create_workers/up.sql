@@ -4,6 +4,6 @@ CREATE TABLE workers (
 	name VARCHAR(100),
 	cpus INT NOT NULL DEFAULT 0,
 	active BOOLEAN NOT NULL DEFAULT TRUE,
-	created TIMESTAMP,
-	updated TIMESTAMP
+	created_at TIMESTAMP NOT NULL DEFAULT current_timestamp,
+	updated_at TIMESTAMP NOT NULL
 )

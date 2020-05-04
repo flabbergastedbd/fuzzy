@@ -4,10 +4,8 @@ use clap::ArgMatches;
 use log::{info, debug};
 use num_cpus;
 use uuid::Uuid;
-use postgres_types::{ToSql, FromSql};
 
-#[derive(Debug, ToSql, FromSql)]
-#[postgres(name = "worker")]
+#[derive(Debug)]
 pub struct Worker {
     pub id: Uuid,
     pub name: Option<String>,

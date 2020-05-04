@@ -7,7 +7,8 @@ mod xpc;
 mod master;
 mod worker;
 
-use diesel::prelude::*;
+// TODO://github.com/diesel-rs/diesel/issues/2155
+#[macro_use] extern crate diesel;
 pub mod schema;
 pub mod models;
 

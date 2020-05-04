@@ -3,8 +3,8 @@ syntax = "proto3";
 package xpc;
 
 // Way to collect hearbeats from all workers
-service Stats {
-    rpc Submit(HeartbeatRequest) returns (HeartbeatResponse);
+service Collector {
+    rpc Heartbeat(HeartbeatRequest) returns (HeartbeatResponse);
 }
 
 message HeartbeatResponse {

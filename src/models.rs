@@ -1,4 +1,5 @@
-// use diesel::Queryable;
+use diesel::Queryable;
+use std::time::SystemTime;
 
 #[derive(Queryable)]
 pub struct Worker {
@@ -6,6 +7,6 @@ pub struct Worker {
     pub name: Option<String>,
     pub cpus: i32,
     pub active: bool,
-    pub created: std::time::SystemTime,
-    pub updated: std::time::SystemTime,
+    pub created: Option<SystemTime>,
+    pub updated: Option<SystemTime>,
 }

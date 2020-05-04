@@ -5,5 +5,6 @@ CREATE TABLE workers (
 	cpus INT NOT NULL DEFAULT 0,
 	active BOOLEAN NOT NULL DEFAULT TRUE,
 	created_at TIMESTAMP NOT NULL DEFAULT current_timestamp,
-	updated_at TIMESTAMP NOT NULL
-)
+	updated_at TIMESTAMP
+);
+SELECT diesel_manage_updated_at('workers');

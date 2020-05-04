@@ -1,12 +1,12 @@
-use diesel::Queryable;
-use std::time::SystemTime;
+use diesel::{Queryable, Insertable};
+use diesel::query_builder::AsChangeset;
 
-#[derive(Queryable)]
+use super::schema::workers;
+
+#[derive(Queryable, Insertable, AsChangeset)]
 pub struct Worker {
     pub id: uuid::Uuid,
     pub name: Option<String>,
     pub cpus: i32,
     pub active: bool,
-    pub created: Option<SystemTime>,
-    pub updated: Option<SystemTime>,
 }

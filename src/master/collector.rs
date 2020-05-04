@@ -1,6 +1,8 @@
-use log::{debug, info};
+use diesel::prelude::*;
+use log::{error, debug, info};
 use tonic::{Request, Response, Status};
 
+use crate::schema;
 use crate::models;
 use crate::db::DbBroker;
 use crate::xpc::collector_server::Collector;
@@ -20,12 +22,26 @@ impl Collector for CollectorService {
         debug!("Received heartbeat request");
 
         // UPSERT worker
-        let req = request.into();
-        let new_worker = models::Worker::default();
-        new_worker.id = req.id;
-        new_worker.name =  req.name;
-        new_worker.cpus =  req.cpus;
-        new_worker.active =  true;
+        let req = request.into_inner();
+        let new_worker = models::Worker {
+            id: uuid::Uuid::parse_str(req.worker_id.as_str()).expect("Unable to parse uuid"),
+            name: Some(req.name),
+            cpus: req.cpus as i32,
+            active: true,
+        };
+
+        info!("Inserting new agent into database");
+        let conn = self.db_broker.get_conn();
+        let rows_inserted = diesel::insert_into(schema::workers::table)
+            .values(&new_worker)
+            .on_conflict(schema::workers::id)
+            .do_update()
+            .set(&new_worker)
+            .execute(&conn);
+
+        if let Err(e) = rows_inserted {
+            error!("{}", e);
+        }
 
         Ok(Response::new(HeartbeatResponse { status: true }))
     }
@@ -33,7 +49,7 @@ impl Collector for CollectorService {
 }
 
 impl CollectorService {
-pub fn new(db_broker: DbBroker) -> Self {
-    CollectorService { db_broker }
-}
+    pub fn new(db_broker: DbBroker) -> Self {
+        CollectorService { db_broker }
+    }
 }

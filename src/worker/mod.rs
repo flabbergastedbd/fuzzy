@@ -6,7 +6,7 @@ use clap::ArgMatches;
 use log::{error, info, debug};
 use num_cpus;
 use uuid::Uuid;
-use tokio::{task, time, sync::RwLock};
+use tokio::sync::RwLock;
 
 use crate::models::Worker;
 
@@ -68,9 +68,10 @@ impl fmt::Display for Worker {
 
 #[tokio::main]
 pub async fn main_loop(worker: Arc<RwLock<Worker>>, connect_addr: &str) -> Result<(), Box<dyn Error>> {
-    let address = Arc::new(String::from(connect_addr));
+    let d = dispatcher::Dispatcher::new(String::from(connect_addr));
     // Launch periodic heartbeat dispatcher
-    dispatcher::periodic_heartbeat(address, worker).await?;
+    info!("Launching heartbeat task");
+    tokio::spawn(d.heartbeat(worker)).await?;
 
     Ok(())
 }

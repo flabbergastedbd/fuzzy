@@ -1,9 +1,10 @@
 use diesel::{Queryable, Insertable};
 use diesel::query_builder::AsChangeset;
+use serde::{Serialize, Deserialize};
 
 use super::schema::{workers, executors, tasks};
 
-#[derive(Clone, Queryable, Insertable, AsChangeset)]
+#[derive(Clone, Queryable, Insertable, AsChangeset, Serialize, Deserialize)]
 #[table_name = "workers"]
 pub struct Worker {
     pub uuid: String,

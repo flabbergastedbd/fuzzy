@@ -57,6 +57,16 @@ impl fmt::Display for Worker {
     }
 }
 
+impl fmt::Debug for Worker {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Worker")
+            .field("uuid", &self.uuid)
+            .field("name", &self.name)
+            .field("cpus", &self.cpus)
+            .finish()
+    }
+}
+
 #[tokio::main]
 pub async fn main_loop(worker: Arc<RwLock<Worker>>, connect_addr: &str) -> Result<(), Box<dyn Error>> {
     let d = dispatcher::Dispatcher::new(String::from(connect_addr));

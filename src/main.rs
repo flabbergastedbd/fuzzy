@@ -3,9 +3,9 @@ use clap::{App, load_yaml};
 use pretty_env_logger;
 
 mod db;
-mod xpc;
 mod master;
 mod worker;
+mod xpc;
 
 // TODO://github.com/diesel-rs/diesel/issues/2155
 #[macro_use] extern crate diesel;

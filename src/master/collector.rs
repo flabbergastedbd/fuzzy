@@ -22,13 +22,15 @@ impl Collector for CollectorService {
 
         // First get inner type of tonic::Request & then use our From traits
         let new_worker: models::Worker = request.into_inner().into();
-        debug!("Received a heartbeat request from {}", new_worker.id);
+        debug!("Received a heartbeat request from {}", new_worker.uuid);
 
         debug!("Inserting agent into database");
+        // Get connection from pool (r2d2)
         let conn = self.db_broker.get_conn();
+        // Upsert the new agent
         let rows_inserted = diesel::insert_into(schema::workers::table)
             .values(&new_worker)
-            .on_conflict(schema::workers::id)
+            .on_conflict(schema::workers::uuid)
             .do_update()
             .set(&new_worker)
             .execute(&conn);

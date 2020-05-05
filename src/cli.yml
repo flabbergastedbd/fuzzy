@@ -35,7 +35,7 @@ subcommands:
                   help: Identifier for this worker agent
                   long: name
                   takes_value: true
-              - id:
+              - uuid:
                   help: Incase of restarting an old agent
-                  long: id
+                  long: uuid
                   takes_value: true

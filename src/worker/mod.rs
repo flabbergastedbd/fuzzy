@@ -16,7 +16,7 @@ impl Worker {
     pub fn new() -> Self {
         debug!("Creating new worker object");
         let worker = Worker {
-            id: Uuid::new_v4().to_string(),
+            uuid: Uuid::new_v4().to_string(),
             name: None,
             cpus: num_cpus::get() as i32,
             active: true,
@@ -34,10 +34,10 @@ impl Worker {
     }
 
     // Assign given name to this worker
-    pub fn id(mut self, id: Option<&str>) -> Self {
+    pub fn uuid(mut self, id: Option<&str>) -> Self {
         if let Some(custom_id) = id {
             debug!("Parsing for valid uuid");
-            self.id = Uuid::parse_str(custom_id).unwrap().to_string();
+            self.uuid = Uuid::parse_str(custom_id).unwrap().to_string();
         }
         self
     }
@@ -47,7 +47,7 @@ impl fmt::Display for Worker {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         // This ugly thing has to done for proper string formatting
         writeln!(f, "Worker Info")?;
-        writeln!(f, "ID  : {}", self.id)?;
+        writeln!(f, "UUID  : {}", self.uuid)?;
 
         if self.name.is_some() {
             writeln!(f, "Name: {:?}", self.name)?;
@@ -75,7 +75,7 @@ pub fn main(arg_matches: &ArgMatches) {
         ("start", Some(sub_matches)) => {
             info!("Starting worker agent");
             let w = Worker::new()
-                .id(sub_matches.value_of("id"))
+                .uuid(sub_matches.value_of("uuid"))
                 .name(sub_matches.value_of("name"));
 
             // Start main loop

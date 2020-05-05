@@ -27,7 +27,7 @@ impl Dispatcher {
             if let Ok(mut client) = CollectorClient::connect(self.connect_addr.clone()).await {
                 let worker = worker_lock.read().await;
                 let request = tonic::Request::new(HeartbeatRequest {
-                    id: worker.id.clone(),
+                    uuid: worker.uuid.clone(),
                     cpus: worker.cpus,
                     name: worker.name.clone().unwrap_or_default()
                 });

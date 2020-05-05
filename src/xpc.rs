@@ -6,7 +6,7 @@ tonic::include_proto!("xpc"); // The string specified here must match the proto 
 impl From<HeartbeatRequest> for Worker {
     fn from(w: HeartbeatRequest) -> Worker {
         Worker {
-            id: w.id,
+            uuid: w.uuid,
             name: Some(w.name),
             cpus: w.cpus,
             // Set agent as active always from heartbeat request

@@ -1,6 +1,6 @@
 table! {
     workers (id) {
-        id -> Uuid,
+        id -> Varchar,
         name -> Nullable<Varchar>,
         cpus -> Int4,
         active -> Bool,

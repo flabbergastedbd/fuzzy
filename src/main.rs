@@ -15,6 +15,7 @@ pub mod models;
 fn main() {
     // Logger initialization is first
     pretty_env_logger::init();
+    debug!("Log initialization complete");
 
     let yaml = load_yaml!("cli.yml");
     let arg_matches = App::from(yaml).get_matches();

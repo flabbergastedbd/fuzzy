@@ -13,7 +13,7 @@ log = "0.4"
 num_cpus = "1.0"
 pretty_env_logger = "0.4"
 tokio = { version = "0.2", features = ["full"] }
-tonic = "0.2"
+tonic = { version = "0.2", features = ["prost"] }
 prost = "0.6"
 uuid = { version = "0.6", features = ["v4"] }
 diesel = { version = "1.4", features = ["postgres", "r2d2", "uuid"] }

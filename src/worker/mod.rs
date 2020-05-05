@@ -16,7 +16,7 @@ impl Worker {
     pub fn new() -> Self {
         debug!("Creating new worker object");
         let worker = Worker {
-            id: Uuid::new_v4(),
+            id: Uuid::new_v4().to_string(),
             name: None,
             cpus: num_cpus::get() as i32,
             active: true,
@@ -36,20 +36,11 @@ impl Worker {
     // Assign given name to this worker
     pub fn id(mut self, id: Option<&str>) -> Self {
         if let Some(custom_id) = id {
-            self.id = Uuid::parse_str(custom_id).unwrap();
+            debug!("Parsing for valid uuid");
+            self.id = Uuid::parse_str(custom_id).unwrap().to_string();
         }
         self
     }
-
-    /*
-    // Assign given address for this worker
-    pub fn connect_addr(mut self, connect_addr: Option<&str>) -> Worker {
-        if let Some(addr) = connect_addr {
-            self.connect_addr = Some(String::from(addr));
-        }
-        self
-    }
-    */
 }
 
 impl fmt::Display for Worker {

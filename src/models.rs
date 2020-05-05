@@ -3,9 +3,9 @@ use diesel::query_builder::AsChangeset;
 
 use super::schema::workers;
 
-#[derive(Queryable, Insertable, AsChangeset)]
+#[derive(Clone, Queryable, Insertable, AsChangeset)]
 pub struct Worker {
-    pub id: uuid::Uuid,
+    pub id: String,
     pub name: Option<String>,
     pub cpus: i32,
     pub active: bool,

@@ -16,7 +16,6 @@ pub struct Master {
 impl Master {
     fn new(listen_address: &str) -> Master {
         debug!("Initializing new master");
-        // Initialize Master struct which exists for full lifetime
         let master = Master {
             listen_addr: listen_address.parse().expect("Invalid listen address provided"),
         };
@@ -41,7 +40,7 @@ impl Master {
 }
 
 pub fn main(arg_matches: &ArgMatches) {
-    debug!("Master main function launched");
+    debug!("Master main launched!");
 
     match arg_matches.subcommand() {
         ("start", Some(sub_matches)) => {

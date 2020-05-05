@@ -1,19 +1,55 @@
-syntax = "proto2";
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
 
 package xpc;
 
-// Way to collect hearbeats from all workers
+// Worker related
 service Collector {
-    rpc Heartbeat(Worker) returns (HeartbeatResponse);
+    rpc Heartbeat(NewWorker) returns (google.protobuf.Empty);
 }
 
-message HeartbeatResponse {
-    required bool status = 1;
+message NewWorker {
+    string uuid = 1;
+    string name = 2;
+    int32 cpus = 3;
+    bool active = 4;
 }
 
 message Worker {
-    required string uuid = 1;
-    optional string name = 2;
-    required int32 cpus = 3;
-    required bool active = 4;
+    int32 id = 1;
+    string uuid = 2;
+    string name = 3;
+    int32 cpus = 4;
+    bool active = 5;
+    // google.protobuf.Timestamp created_at = 6;
+    // google.protobuf.Timestamp updated_at = 7;
+}
+
+// User interface related
+service UserInterface {
+    rpc SubmitTask(NewTask) returns (google.protobuf.Empty);
+    // rpc GetTasks(google.protobuf.Empty) returns (FullTasks);
+}
+
+message FullTasks {
+    repeated Task data = 1;
+}
+
+message NewTask {
+    string name = 1;
+    bool active = 2;
+    string executor = 3;
+    string fuzz_driver = 4;
+}
+
+message Task {
+    int32 id = 1;
+    string name = 2;
+    bool active = 3;
+    string executor = 4;
+    string fuzz_driver = 5;
+    // google.protobuf.Timestamp created_at = 6;
+    // google.protobuf.Timestamp updated_at = 7;
 }

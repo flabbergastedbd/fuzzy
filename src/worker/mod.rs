@@ -8,16 +8,16 @@ use num_cpus;
 use uuid::Uuid;
 use tokio::sync::RwLock;
 
-use crate::xpc::Worker;
+use crate::models::NewWorker;
 
 mod dispatcher;
 
-impl Worker {
+impl NewWorker {
     pub fn new() -> Self {
         debug!("Creating new worker object");
-        let worker = Worker {
+        let worker = NewWorker {
             uuid: Uuid::new_v4().to_string(),
-            name: None,
+            name: String::new(),
             cpus: num_cpus::get() as i32,
             active: true,
             // connect_addr: None,
@@ -28,7 +28,7 @@ impl Worker {
     // Assign given name to this worker
     pub fn with_name(mut self, name: Option<&str>) -> Self {
         if let Some(custom_name) = name {
-            self.name = Some(String::from(custom_name));
+            self.name.push_str(custom_name);
         }
         self
     }
@@ -43,22 +43,18 @@ impl Worker {
     }
 }
 
-impl fmt::Display for Worker {
+impl fmt::Display for NewWorker {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         // This ugly thing has to done for proper string formatting
         writeln!(f, "Worker Info")?;
         writeln!(f, "UUID  : {}", self.uuid)?;
-
-        if self.name.is_some() {
-            writeln!(f, "Name: {:?}", self.name)?;
-        }
-
-        writeln!(f, "CPUs: {}", self.cpus)
+        writeln!(f, "Name  : {}", self.name)?;
+        writeln!(f, "CPUs  : {}", self.cpus)
     }
 }
 
 #[tokio::main]
-pub async fn main_loop(worker: Arc<RwLock<Worker>>, connect_addr: &str) -> Result<(), Box<dyn Error>> {
+pub async fn main_loop(worker: Arc<RwLock<NewWorker>>, connect_addr: &str) -> Result<(), Box<dyn Error>> {
     let d = dispatcher::Dispatcher::new(String::from(connect_addr));
     // Launch periodic heartbeat dispatcher
     info!("Launching heartbeat task");
@@ -74,7 +70,7 @@ pub fn main(arg_matches: &ArgMatches) {
     match arg_matches.subcommand() {
         ("start", Some(sub_matches)) => {
             info!("Starting worker agent");
-            let w = Worker::new()
+            let w = NewWorker::new()
                 .with_uuid(sub_matches.value_of("uuid"))
                 .with_name(sub_matches.value_of("name"));
 

@@ -1,17 +1,8 @@
 use diesel::{Queryable, Insertable};
 
-use super::schema::{tasks, worker_tasks};
+use super::schema::worker_tasks;
 
-pub use crate::xpc::Worker;
-
-#[derive(Clone, Queryable, Insertable, Associations)]
-#[table_name = "tasks"]
-pub struct Task {
-    pub name: String,
-    pub active: bool,
-    pub executor: String,
-    pub fuzz_driver: String
-}
+pub use crate::xpc::{NewWorker, Worker, NewTask, Task};
 
 #[derive(Clone, Queryable, Insertable, Associations)]
 #[table_name = "worker_tasks"]

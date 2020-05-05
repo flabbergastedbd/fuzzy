@@ -4,7 +4,7 @@ use std::time::Duration;
 use log::{debug, error, info};
 use tokio::sync::RwLock;
 
-use crate::models::Worker;
+use crate::models::NewWorker;
 use crate::xpc::collector_client::CollectorClient;
 
 // Heartbeat interval in seconds
@@ -21,7 +21,7 @@ impl Dispatcher {
         Dispatcher { connect_addr }
     }
 
-    pub async fn heartbeat(self, worker_lock: Arc<RwLock<Worker>>) { // -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn heartbeat(self, worker_lock: Arc<RwLock<NewWorker>>) { // -> Result<(), Box<dyn std::error::Error>> {
         let mut interval = tokio::time::interval(HEARTBEAT_INTERVAL);
         loop {
             debug!("Trying to send heartbeat to given address");

@@ -1,11 +1,4 @@
 table! {
-    executors (id) {
-        id -> Int4,
-        name -> Nullable<Varchar>,
-    }
-}
-
-table! {
     tasks (id) {
         id -> Int4,
         name -> Varchar,
@@ -42,7 +35,6 @@ joinable!(worker_tasks -> tasks (task_id));
 joinable!(worker_tasks -> workers (worker_id));
 
 allow_tables_to_appear_in_same_query!(
-    executors,
     tasks,
     worker_tasks,
     workers,

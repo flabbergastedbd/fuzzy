@@ -5,6 +5,11 @@ import "google/protobuf/timestamp.proto";
 
 package xpc;
 
+// Generic one to be used by all, for look ups for primary key
+message Id {
+    int32 value = 1;
+}
+
 // Worker related
 service Collector {
     rpc Heartbeat(NewWorker) returns (google.protobuf.Empty);
@@ -30,6 +35,7 @@ message Worker {
 // User interface related
 service UserInterface {
     rpc SubmitTask(NewTask) returns (google.protobuf.Empty);
+    // rpc GetTask(Id) returns (Task);
     // rpc GetTasks(google.protobuf.Empty) returns (FullTasks);
 }
 

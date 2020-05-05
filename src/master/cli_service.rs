@@ -1,10 +1,11 @@
 use diesel::prelude::*;
 use log::{error, debug};
-use tonic::{Request, Response, Status};
+use tonic::{Request, Response, Status, Code};
 
 use crate::db::DbBroker;
 use crate::schema::tasks;
 use crate::models::{Task, NewTask};
+use crate::xpc::Id;
 use crate::xpc::user_interface_server::UserInterface;
 pub use crate::xpc::user_interface_server::UserInterfaceServer as CliInterfaceServer;
 
@@ -21,7 +22,7 @@ impl UserInterface for CliServer {
         let new_task: NewTask = request.into_inner();
         debug!("Received a task request");
 
-        debug!("Inserting agent into database");
+        debug!("Inserting new task into database");
         // Get connection from pool (r2d2)
         let conn = self.db_broker.get_conn();
         // Upsert the new agent
@@ -32,11 +33,29 @@ impl UserInterface for CliServer {
 
         if let Err(e) = rows_inserted {
             error!("Unable to update db due to {}", e);
-            Err(Status::new(tonic::Code::InvalidArgument, format!("{}", e)))
+            Err(Status::new(Code::InvalidArgument, format!("{}", e)))
         } else {
             Ok(Response::new({}))
         }
     }
+
+    /*
+    async fn get_task(&self, request: Request<Id>) -> Result<Response<Task>, Status> {
+        debug!("Trying to fetch a specific task");
+
+        let id = request.into_inner().value;
+
+        let conn = self.db_broker.get_conn();
+        let task: QueryResult<Vec<Task>> = tasks::table.load(&conn);
+
+        if let Err(e) = task {
+            error!("Unable to get task: {}", e);
+            Err(Status::new(Code::NotFound, ""))
+        } else {
+            Ok(Response::new(task.unwrap()))
+        }
+    }
+    */
 }
 
 impl CliServer {

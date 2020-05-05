@@ -19,8 +19,13 @@ subcommands:
             about: Start a master agent
             args:
               - listen_addr:
-                  help: Address to listen for worker connections (127.0.0.1:12700)
-                  index: 1
+                  help: "Address to listen for worker connections (Default: 127.0.0.1:12700)"
+                  long: listen-addr
+                  takes_value: true
+              - db_connect_str:
+                  help: "Postgres database connection string (Default: postgres://fuzzy:fuzzy@127.0.0.1:5432/fuzzy)"
+                  long: db
+                  takes_value: true
   - worker:
       about: Workers that perform actual fuzzy computations
       version: "0.1"

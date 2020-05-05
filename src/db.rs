@@ -9,9 +9,9 @@ pub struct DbBroker {
 }
 
 impl DbBroker {
-    pub fn new() -> Self {
+    pub fn new(connection_string: String) -> Self {
         info!("Creating a new db connection");
-        let manager = ConnectionManager::<PgConnection>::new("postgres://fuzzy:fuzzy@127.0.0.1:5432/fuzzy");
+        let manager = ConnectionManager::<PgConnection>::new(connection_string);
         let pool = Pool::builder()
             .max_size(5)
             .build(manager).expect("Failed to create db connection pool");

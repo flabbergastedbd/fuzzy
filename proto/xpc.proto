@@ -1,4 +1,7 @@
-syntax = "proto3";
+// Sticking to proto3 due to a very important thing
+// Option<> is only present in proto2 as per prost, and we need
+// that type as we have null columns in DB.
+syntax = "proto2";
 
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
@@ -7,7 +10,7 @@ package xpc;
 
 // Generic one to be used by all, for look ups for primary key
 message Id {
-    int32 value = 1;
+    required int32 value = 1;
 }
 
 // Worker related
@@ -16,18 +19,18 @@ service Collector {
 }
 
 message NewWorker {
-    string uuid = 1;
-    string name = 2;
-    int32 cpus = 3;
-    bool active = 4;
+    required string uuid = 1;
+    optional string name = 2;
+    required int32 cpus = 3;
+    required bool active = 4;
 }
 
 message Worker {
-    int32 id = 1;
-    string uuid = 2;
-    string name = 3;
-    int32 cpus = 4;
-    bool active = 5;
+    required int32 id = 1;
+    required string uuid = 2;
+    required string name = 3;
+    required int32 cpus = 4;
+    required bool active = 5;
     // google.protobuf.Timestamp created_at = 6;
     // google.protobuf.Timestamp updated_at = 7;
 }
@@ -35,7 +38,7 @@ message Worker {
 // User interface related
 service UserInterface {
     rpc SubmitTask(NewTask) returns (google.protobuf.Empty);
-    // rpc GetTask(Id) returns (Task);
+    rpc GetTask(Id) returns (Task);
     // rpc GetTasks(google.protobuf.Empty) returns (FullTasks);
 }
 
@@ -44,18 +47,18 @@ message FullTasks {
 }
 
 message NewTask {
-    string name = 1;
-    bool active = 2;
-    string executor = 3;
-    string fuzz_driver = 4;
+    required string name = 1;
+    required bool active = 2;
+    required string executor = 3;
+    required string fuzz_driver = 4;
 }
 
 message Task {
-    int32 id = 1;
-    string name = 2;
-    bool active = 3;
-    string executor = 4;
-    string fuzz_driver = 5;
+    required int32 id = 1;
+    required string name = 2;
+    required bool active = 3;
+    optional string executor = 4;
+    optional string fuzz_driver = 5;
     // google.protobuf.Timestamp created_at = 6;
     // google.protobuf.Timestamp updated_at = 7;
 }

@@ -17,7 +17,7 @@ impl NewWorker {
         debug!("Creating new worker object");
         let worker = NewWorker {
             uuid: Uuid::new_v4().to_string(),
-            name: String::new(),
+            name: None,
             cpus: num_cpus::get() as i32,
             active: true,
             // connect_addr: None,
@@ -28,7 +28,7 @@ impl NewWorker {
     // Assign given name to this worker
     pub fn with_name(mut self, name: Option<&str>) -> Self {
         if let Some(custom_name) = name {
-            self.name.push_str(custom_name);
+            self.name = Some(custom_name.to_owned());
         }
         self
     }
@@ -48,7 +48,7 @@ impl fmt::Display for NewWorker {
         // This ugly thing has to done for proper string formatting
         writeln!(f, "Worker Info")?;
         writeln!(f, "UUID  : {}", self.uuid)?;
-        writeln!(f, "Name  : {}", self.name)?;
+        writeln!(f, "Name  : {:?}", self.name)?;
         writeln!(f, "CPUs  : {}", self.cpus)
     }
 }

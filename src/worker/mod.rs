@@ -8,7 +8,7 @@ use num_cpus;
 use uuid::Uuid;
 use tokio::sync::RwLock;
 
-use crate::models::Worker;
+use crate::xpc::Worker;
 
 mod dispatcher;
 
@@ -26,7 +26,7 @@ impl Worker {
     }
 
     // Assign given name to this worker
-    pub fn name(mut self, name: Option<&str>) -> Self {
+    pub fn with_name(mut self, name: Option<&str>) -> Self {
         if let Some(custom_name) = name {
             self.name = Some(String::from(custom_name));
         }
@@ -34,7 +34,7 @@ impl Worker {
     }
 
     // Assign given name to this worker
-    pub fn uuid(mut self, id: Option<&str>) -> Self {
+    pub fn with_uuid(mut self, id: Option<&str>) -> Self {
         if let Some(custom_id) = id {
             debug!("Parsing for valid uuid");
             self.uuid = Uuid::parse_str(custom_id).unwrap().to_string();
@@ -75,8 +75,8 @@ pub fn main(arg_matches: &ArgMatches) {
         ("start", Some(sub_matches)) => {
             info!("Starting worker agent");
             let w = Worker::new()
-                .uuid(sub_matches.value_of("uuid"))
-                .name(sub_matches.value_of("name"));
+                .with_uuid(sub_matches.value_of("uuid"))
+                .with_name(sub_matches.value_of("name"));
 
             // Start main loop
             if let Err(e) = main_loop(Arc::new(RwLock::new(w)), sub_matches.value_of("connect_addr").unwrap()) {

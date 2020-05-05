@@ -6,7 +6,6 @@ use tokio::sync::RwLock;
 
 use crate::models::Worker;
 use crate::xpc::collector_client::CollectorClient;
-use crate::xpc::HeartbeatRequest;
 
 // Heartbeat interval in seconds
 const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5);
@@ -16,7 +15,9 @@ pub struct Dispatcher {
 }
 
 impl Dispatcher {
-    pub fn new(connect_addr: String) -> Self {
+    pub fn new(addr: String) -> Self {
+        let mut connect_addr = "http://".to_owned();
+        connect_addr.push_str(addr.as_str());
         Dispatcher { connect_addr }
     }
 
@@ -25,13 +26,10 @@ impl Dispatcher {
         loop {
             debug!("Trying to send heartbeat to given address");
             if let Ok(mut client) = CollectorClient::connect(self.connect_addr.clone()).await {
+                // Aquire read lock
                 let worker = worker_lock.read().await;
-                let request = tonic::Request::new(HeartbeatRequest {
-                    uuid: worker.uuid.clone(),
-                    cpus: worker.cpus,
-                    name: worker.name.clone().unwrap_or_default()
-                });
-
+                // Create new request
+                let request = tonic::Request::new(worker.clone());
                 if let Err(e) = client.heartbeat(request).await {
                     error!("Sending heartbeat failed: {}", e);
                 } else {

@@ -1,12 +1,12 @@
 use diesel::prelude::*;
-use log::{error, debug, info};
+use log::{error, debug};
 use tonic::{Request, Response, Status};
 
 use crate::schema;
 use crate::models;
 use crate::db::DbBroker;
 use crate::xpc::collector_server::Collector;
-use crate::xpc::{HeartbeatRequest, HeartbeatResponse};
+use crate::xpc::HeartbeatResponse;
 
 #[derive(Clone)]
 pub struct CollectorService {
@@ -17,11 +17,11 @@ pub struct CollectorService {
 impl Collector for CollectorService {
     async fn heartbeat(
         &self,
-        request: Request<HeartbeatRequest>, // Accept request of type HelloRequest
+        request: Request<models::Worker>, // Accept request of type HelloRequest
     ) -> Result<Response<HeartbeatResponse>, Status> {
 
         // First get inner type of tonic::Request & then use our From traits
-        let new_worker: models::Worker = request.into_inner().into();
+        let new_worker: models::Worker = request.into_inner();
         debug!("Received a heartbeat request from {}", new_worker.uuid);
 
         debug!("Inserting agent into database");

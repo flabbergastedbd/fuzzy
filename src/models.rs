@@ -1,16 +1,8 @@
 use diesel::{Queryable, Insertable};
-use diesel::query_builder::AsChangeset;
 
-use super::schema::{workers, executors, tasks};
+use super::schema::{executors, tasks};
 
-#[derive(Clone, Queryable, Insertable, AsChangeset)]
-#[table_name = "workers"]
-pub struct Worker {
-    pub uuid: String,
-    pub name: Option<String>,
-    pub cpus: i32,
-    pub active: bool,
-}
+pub use crate::xpc::Worker;
 
 #[derive(Clone, Queryable, Insertable, AsChangeset)]
 #[table_name = "executors"]

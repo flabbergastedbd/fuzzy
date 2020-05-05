@@ -1,18 +1,19 @@
-syntax = "proto3";
+syntax = "proto2";
 
 package xpc;
 
 // Way to collect hearbeats from all workers
 service Collector {
-    rpc Heartbeat(HeartbeatRequest) returns (HeartbeatResponse);
+    rpc Heartbeat(Worker) returns (HeartbeatResponse);
 }
 
 message HeartbeatResponse {
-    bool status = 1;
+    required bool status = 1;
 }
 
-message HeartbeatRequest {
-    string uuid = 2;
-    int32 cpus = 1;
-    string name = 3;
+message Worker {
+    required string uuid = 1;
+    optional string name = 2;
+    required int32 cpus = 3;
+    required bool active = 4;
 }

@@ -10,7 +10,8 @@ table! {
         id -> Int4,
         name -> Varchar,
         active -> Bool,
-        executor_id -> Int4,
+        executor -> Nullable<Varchar>,
+        fuzz_driver -> Nullable<Varchar>,
         created_at -> Timestamp,
         updated_at -> Nullable<Timestamp>,
     }
@@ -37,7 +38,6 @@ table! {
     }
 }
 
-joinable!(tasks -> executors (executor_id));
 joinable!(worker_tasks -> tasks (task_id));
 joinable!(worker_tasks -> workers (worker_id));
 

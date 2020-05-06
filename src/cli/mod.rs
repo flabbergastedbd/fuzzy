@@ -1,11 +1,13 @@
 use std::error::Error;
+use std::str::FromStr;
 
-use log::{debug, info};
+use log::debug;
 use clap::ArgMatches;
-use tonic::{Request, Response, Status, Code};
-use prettytable::{Table, Row, Cell};
+use tonic::Request;
+use prettytable::{Table, Row};
 
 use crate::xpc::user_interface_client::UserInterfaceClient;
+use crate::db::enums::{Executor, FuzzDriver};
 use crate::models::NewTask;
 
 mod formatter;
@@ -37,6 +39,9 @@ async fn tasks(args: &ArgMatches, connect_addr: String) -> Result<(), Box<dyn Er
                 fuzz_driver: sub_matches.value_of("fuzz_driver").unwrap().to_owned(),
                 active: false,
             };
+            // Validate executor & driver as we do crude transforms via enums & strum
+            Executor::from_str(new_task.executor.as_ref()).expect("Invalid executor");
+            FuzzDriver::from_str(new_task.fuzz_driver.as_ref()).expect("Invalid fuzz driver");
             let response = client.submit_task(Request::new(new_task)).await?;
             // TODO: Error handling
             println!("{:?}", response);

@@ -3,6 +3,8 @@ use log::info;
 use diesel::pg::PgConnection;
 use diesel::r2d2::{ConnectionManager, Pool, PooledConnection};
 
+pub mod enums;
+
 #[derive(Clone)]
 pub struct DbBroker {
     pool: Pool<ConnectionManager<PgConnection>>

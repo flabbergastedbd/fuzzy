@@ -20,7 +20,6 @@ impl UserInterface for CliServer {
 
         // First get inner type of tonic::Request & then use our From traits
         let new_task: NewTask = request.into_inner();
-        debug!("Received a task request");
 
         debug!("Inserting new task into database");
         // Get connection from pool (r2d2)

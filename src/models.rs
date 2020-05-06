@@ -1,4 +1,3 @@
-use diesel::prelude::*;
 use diesel::{Queryable, Insertable};
 
 use super::schema::worker_tasks;

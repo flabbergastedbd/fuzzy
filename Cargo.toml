@@ -21,6 +21,8 @@ uuid = { version = "0.6", features = ["v4"] }
 diesel = { version = "1.4", features = ["postgres", "r2d2", "uuid", "chrono"] }
 prettytable-rs = "^0.8"
 colored = "1.9"
+strum = "0.18.0"
+strum_macros = "0.18.0"
 
 [build-dependencies]
 tonic-build = { version = "0.2", features = ["prost"] }

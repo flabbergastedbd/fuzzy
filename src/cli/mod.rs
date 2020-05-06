@@ -1,16 +1,12 @@
 use std::error::Error;
-use std::str::FromStr;
 
 use log::debug;
 use clap::ArgMatches;
-use tonic::Request;
 use prettytable::{Table, Row};
 
-use crate::xpc::user_interface_client::UserInterfaceClient;
-use crate::db::enums::{Executor, FuzzDriver};
-use crate::models::NewTask;
-
 mod formatter;
+mod tasks;
+mod corpora;
 
 fn print_results<T>(headings: Vec<&str>, entries: Vec<Vec<T>>)
     where T: std::fmt::Display
@@ -25,48 +21,6 @@ fn print_results<T>(headings: Vec<&str>, entries: Vec<Vec<T>>)
     table.printstd();
 }
 
-async fn tasks(args: &ArgMatches, connect_addr: String) -> Result<(), Box<dyn Error>> {
-    debug!("Creating interface client");
-    let mut client = UserInterfaceClient::connect(connect_addr).await?;
-
-    match args.subcommand() {
-        // Adding a new task
-        ("add", Some(sub_matches)) => {
-            debug!("Adding a new task");
-            let new_task = NewTask {
-                name: sub_matches.value_of("name").unwrap().to_owned(),
-                executor: sub_matches.value_of("executor").unwrap().to_owned(),
-                fuzz_driver: sub_matches.value_of("fuzz_driver").unwrap().to_owned(),
-                active: false,
-            };
-            // Validate executor & driver as we do crude transforms via enums & strum
-            Executor::from_str(new_task.executor.as_ref()).expect("Invalid executor");
-            FuzzDriver::from_str(new_task.fuzz_driver.as_ref()).expect("Invalid fuzz driver");
-            let response = client.submit_task(Request::new(new_task)).await?;
-            // TODO: Error handling
-            println!("{:?}", response);
-        },
-        // Listing all tasks
-        ("list", Some(_)) => {
-            debug!("Listing all tasks");
-
-            let response = client.get_tasks(Request::new({})).await?;
-            let tasks = response.into_inner().data;
-
-            let tasks_heading = vec!["ID", "Name", "Executor", "Fuzz Driver", "Active"];
-            let mut tasks_vec = Vec::new();
-            for t in tasks.iter() {
-                tasks_vec.push(formatter::format_task(t));
-            }
-
-            print_results(tasks_heading, tasks_vec);
-        },
-        _ => {},
-    }
-
-    Ok(())
-}
-
 #[tokio::main]
 async fn main_loop(arg_matches: &ArgMatches) -> Result<(), Box<dyn Error>> {
     // Create url for server & create a client
@@ -77,7 +31,11 @@ async fn main_loop(arg_matches: &ArgMatches) -> Result<(), Box<dyn Error>> {
     match arg_matches.subcommand() {
         ("tasks", Some(sub_matches)) => {
             debug!("Launched tasks subcommand");
-            tasks(sub_matches, connect_addr).await?;
+            tasks::cli(sub_matches, connect_addr).await?;
+        },
+        ("corpora", Some(sub_matches)) => {
+            debug!("Launched tasks subcommand");
+            corpora::cli(sub_matches, connect_addr).await?;
         },
         _ => {}
     }

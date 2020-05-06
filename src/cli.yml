@@ -84,3 +84,23 @@ subcommands:
                           index: 1
                 - list:
                     about: List all tasks
+        - corpora:
+            about: Access/Edit/Remove corpus
+            subcommands:
+                - add:
+                    about: Add a new corpus
+                    args:
+                        - task:
+                            help: Name of the task
+                            index: 1
+                        - file_path:
+                            help: Executor for the task
+                            index: 2
+                - delete:
+                    about: Delete a corpus
+                    args:
+                      - id:
+                          help: Id of task
+                          index: 1
+                - list:
+                    about: List all corpus

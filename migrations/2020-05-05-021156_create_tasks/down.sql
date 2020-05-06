@@ -1,5 +1,5 @@
 -- This file should undo anything in `up.sql`
-DROP TABLE worker_tasks, tasks;
+DROP TABLE crashes, corpora, worker_tasks, tasks;
 
 -- Drop types
 DO $$

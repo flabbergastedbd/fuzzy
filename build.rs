@@ -20,6 +20,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .type_attribute("Task", "#[derive(Queryable, Identifiable, Associations)]")
         .type_attribute("Task", "#[table_name = \"tasks\"]")
 
+        // NewCorpus (Corpus with limited fields)
+        .type_attribute("NewCorpus", "#[derive(Queryable, Insertable, AsChangeset, Associations)]")
+        .type_attribute("NewCorpus", "#[table_name = \"corpora\"]")
+
+        // NewCorpus (Corpus with limited fields)
+        .type_attribute("Corpus", "#[derive(Queryable, Identifiable, Associations)]")
+        .type_attribute("Corpus", "#[table_name = \"corpora\"]")
+
         // All fields of this name, prost converts them to prost_types::Timestamp, which diesel
         // doesn't support natively so we customize deserialization behaviour for one field
         //

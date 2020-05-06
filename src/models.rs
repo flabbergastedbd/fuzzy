@@ -1,7 +1,11 @@
 use diesel::{Queryable, Insertable};
 
 use super::schema::worker_tasks;
-pub use crate::xpc::{NewWorker, Worker, NewTask, Task};
+pub use crate::xpc::{
+    NewWorker, Worker,
+    NewTask, Task,
+    NewCorpus, Corpus,
+};
 
 #[derive(Clone, Queryable, Insertable, Associations)]
 #[table_name = "worker_tasks"]

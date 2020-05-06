@@ -23,6 +23,8 @@ prettytable-rs = "^0.8"
 colored = "1.9"
 strum = "0.18.0"
 strum_macros = "0.18.0"
+ring = "0.16"
+data-encoding = "2.2.0"
 
 [build-dependencies]
 tonic-build = { version = "0.2", features = ["prost"] }

@@ -14,8 +14,25 @@ CREATE TABLE tasks (
 
 CREATE TABLE worker_tasks (
 	id SERIAL PRIMARY KEY,
-	worker_id SERIAL REFERENCES workers(id) ON DELETE CASCADE,
 	task_id SERIAL REFERENCES tasks(id) ON DELETE CASCADE,
+	worker_id SERIAL REFERENCES workers(id) ON DELETE CASCADE,
+	created_at TIMESTAMP NOT NULL DEFAULT current_timestamp
+);
+
+CREATE TABLE corpora (
+	id SERIAL PRIMARY KEY,
+	content bytea NOT NULL,
+	checksum VARCHAR(64) UNIQUE NOT NULL,
+	task_id SERIAL REFERENCES tasks(id) ON DELETE CASCADE,
+	worker_id SERIAL REFERENCES workers(id) ON DELETE CASCADE,
+	created_at TIMESTAMP NOT NULL DEFAULT current_timestamp
+);
+
+CREATE TABLE crashes (
+	id SERIAL PRIMARY KEY,
+	task_id SERIAL REFERENCES tasks(id) ON DELETE CASCADE,
+	worker_id SERIAL REFERENCES workers(id) ON DELETE CASCADE,
+	reproducable BOOLEAN NOT NULL DEFAULT FALSE,
 	created_at TIMESTAMP NOT NULL DEFAULT current_timestamp
 );
 

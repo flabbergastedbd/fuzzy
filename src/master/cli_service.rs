@@ -3,8 +3,8 @@ use log::{error, debug};
 use tonic::{Request, Response, Status, Code};
 
 use crate::db::DbBroker;
-use crate::schema::tasks;
-use crate::models::{Task, NewTask};
+use crate::schema::{tasks, corpora};
+use crate::models::{Task, NewTask, Corpus, NewCorpus};
 use crate::xpc;
 use crate::xpc::user_interface_server::UserInterface;
 pub use crate::xpc::user_interface_server::UserInterfaceServer as CliInterfaceServer;
@@ -50,6 +50,25 @@ impl UserInterface for CliServer {
             Err(Status::new(Code::NotFound, ""))
         } else {
             Ok(Response::new(xpc::Tasks { data: task_list.unwrap() }))
+        }
+    }
+
+    async fn submit_corpus(&self, request: Request<NewCorpus>) -> Result<Response<()>, Status> {
+        debug!("Received new corpus");
+
+        let new_corpus: NewCorpus = request.into_inner();
+
+        let conn = self.db_broker.get_conn();
+        let rows_inserted = diesel::insert_into(corpora::table)
+            .values(&new_corpus)
+            .returning(corpora::id)
+            .execute(&conn);
+
+        if let Err(e) = rows_inserted {
+            error!("Unable to update db due to {}", e);
+            Err(Status::new(Code::InvalidArgument, format!("{}", e)))
+        } else {
+            Ok(Response::new({}))
         }
     }
 }

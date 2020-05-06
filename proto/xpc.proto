@@ -40,6 +40,8 @@ service UserInterface {
     rpc SubmitTask(NewTask) returns (google.protobuf.Empty);
     // rpc GetTask(Id) returns (Task);
     rpc GetTasks(google.protobuf.Empty) returns (Tasks);
+
+    rpc SubmitCorpus(NewCorpus) returns (google.protobuf.Empty);
 }
 
 message Tasks {
@@ -61,4 +63,23 @@ message Task {
     optional string fuzz_driver = 5;
     required google.protobuf.Timestamp created_at = 6;
     required google.protobuf.Timestamp updated_at = 7;
+}
+
+message NewCorpus {
+    required bytes content = 1;
+    required string checksum = 2;
+    required int32 task_id = 3;
+}
+
+message Corpus {
+    required int32 id = 1;
+    required bytes content = 2;
+    required string checksum = 3;
+    required int32 task_id = 4;
+    optional int32 worker_id = 5;
+    required google.protobuf.Timestamp created_at = 6;
+}
+
+message Corpora {
+    repeated Corpus files = 1;
 }

@@ -7,6 +7,7 @@ mod db;
 mod xpc;
 mod master;
 mod worker;
+mod common;
 
 // TODO://github.com/diesel-rs/diesel/issues/2155
 #[macro_use] extern crate diesel;

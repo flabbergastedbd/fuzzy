@@ -13,9 +13,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .type_attribute("NewTask", "#[derive(Queryable, Insertable, AsChangeset, Associations)]")
         .type_attribute("NewTask", "#[table_name = \"tasks\"]")
 
-        // Task
-        .type_attribute("Task", "#[derive(Queryable, Insertable, Identifiable, AsChangeset, Associations)]")
-        .type_attribute("Task", "#[table_name = \"tasks\"]")
+        // Task (Removed as prost_types::Timestamp cannto be changed)
+        // .type_attribute("Task", "#[derive(Queryable, Insertable, Identifiable, AsChangeset, Associations)]")
+        // .type_attribute("Task", "#[table_name = \"tasks\"]")
 
 
         .compile(

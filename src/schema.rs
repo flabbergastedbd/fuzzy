@@ -6,7 +6,7 @@ table! {
         executor -> Nullable<Varchar>,
         fuzz_driver -> Nullable<Varchar>,
         created_at -> Timestamp,
-        updated_at -> Timestamp,
+        updated_at -> Nullable<Timestamp>,
     }
 }
 

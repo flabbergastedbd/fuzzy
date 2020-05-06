@@ -4,7 +4,7 @@ use tonic::{Request, Response, Status, Code};
 
 use crate::db::DbBroker;
 use crate::schema::tasks;
-use crate::models::{Task, NewTask};
+use crate::models::{Task, NewTask, DieselTaskModel};
 use crate::xpc::Id;
 use crate::xpc::user_interface_server::UserInterface;
 pub use crate::xpc::user_interface_server::UserInterfaceServer as CliInterfaceServer;
@@ -45,14 +45,14 @@ impl UserInterface for CliServer {
         let id = request.into_inner().value;
 
         let conn = self.db_broker.get_conn();
-        let task = tasks::table.select((tasks::id, tasks::name, tasks::active, tasks::executor, tasks::fuzz_driver))
-            .load::<Task>(&conn);
+        let task = tasks::table
+            .load::<DieselTaskModel>(&conn);
 
         if let Err(e) = task {
             error!("Unable to get task: {}", e);
             Err(Status::new(Code::NotFound, ""))
         } else {
-            Ok(Response::new(task.unwrap()[0].clone()))
+            Ok(Response::new(task.unwrap()[0].clone().into()))
         }
     }
 }

@@ -6,7 +6,7 @@ CREATE TABLE tasks (
 	executor VARCHAR(10),
 	fuzz_driver VARCHAR(10),
 	created_at TIMESTAMP NOT NULL DEFAULT current_timestamp,
-	updated_at TIMESTAMP NOT NULL DEFAULT current_timestamp
+	updated_at TIMESTAMP
 );
 
 CREATE TABLE worker_tasks (

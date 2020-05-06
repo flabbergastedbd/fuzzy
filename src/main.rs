@@ -2,6 +2,7 @@ use log::debug;
 use clap::{App, load_yaml};
 use pretty_env_logger;
 
+mod cli;
 mod db;
 mod xpc;
 mod master;
@@ -27,6 +28,9 @@ fn main() {
         },
         ("worker", Some(sub_matches)) => {
             worker::main(sub_matches);
+        },
+        ("cli", Some(sub_matches)) => {
+            cli::main(sub_matches);
         },
         _ => {}
     }

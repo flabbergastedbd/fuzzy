@@ -5,7 +5,7 @@ use tonic::{Request, Response, Status, Code};
 use crate::db::DbBroker;
 use crate::schema::tasks;
 use crate::models::{Task, NewTask};
-use crate::xpc::Id;
+use crate::xpc;
 use crate::xpc::user_interface_server::UserInterface;
 pub use crate::xpc::user_interface_server::UserInterfaceServer as CliInterfaceServer;
 
@@ -39,20 +39,18 @@ impl UserInterface for CliServer {
         }
     }
 
-    async fn get_task(&self, request: Request<Id>) -> Result<Response<Task>, Status> {
-        debug!("Trying to fetch a specific task");
-
-        let id = request.into_inner().value;
+    async fn get_tasks(&self, _: Request<()>) -> Result<Response<xpc::Tasks>, Status> {
+        debug!("Returning all tasks");
 
         let conn = self.db_broker.get_conn();
-        let task = tasks::table
+        let task_list = tasks::table
             .load::<Task>(&conn);
 
-        if let Err(e) = task {
+        if let Err(e) = task_list {
             error!("Unable to get task: {}", e);
             Err(Status::new(Code::NotFound, ""))
         } else {
-            Ok(Response::new(task.unwrap()[0].clone().into()))
+            Ok(Response::new(xpc::Tasks { data: task_list.unwrap() }))
         }
     }
 }

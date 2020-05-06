@@ -44,3 +44,35 @@ subcommands:
                   help: Incase of restarting an old agent
                   long: uuid
                   takes_value: true
+  - cli:
+      about: Command line interface to interact with master
+      version: "0.1"
+      args:
+        - connect_addr:
+            help: "Address to listen for worker connections (Default: 127.0.0.1:12700)"
+            long: server-addr
+            takes_value: true
+      subcommands:
+        - tasks:
+            about: Access/Edit/Remove task information
+            subcommands:
+                - add:
+                    about: Add a new task
+                    args:
+                        - name:
+                            help: Name of the task
+                            index: 1
+                        - executor:
+                            help: Executor for the task
+                            index: 2
+                        - fuzz_driver:
+                            help: Fuzz driver for the task
+                            index: 3
+                - delete:
+                    about: Delete a task
+                    args:
+                      - id:
+                          help: Id of task
+                          index: 1
+                - list:
+                    about: List all tasks

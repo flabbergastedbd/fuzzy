@@ -3,8 +3,9 @@ table! {
         id -> Int4,
         content -> Bytea,
         checksum -> Varchar,
-        task_id -> Int4,
-        worker_id -> Int4,
+        label -> Varchar,
+        task_id -> Nullable<Int4>,
+        worker_id -> Nullable<Int4>,
         created_at -> Timestamp,
     }
 }

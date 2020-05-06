@@ -23,8 +23,9 @@ CREATE TABLE corpora (
 	id SERIAL PRIMARY KEY,
 	content bytea NOT NULL,
 	checksum VARCHAR(64) UNIQUE NOT NULL,
-	task_id SERIAL REFERENCES tasks(id) ON DELETE CASCADE,
-	worker_id SERIAL REFERENCES workers(id) ON DELETE CASCADE,
+	label VARCHAR(100) NOT NULL,
+	task_id INTEGER REFERENCES tasks(id),
+	worker_id INTEGER REFERENCES workers(id),
 	created_at TIMESTAMP NOT NULL DEFAULT current_timestamp
 );
 

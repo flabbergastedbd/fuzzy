@@ -61,15 +61,18 @@ subcommands:
                     args:
                         - name:
                             help: Name of the task
+                            takes_value: true
                             index: 1
                         - executor:
                             help: Executor for the task
+                            takes_value: true
                             possible_values:
                               - Native
                               - Docker
                             index: 2
                         - fuzz_driver:
                             help: Fuzz driver for the task
+                            takes_value: true
                             possible_values:
                               - Aflpp
                               - Honggfuzz
@@ -81,6 +84,7 @@ subcommands:
                     args:
                       - id:
                           help: Id of task
+                          takes_value: true
                           index: 1
                 - list:
                     about: List all tasks
@@ -91,16 +95,24 @@ subcommands:
                     about: Add a new corpus
                     args:
                         - task:
-                            help: Name of the task
+                            help: Label for corpus
+                            long: task-id
+                            takes_value: true
+                        - label:
+                            help: Label for corpus
+                            takes_value: true
                             index: 1
                         - file_path:
                             help: Executor for the task
+                            takes_value: true
                             index: 2
+                            multiple: true
                 - delete:
                     about: Delete a corpus
                     args:
                       - id:
                           help: Id of task
+                          takes_value: true
                           index: 1
                 - list:
                     about: List all corpus

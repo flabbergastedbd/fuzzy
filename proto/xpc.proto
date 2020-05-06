@@ -68,16 +68,17 @@ message Task {
 message NewCorpus {
     required bytes content = 1;
     required string checksum = 2;
-    required int32 task_id = 3;
+    required string label = 3;
 }
 
 message Corpus {
     required int32 id = 1;
     required bytes content = 2;
     required string checksum = 3;
-    required int32 task_id = 4;
-    optional int32 worker_id = 5;
-    required google.protobuf.Timestamp created_at = 6;
+    required string label = 4;
+    required int32 task_id = 5;
+    optional int32 worker_id = 6;
+    required google.protobuf.Timestamp created_at = 7;
 }
 
 message Corpora {

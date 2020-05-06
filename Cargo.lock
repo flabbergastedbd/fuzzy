@@ -279,6 +279,7 @@ dependencies = [
  "num_cpus",
  "pretty_env_logger",
  "prost",
+ "prost-build",
  "prost-types",
  "tokio",
  "tonic",

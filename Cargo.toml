@@ -23,3 +23,4 @@ diesel = { version = "1.4", features = ["postgres", "r2d2", "uuid", "chrono"] }
 [build-dependencies]
 tonic-build = { version = "0.2", features = ["prost"] }
 prost-types = "0.6"
+prost-build = "0.6"

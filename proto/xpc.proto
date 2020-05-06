@@ -31,7 +31,7 @@ message Worker {
     required string name = 3;
     required int32 cpus = 4;
     required bool active = 5;
-    // google.protobuf.Timestamp created_at = 6;
+    required google.protobuf.Timestamp created_at = 6;
     // google.protobuf.Timestamp updated_at = 7;
 }
 
@@ -60,5 +60,5 @@ message Task {
     optional string executor = 4;
     optional string fuzz_driver = 5;
     required google.protobuf.Timestamp created_at = 6;
-    optional google.protobuf.Timestamp updated_at = 7;
+    required google.protobuf.Timestamp updated_at = 7;
 }

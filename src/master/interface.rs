@@ -4,18 +4,18 @@ use tonic::{Request, Response, Status, Code};
 
 use crate::db::DbBroker;
 use crate::schema::{tasks, corpora};
-use crate::models::{Task, NewTask, Corpus, NewCorpus};
+use crate::models::{Task, NewTask, NewCorpus};
 use crate::xpc;
-use crate::xpc::user_interface_server::UserInterface;
-pub use crate::xpc::user_interface_server::UserInterfaceServer as CliInterfaceServer;
+use crate::xpc::orchestrator_server::Orchestrator;
+pub use crate::xpc::orchestrator_server::OrchestratorServer as OrchestratorServer;
 
 #[derive(Clone)]
-pub struct CliServer {
+pub struct OrchestratorService {
     db_broker: DbBroker,
 }
 
 #[tonic::async_trait]
-impl UserInterface for CliServer {
+impl Orchestrator for OrchestratorService {
     async fn submit_task(&self, request: Request<NewTask>) -> Result<Response<()>, Status> {
 
         // First get inner type of tonic::Request & then use our From traits
@@ -73,8 +73,8 @@ impl UserInterface for CliServer {
     }
 }
 
-impl CliServer {
+impl OrchestratorService {
     pub fn new(db_broker: DbBroker) -> Self {
-        CliServer { db_broker }
+        Self { db_broker }
     }
 }

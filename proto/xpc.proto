@@ -36,7 +36,7 @@ message Worker {
 }
 
 // User interface related
-service UserInterface {
+service Orchestrator {
     rpc SubmitTask(NewTask) returns (google.protobuf.Empty);
     // rpc GetTask(Id) returns (Task);
     rpc GetTasks(google.protobuf.Empty) returns (Tasks);

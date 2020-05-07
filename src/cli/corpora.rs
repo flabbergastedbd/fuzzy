@@ -1,49 +1,15 @@
 use std::error::Error;
 
-use log::{error, info, debug};
+use log::debug;
 use clap::ArgMatches;
-use tonic::{Request, transport::channel::Channel};
-use tokio::{task, fs::File};
-use tokio::prelude::*;
+use tokio::task;
 
-use crate::models::NewCorpus;
-use crate::xpc::user_interface_client::UserInterfaceClient;
-
-pub async fn upload_corpus(file_path: String, label: String, client: &mut UserInterfaceClient<Channel>) {
-    let mut content = vec![];
-    let file = File::open(file_path.clone()).await;
-
-    if let Err(e) = file {
-        error!("Unable to process file {}: {}", file_path, e);
-        return
-    } else {
-        let mut file = file.unwrap();
-        if let Err(e) = file.read_to_end(&mut content).await {
-            error!("Unable to process file {}: {}", file_path, e);
-            return
-        }
-
-        // Generate checksum
-        let checksum = crate::common::checksum(&content);
-
-        // Send request
-        let new_corpus = NewCorpus {
-            content,
-            checksum,
-            label,
-        };
-        let response = client.submit_corpus(Request::new(new_corpus)).await;
-        if let Err(e) = response {
-            error!("Failed to add {}: {:?}", file_path, e);
-        } else {
-            info!("Successfully added: {}", file_path);
-        }
-    }
-}
+use crate::common::upload_corpus;
+use crate::xpc::orchestrator_client::OrchestratorClient;
 
 pub async fn cli(args: &ArgMatches, connect_addr: String) -> Result<(), Box<dyn Error>> {
     debug!("Creating interface client");
-    let client = UserInterfaceClient::connect(connect_addr).await?;
+    let client = OrchestratorClient::connect(connect_addr).await?;
 
     match args.subcommand() {
         // Adding a new task
@@ -62,7 +28,6 @@ pub async fn cli(args: &ArgMatches, connect_addr: String) -> Result<(), Box<dyn 
                     upload_corpus(file_path, label, &mut local_client).await
                 });
             }
-
             task_set.await;
         },
         // Listing all tasks

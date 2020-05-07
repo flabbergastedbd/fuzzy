@@ -6,13 +6,13 @@ use clap::ArgMatches;
 use tonic::Request;
 
 use crate::models::NewTask;
-use crate::xpc::user_interface_client::UserInterfaceClient;
+use crate::xpc::orchestrator_client::OrchestratorClient;
 use crate::db::enums::{Executor, FuzzDriver};
 
 
 pub async fn cli(args: &ArgMatches, connect_addr: String) -> Result<(), Box<dyn Error>> {
     debug!("Creating interface client");
-    let mut client = UserInterfaceClient::connect(connect_addr).await?;
+    let mut client = OrchestratorClient::connect(connect_addr).await?;
 
     match args.subcommand() {
         // Adding a new task

@@ -5,10 +5,10 @@ use tonic::transport::Server;
 
 use crate::db::DbBroker;
 use crate::xpc::collector_server::CollectorServer;
-use cli_service::{CliServer, CliInterfaceServer};
+use interface::{OrchestratorService, OrchestratorServer};
 
 mod collector;
-mod cli_service;
+mod interface;
 
 #[derive(Debug)]
 pub struct Master {
@@ -35,12 +35,12 @@ impl Master {
         let db_broker = DbBroker::new(self.db_connect_str.clone());
         // Initialize all grpc services with database handle
         let collector_service = collector::CollectorService::new(db_broker.clone());
-        let cli_server = CliServer::new(db_broker.clone());
+        let orchestrator_service = OrchestratorService::new(db_broker.clone());
 
         debug!("Starting master event loop on {}", self.listen_addr);
         Server::builder()
             .add_service(CollectorServer::new(collector_service))
-            .add_service(CliInterfaceServer::new(cli_server))
+            .add_service(OrchestratorServer::new(orchestrator_service))
             .serve(self.listen_addr)
             .await?;
 

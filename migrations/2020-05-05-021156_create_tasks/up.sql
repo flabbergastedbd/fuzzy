@@ -24,16 +24,15 @@ CREATE TABLE corpora (
 	content bytea NOT NULL,
 	checksum VARCHAR(64) UNIQUE NOT NULL,
 	label VARCHAR(100) NOT NULL,
-	task_id INTEGER REFERENCES tasks(id),
-	worker_id INTEGER REFERENCES workers(id),
+	worker_task_id INTEGER REFERENCES tasks(id) ON DELETE SET NULL,
 	created_at TIMESTAMP NOT NULL DEFAULT current_timestamp
 );
 
 CREATE TABLE crashes (
 	id SERIAL PRIMARY KEY,
 	task_id SERIAL REFERENCES tasks(id) ON DELETE CASCADE,
-	worker_id SERIAL REFERENCES workers(id) ON DELETE CASCADE,
-	reproducable BOOLEAN NOT NULL DEFAULT FALSE,
+	worker_id SERIAL REFERENCES workers(id) ON DELETE SET NULL,
+	verified BOOLEAN NOT NULL DEFAULT FALSE,
 	created_at TIMESTAMP NOT NULL DEFAULT current_timestamp
 );
 

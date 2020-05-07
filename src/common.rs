@@ -1,12 +1,12 @@
 use data_encoding::HEXUPPER;
-use log::{error, info};
+use log::{error, debug, info};
 use ring::digest;
 use tokio::fs::File;
 use tokio::prelude::*;
 use tonic::{Request, transport::channel::Channel};
 
-use crate::models::NewCorpus;
-use crate::xpc::orchestrator_client::OrchestratorClient;
+use crate::models::{NewCorpus, Corpus};
+use crate::xpc::{self, orchestrator_client::OrchestratorClient};
 
 pub fn checksum(bytes: &Vec<u8>) -> String {
     let actual = digest::digest(&digest::SHA256, bytes);
@@ -48,5 +48,20 @@ pub async fn upload_corpus(
         } else {
             info!("Successfully added: {}", file_path);
         }
+    }
+}
+
+pub async fn get_corpus(
+        label: String,
+        client: &mut OrchestratorClient<Channel>) -> Vec<Corpus> {
+    debug!("Getting corpus");
+
+    let filter_corpus = xpc::FilterCorpus { label };
+    let response = client.get_corpus(Request::new(filter_corpus)).await;
+    if let Err(e) = response {
+        error!("Failed to get corpus: {}", e);
+        return vec![]
+    } else {
+        response.unwrap().into_inner().data
     }
 }

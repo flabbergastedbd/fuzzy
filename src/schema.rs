@@ -4,8 +4,7 @@ table! {
         content -> Bytea,
         checksum -> Varchar,
         label -> Varchar,
-        task_id -> Nullable<Int4>,
-        worker_id -> Nullable<Int4>,
+        worker_task_id -> Nullable<Int4>,
         created_at -> Timestamp,
     }
 }
@@ -15,7 +14,7 @@ table! {
         id -> Int4,
         task_id -> Int4,
         worker_id -> Int4,
-        reproducable -> Bool,
+        verified -> Bool,
         created_at -> Timestamp,
     }
 }
@@ -53,8 +52,7 @@ table! {
     }
 }
 
-joinable!(corpora -> tasks (task_id));
-joinable!(corpora -> workers (worker_id));
+joinable!(corpora -> tasks (worker_task_id));
 joinable!(crashes -> tasks (task_id));
 joinable!(crashes -> workers (worker_id));
 joinable!(worker_tasks -> tasks (task_id));

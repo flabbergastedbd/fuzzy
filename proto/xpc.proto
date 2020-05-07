@@ -37,10 +37,12 @@ message Worker {
 
 // User interface related
 service Orchestrator {
-    rpc SubmitTask(NewTask) returns (google.protobuf.Empty);
-    // rpc GetTask(Id) returns (Task);
+    // Task related functions
     rpc GetTasks(google.protobuf.Empty) returns (Tasks);
+    rpc SubmitTask(NewTask) returns (google.protobuf.Empty);
 
+    // Corpus related functions
+    rpc GetCorpus(FilterCorpus) returns (Corpora);
     rpc SubmitCorpus(NewCorpus) returns (google.protobuf.Empty);
 }
 
@@ -71,16 +73,19 @@ message NewCorpus {
     required string label = 3;
 }
 
+message FilterCorpus {
+    required string label = 1;
+}
+
 message Corpus {
     required int32 id = 1;
     required bytes content = 2;
     required string checksum = 3;
     required string label = 4;
-    required int32 task_id = 5;
-    optional int32 worker_id = 6;
-    required google.protobuf.Timestamp created_at = 7;
+    optional int32 worker_task_id = 5;
+    required google.protobuf.Timestamp created_at = 6;
 }
 
 message Corpora {
-    repeated Corpus files = 1;
+    repeated Corpus data = 1;
 }

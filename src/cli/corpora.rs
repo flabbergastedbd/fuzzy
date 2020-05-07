@@ -4,12 +4,12 @@ use log::debug;
 use clap::ArgMatches;
 use tokio::task;
 
-use crate::common::upload_corpus;
+use crate::common::{upload_corpus, get_corpus};
 use crate::xpc::orchestrator_client::OrchestratorClient;
 
 pub async fn cli(args: &ArgMatches, connect_addr: String) -> Result<(), Box<dyn Error>> {
     debug!("Creating interface client");
-    let client = OrchestratorClient::connect(connect_addr).await?;
+    let mut client = OrchestratorClient::connect(connect_addr).await?;
 
     match args.subcommand() {
         // Adding a new task
@@ -29,6 +29,16 @@ pub async fn cli(args: &ArgMatches, connect_addr: String) -> Result<(), Box<dyn 
                 });
             }
             task_set.await;
+        },
+        ("list", Some(sub_matches)) => {
+            debug!("Listing corpus");
+
+            let corpora = get_corpus(
+                sub_matches.value_of("label").unwrap().to_owned(),
+                &mut client
+            ).await;
+
+            super::formatter::print_corpora(corpora);
         },
         // Listing all tasks
         _ => {},

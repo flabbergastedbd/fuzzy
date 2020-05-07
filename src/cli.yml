@@ -94,10 +94,6 @@ subcommands:
                 - add:
                     about: Add a new corpus
                     args:
-                        - task:
-                            help: Label for corpus
-                            long: task-id
-                            takes_value: true
                         - label:
                             help: Label for corpus
                             takes_value: true
@@ -116,3 +112,8 @@ subcommands:
                           index: 1
                 - list:
                     about: List all corpus
+                    args:
+                        - label:
+                            help: Label for corpus
+                            index: 1
+                            takes_value: true

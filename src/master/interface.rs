@@ -4,7 +4,7 @@ use tonic::{Request, Response, Status, Code};
 
 use crate::db::DbBroker;
 use crate::schema::{tasks, corpora};
-use crate::models::{Task, NewTask, NewCorpus};
+use crate::models::{Task, NewTask, Corpus, NewCorpus};
 use crate::xpc;
 use crate::xpc::orchestrator_server::Orchestrator;
 pub use crate::xpc::orchestrator_server::OrchestratorServer as OrchestratorServer;
@@ -16,6 +16,23 @@ pub struct OrchestratorService {
 
 #[tonic::async_trait]
 impl Orchestrator for OrchestratorService {
+
+    // Task related calls
+    async fn get_tasks(&self, _: Request<()>) -> Result<Response<xpc::Tasks>, Status> {
+        debug!("Returning all tasks");
+
+        let conn = self.db_broker.get_conn();
+        let task_list = tasks::table
+            .load::<Task>(&conn);
+
+        if let Err(e) = task_list {
+            error!("Unable to get task: {}", e);
+            Err(Status::new(Code::NotFound, ""))
+        } else {
+            Ok(Response::new(xpc::Tasks { data: task_list.unwrap() }))
+        }
+    }
+
     async fn submit_task(&self, request: Request<NewTask>) -> Result<Response<()>, Status> {
 
         // First get inner type of tonic::Request & then use our From traits
@@ -38,21 +55,7 @@ impl Orchestrator for OrchestratorService {
         }
     }
 
-    async fn get_tasks(&self, _: Request<()>) -> Result<Response<xpc::Tasks>, Status> {
-        debug!("Returning all tasks");
-
-        let conn = self.db_broker.get_conn();
-        let task_list = tasks::table
-            .load::<Task>(&conn);
-
-        if let Err(e) = task_list {
-            error!("Unable to get task: {}", e);
-            Err(Status::new(Code::NotFound, ""))
-        } else {
-            Ok(Response::new(xpc::Tasks { data: task_list.unwrap() }))
-        }
-    }
-
+    // Corpus related calls
     async fn submit_corpus(&self, request: Request<NewCorpus>) -> Result<Response<()>, Status> {
         debug!("Received new corpus");
 
@@ -69,6 +72,24 @@ impl Orchestrator for OrchestratorService {
             Err(Status::new(Code::InvalidArgument, format!("{}", e)))
         } else {
             Ok(Response::new({}))
+        }
+    }
+
+    async fn get_corpus(&self, request: Request<xpc::FilterCorpus>) -> Result<Response<xpc::Corpora>, Status> {
+        debug!("Filtering and sending corpus");
+
+        let filter_corpus = request.into_inner();
+        let conn = self.db_broker.get_conn();
+
+        let corpus_list = corpora::table
+            .filter(corpora::label.ilike(filter_corpus.label))
+            .load::<Corpus>(&conn);
+
+        if let Err(e) = corpus_list {
+            error!("Unable to get task: {}", e);
+            Err(Status::new(Code::NotFound, ""))
+        } else {
+            Ok(Response::new(xpc::Corpora { data: corpus_list.unwrap() }))
         }
     }
 }

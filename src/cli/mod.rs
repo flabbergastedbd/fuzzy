@@ -7,6 +7,7 @@ use prettytable::{Table, Row};
 mod formatter;
 mod tasks;
 mod corpora;
+mod profile;
 
 fn print_results<T>(headings: Vec<&str>, entries: Vec<Vec<T>>)
     where T: std::fmt::Display
@@ -36,6 +37,10 @@ async fn main_loop(arg_matches: &ArgMatches) -> Result<(), Box<dyn Error>> {
         ("corpora", Some(sub_matches)) => {
             debug!("Launched tasks subcommand");
             corpora::cli(sub_matches, connect_addr).await?;
+        },
+        ("profile", Some(sub_matches)) => {
+            debug!("Launched profile subcommand");
+            profile::cli(sub_matches, connect_addr).await?;
         },
         _ => {}
     }

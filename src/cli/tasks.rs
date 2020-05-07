@@ -7,7 +7,8 @@ use tonic::Request;
 
 use crate::models::NewTask;
 use crate::xpc::orchestrator_client::OrchestratorClient;
-use crate::db::enums::{Executor, FuzzDriver};
+use crate::db::enums::FuzzDriver;
+use crate::executor::ExecutorEnum;
 
 
 pub async fn cli(args: &ArgMatches, connect_addr: String) -> Result<(), Box<dyn Error>> {
@@ -25,7 +26,7 @@ pub async fn cli(args: &ArgMatches, connect_addr: String) -> Result<(), Box<dyn 
                 active: false,
             };
             // Validate executor & driver as we do crude transforms via enums & strum
-            Executor::from_str(new_task.executor.as_ref()).expect("Invalid executor");
+            ExecutorEnum::from_str(new_task.executor.as_ref()).expect("Invalid executor");
             FuzzDriver::from_str(new_task.fuzz_driver.as_ref()).expect("Invalid fuzz driver");
             let response = client.submit_task(Request::new(new_task)).await?;
             // TODO: Error handling

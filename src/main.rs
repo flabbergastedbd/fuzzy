@@ -8,8 +8,9 @@ mod xpc;
 mod master;
 mod worker;
 mod common;
+mod executor;
 
-// TODO://github.com/diesel-rs/diesel/issues/2155
+// TODO https://github.com/diesel-rs/diesel/issues/2155
 #[macro_use] extern crate diesel;
 pub mod schema;
 pub mod models;

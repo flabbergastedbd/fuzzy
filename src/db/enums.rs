@@ -5,12 +5,6 @@ use strum_macros::{Display, EnumString};
  */
 
 #[derive(Display, EnumString)]
-pub enum Executor {
-    Native,
-    Docker,
-}
-
-#[derive(Display, EnumString)]
 pub enum FuzzDriver {
     Aflpp,
     Honggfuzz,

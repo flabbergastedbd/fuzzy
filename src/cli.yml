@@ -44,6 +44,7 @@ subcommands:
                   help: Incase of restarting an old agent
                   long: uuid
                   takes_value: true
+
   - cli:
       about: Command line interface to interact with master
       version: "0.1"
@@ -117,3 +118,21 @@ subcommands:
                             help: Label for corpus
                             index: 1
                             takes_value: true
+        - profile:
+            about: Test fuzz profiles
+            version: "0.1"
+            subcommands:
+              - executor:
+                  about: Test only executor profile
+                  args:
+                    - file_path:
+                        help: Path to executor profile json
+                        takes_value: true
+                        index: 1
+              - fuzz_driver:
+                  about: Test fuzz profile
+                  args:
+                    - file_path:
+                        help: Path to executor profile json
+                        takes_value: true
+                        index: 1

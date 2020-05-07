@@ -6,8 +6,7 @@ CREATE TABLE tasks (
 	id SERIAL PRIMARY KEY,
 	name VARCHAR(100) NOT NULL,
 	active BOOLEAN NOT NULL DEFAULT FALSE,
-	executor VARCHAR(20),
-	fuzz_driver VARCHAR(20),
+	profile VARCHAR,
 	created_at TIMESTAMP NOT NULL DEFAULT current_timestamp,
 	updated_at TIMESTAMP NOT NULL DEFAULT current_timestamp
 );

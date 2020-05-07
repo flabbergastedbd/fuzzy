@@ -1,0 +1,7 @@
+{
+	"executor": "Native",
+	"executable": "echo",
+	"args": ["hello", "world"],
+	"cwd": "/tmp",
+	"envs": []
+}

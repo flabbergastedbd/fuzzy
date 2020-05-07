@@ -55,18 +55,15 @@ message Tasks {
 message NewTask {
     required string name = 1;
     required bool active = 2;
-    required string executor = 3;
-    required string fuzz_driver = 4;
 }
 
 message Task {
     required int32 id = 1;
     required string name = 2;
     required bool active = 3;
-    optional string executor = 4;
-    optional string fuzz_driver = 5;
-    required google.protobuf.Timestamp created_at = 6;
-    required google.protobuf.Timestamp updated_at = 7;
+    optional string profile = 4;
+    required google.protobuf.Timestamp created_at = 5;
+    required google.protobuf.Timestamp updated_at = 6;
 }
 
 message NewCorpus {

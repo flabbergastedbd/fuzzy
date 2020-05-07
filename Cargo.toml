@@ -11,7 +11,7 @@ build = "build.rs"
 clap = { git = "https://github.com/clap-rs/clap/", features = ["yaml"] }
 chrono = "0.4"
 log = "0.4"
-num_cpus = "1.0"
+heim = { version = "0.1.0-alpha.1", features = ["cpu", "disk", "memory", "process", "runtime-tokio"] }
 pretty_env_logger = "0.4"
 tokio = { version = "0.2", features = ["full"] }
 tonic = { version = "0.2", features = ["prost"] }

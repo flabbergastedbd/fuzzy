@@ -4,9 +4,9 @@ use std::fmt;
 
 use clap::ArgMatches;
 use log::{error, info, debug};
-use num_cpus;
 use uuid::Uuid;
 use tokio::sync::RwLock;
+use heim::units::information;
 
 use crate::models::NewWorker;
 
@@ -18,7 +18,8 @@ impl NewWorker {
         let worker = NewWorker {
             uuid: Uuid::new_v4().to_string(),
             name: None,
-            cpus: num_cpus::get() as i32,
+            cpus: 0,
+            memory: 0,
             active: true,
             // connect_addr: None,
         };
@@ -41,6 +42,24 @@ impl NewWorker {
         }
         self
     }
+
+    pub async fn update_self(&mut self) {
+        // Update CPU
+        let cpus = heim::cpu::logical_count().await;
+        if let Err(e) = cpus {
+            panic!("Failed to get cpu count: {}", e);
+        } else {
+            self.cpus = cpus.unwrap() as i32;
+        }
+
+        // Update Memory
+        let memory = heim::memory::memory().await;
+        if let Err(e) = memory {
+            panic!("Failed to get memory: {}", e);
+        } else {
+            self.memory = memory.unwrap().total().get::<information::megabyte>() as i32;
+        }
+    }
 }
 
 impl fmt::Display for NewWorker {
@@ -55,6 +74,13 @@ impl fmt::Display for NewWorker {
 
 #[tokio::main]
 pub async fn main_loop(worker: Arc<RwLock<NewWorker>>, connect_addr: &str) -> Result<(), Box<dyn Error>> {
+    // Launch a cpu update task, because of well `heim` and async only
+    let worker_clone = worker.clone();
+    tokio::task::spawn(async move {
+        let mut worker_writable = worker_clone.write().await;
+        worker_writable.update_self().await
+    });
+
     let d = dispatcher::Dispatcher::new(String::from(connect_addr));
     // Launch periodic heartbeat dispatcher
     info!("Launching heartbeat task");

@@ -4,6 +4,7 @@ CREATE TABLE workers (
 	uuid VARCHAR(50) UNIQUE NOT NULL,
 	name VARCHAR(100),
 	cpus INT NOT NULL DEFAULT 0,
+	memory INT NOT NULL DEFAULT 0,
 	active BOOLEAN NOT NULL DEFAULT TRUE,
 	created_at TIMESTAMP NOT NULL DEFAULT current_timestamp,
 	updated_at TIMESTAMP NOT NULL DEFAULT current_timestamp

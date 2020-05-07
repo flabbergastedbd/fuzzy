@@ -22,7 +22,8 @@ message NewWorker {
     required string uuid = 1;
     optional string name = 2;
     required int32 cpus = 3;
-    required bool active = 4;
+    required int32 memory = 4;
+    required bool active = 5;
 }
 
 message Worker {
@@ -30,9 +31,10 @@ message Worker {
     required string uuid = 2;
     required string name = 3;
     required int32 cpus = 4;
-    required bool active = 5;
-    required google.protobuf.Timestamp created_at = 6;
-    // google.protobuf.Timestamp updated_at = 7;
+    required int32 memory = 5;
+    required bool active = 6;
+    required google.protobuf.Timestamp created_at = 7;
+    // google.protobuf.Timestamp updated_at = 8;
 }
 
 // User interface related

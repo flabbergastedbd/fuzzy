@@ -64,22 +64,6 @@ subcommands:
                             help: Name of the task
                             takes_value: true
                             index: 1
-                        - executor:
-                            help: Executor for the task
-                            takes_value: true
-                            possible_values:
-                              - Native
-                              - Docker
-                            index: 2
-                        - fuzz_driver:
-                            help: Fuzz driver for the task
-                            takes_value: true
-                            possible_values:
-                              - Aflpp
-                              - Honggfuzz
-                              - Fuzzilli
-                              - Libfuzzer
-                            index: 3
                 - delete:
                     about: Delete a task
                     args:

@@ -24,8 +24,7 @@ table! {
         id -> Int4,
         name -> Varchar,
         active -> Bool,
-        executor -> Nullable<Varchar>,
-        fuzz_driver -> Nullable<Varchar>,
+        profile -> Nullable<Varchar>,
         created_at -> Timestamp,
         updated_at -> Timestamp,
     }

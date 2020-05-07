@@ -11,7 +11,7 @@ use strum_macros::{Display, EnumString};
 
 mod native;
 
-#[derive(Display, EnumString)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum ExecutorEnum {
     Native,
     Docker,
@@ -19,6 +19,7 @@ pub enum ExecutorEnum {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ExecutorConfig {
+    executor: ExecutorEnum,
     executable: String,
     args: Vec<String>,
     cwd: Box<Path>,

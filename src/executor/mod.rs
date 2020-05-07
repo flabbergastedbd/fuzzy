@@ -38,8 +38,7 @@ pub trait Executor {
     fn launch(&mut self) -> Result<(), Box<dyn Error>>;
 
     async fn get_stdout_line(&mut self) -> Option<String>;
-    fn get_stderr_reader(self) -> Option<BufReader<ChildStderr>>;
-
+    async fn get_stderr_line(&mut self) -> Option<String>;
 
     fn id(&self) -> u32;
 }

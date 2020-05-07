@@ -15,7 +15,7 @@ pub struct NativeExecutor {
     config: ExecutorConfig,
     child: Option<Child>,
     stdout_reader: Option<Lines<BufReader<ChildStdout>>>,
-    // stdout_reader: Option<BufReader<ChildStdout>>,
+    stderr_reader: Option<Lines<BufReader<ChildStderr>>>,
 }
 
 #[tonic::async_trait]
@@ -26,6 +26,7 @@ impl super::Executor for NativeExecutor {
             config,
             child: None,
             stdout_reader: None,
+            stderr_reader: None,
         }
     }
 
@@ -56,12 +57,10 @@ impl super::Executor for NativeExecutor {
         if let Some(out) = stdout {
             self.stdout_reader = Some(BufReader::new(out).lines());
         }
-        /*
         let stderr = child.stderr.take();
         if let Some(err) = stderr {
             self.stderr_reader = Some(BufReader::new(err).lines());
         }
-        */
 
         self.child = Some(child);
 
@@ -81,15 +80,16 @@ impl super::Executor for NativeExecutor {
         }
     }
 
-    fn get_stderr_reader(self) -> Option<BufReader<ChildStderr>>
-    {
-        debug!("Taking out stderr reader");
-        // Create async line reader for stdout and stderr
-        let stdout = self.child.unwrap().stderr.take();
-        if let Some(out) = stdout {
-            return Some(BufReader::new(out))
-        } else {
-            return None
+    async fn get_stderr_line(&mut self) -> Option<String> {
+        match self.stderr_reader {
+            Some(ref mut reader) => {
+                if let Ok(maybe_line) = reader.next_line().await {
+                    maybe_line
+                } else {
+                    None
+                }
+            },
+            _ => None,
         }
     }
 

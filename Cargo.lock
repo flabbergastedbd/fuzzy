@@ -265,6 +265,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "ctrlc"
+version = "3.1.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7a4ba686dff9fa4c1c9636ce1010b0cf98ceb421361b0bb3d6faeec43bd217a7"
+dependencies = [
+ "nix",
+ "winapi 0.3.8",
+]
+
+[[package]]
 name = "darwin-libproc"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -448,6 +458,7 @@ dependencies = [
  "chrono",
  "clap",
  "colored",
+ "ctrlc",
  "data-encoding",
  "diesel",
  "heim",
@@ -458,9 +469,11 @@ dependencies = [
  "prost",
  "prost-build",
  "prost-types",
+ "regex",
  "ring",
  "serde",
  "serde_json",
+ "serde_regex",
  "strum",
  "strum_macros",
  "tokio",
@@ -1487,6 +1500,16 @@ checksum = "a7894c8ed05b7a3a279aeb79025fdec1d3158080b75b98a08faf2806bb799edd"
 dependencies = [
  "itoa",
  "ryu",
+ "serde",
+]
+
+[[package]]
+name = "serde_regex"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f6df1bd02973c8c85e333287f6ac6c6a5fbed414e4be450fd6f52280b7c7b209"
+dependencies = [
+ "regex",
  "serde",
 ]
 

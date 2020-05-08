@@ -3,10 +3,11 @@ use std::error::Error;
 
 use log::{warn, info, error, debug};
 use clap::ArgMatches;
+use tokio::task::LocalSet;
 
 use crate::executor::{self, Executor, ExecutorConfig};
 
-pub async fn cli(args: &ArgMatches, _: String) -> Result<(), Box<dyn Error>> {
+pub async fn cli(args: &ArgMatches, connect_addr: String) -> Result<(), Box<dyn Error>> {
 
     match args.subcommand() {
         // Adding a new task
@@ -27,26 +28,40 @@ pub async fn cli(args: &ArgMatches, _: String) -> Result<(), Box<dyn Error>> {
             let mut executor = executor::new(config, None);
 
             executor.setup().await?;
+
+
+            let local_set = LocalSet::new();
+
+            // Spawn off corpus sync
+            let corpus_syncer = executor.get_corpus_syncer()?;
+            corpus_syncer.setup_corpus(connect_addr.clone()).await?;
+            local_set.spawn_local(async move {
+                if let Err(e) = corpus_syncer.sync_corpus(connect_addr.clone()).await {
+                    error!("Unable to sync corpus: {}", e);
+                }
+            });
+
             executor.launch().await?;
+            info!("Child PID: {:?}", executor.get_pid());
 
-            info!("Child PID: {}", executor.get_pid());
-
-            if let Some(path) = sub_matches.value_of("watch") {
-                debug!("Watching for files in {}", path);
-                // TODO: Fix this
-            }
-
-            if sub_matches.is_present("stdout") {
-                let mut stdout_reader = executor.get_stdout_reader().unwrap();
-                let mut stderr_reader = executor.get_stderr_reader().unwrap();
-                while let Some(line) = stdout_reader.next_line().await? {
+            // Spawn off stdout output
+            let mut stdout_reader = executor.get_stdout_reader().unwrap();
+            local_set.spawn_local(async move {
+                while let Ok(Some(line)) = stdout_reader.next_line().await {
                     info!("Stdout: {}", line);
                 }
+            });
 
-                while let Some(line) = stderr_reader.next_line().await? {
+            // Spawn off stderr output
+            let mut stderr_reader = executor.get_stderr_reader().unwrap();
+            local_set.spawn_local(async move {
+                while let Ok(Some(line)) = stderr_reader.next_line().await {
                     warn!("Stderr: {}", line);
                 }
-            }
+            });
+
+            local_set.await;
+
 
         },
         ("fuzz_driver", Some(_)) => {

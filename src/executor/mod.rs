@@ -1,9 +1,12 @@
 use std::time::Duration;
 use std::path::Path;
 use std::error::Error;
+use std::collections::HashMap;
 
+use regex::Regex;
 use log::debug;
 use serde::{Serialize, Deserialize};
+use serde_regex::{Serialize, Deserialize};
 use tokio::{
     process::{ChildStdout, ChildStderr},
     io::{BufReader, Lines},
@@ -28,6 +31,11 @@ pub enum ExecutorEnum {
 pub struct CorpusConfig {
     path: Box<Path>,
     label: String,
+    refresh_interval: u64,
+    upload: bool,
+
+    #[serde(with = "serde_regex")]
+    pattern: Regex,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -37,8 +45,7 @@ pub struct ExecutorConfig {
     args: Vec<String>,
     cwd: Box<Path>,
     corpus: CorpusConfig,
-    envs: Vec<(String, String)>,
-    refresh_interval: u64,
+    envs: HashMap<String, String>,
 }
 
 #[tonic::async_trait]
@@ -56,7 +63,7 @@ pub trait Executor {
     // fn get_file_watcher(&self, path: Path) -> Box<dyn file_watcher::FileWatcher>;
     fn get_corpus_syncer(&self) -> Result<CorpusSyncer, Box<dyn Error>>;
 
-    fn get_pid(&self) -> u32;
+    fn get_pid(&self) -> Option<u32>;
 }
 
 pub fn new(config: ExecutorConfig, worker_task_id: Option<i32>) -> impl Executor {

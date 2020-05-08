@@ -2,7 +2,7 @@ use std::process::Stdio;
 use std::error::Error;
 use std::path::Path;
 
-use log::{trace, debug};
+use log::{info, debug};
 use super::ExecutorConfig;
 use tokio::{
     fs,
@@ -39,6 +39,7 @@ impl super::Executor for NativeExecutor {
 
     async fn launch(&mut self) -> Result<(), Box<dyn Error>> {
         debug!("Launching child process");
+        info!("{:?}", self.config.envs);
         let mut cmd = Command::new(self.config.executable.clone());
         cmd
             .args(self.config.args.clone())
@@ -74,8 +75,8 @@ impl super::Executor for NativeExecutor {
         )?)
     }
 
-    fn get_pid(&self) -> u32 {
-        self.child.as_ref().map(|c| c.id()).unwrap()
+    fn get_pid(&self) -> Option<u32> {
+        self.child.as_ref().map(|c| c.id())
     }
 }
 

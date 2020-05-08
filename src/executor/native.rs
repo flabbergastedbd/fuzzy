@@ -12,13 +12,11 @@ use tokio::{
 };
 
 use super::file_watcher::InotifyFileWatcher;
+use super::corpus_syncer::CorpusSyncer;
 
 pub struct NativeExecutor {
     config: ExecutorConfig,
     child: Option<Child>,
-    // Related use index as tying point
-    watchers: Vec<Inotify>,
-    streams: Vec<inotify::EventStream<[u8; 32]>>,
 }
 
 #[tonic::async_trait]
@@ -27,10 +25,6 @@ impl super::Executor for NativeExecutor {
         debug!("Creating new native executor with config: {:#?}", config);
         Self {
             config, child: None,
-            // We use one inotify per watch,
-            // TODO: Need to improve this
-            watchers: Vec::new(),
-            streams: Vec::new(),
         }
     }
 
@@ -39,6 +33,7 @@ impl super::Executor for NativeExecutor {
 
         // Check if cwd exists, if not create
         Self::mkdir_p(&self.config.cwd).await?;
+        Self::mkdir_p(&self.config.corpus).await?;
 
         Ok(())
     }
@@ -74,6 +69,10 @@ impl super::Executor for NativeExecutor {
 
     fn get_file_watcher(&self, path: &Path) -> Result<InotifyFileWatcher, Box<dyn Error>> {
         Ok(InotifyFileWatcher::new(path)?)
+    }
+
+    fn get_corpus_syncer(&self) -> Result<CorpusSyncer, Box<dyn Error>> {
+        Ok(CorpusSyncer::new(&self.config.corpus)?)
     }
 
     fn get_pid(&self) -> u32 {

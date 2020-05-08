@@ -3,5 +3,6 @@
 	"executable": "echo",
 	"args": ["hello", "world"],
 	"cwd": "/tmp",
+	"corpus": "/tmp/corpus",
 	"envs": []
 }

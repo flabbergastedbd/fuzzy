@@ -9,8 +9,10 @@ use tokio::{
 };
 
 use file_watcher::InotifyFileWatcher;
+use corpus_syncer::CorpusSyncer;
 
 pub mod file_watcher;
+pub mod corpus_syncer;
 mod native;
 
 /**
@@ -28,6 +30,7 @@ pub struct ExecutorConfig {
     executable: String,
     args: Vec<String>,
     cwd: Box<Path>,
+    corpus: Box<Path>,
     envs: Vec<(String, String)>,
 }
 
@@ -45,6 +48,7 @@ pub trait Executor {
     // TODO: Switch to generic trait based returns so we can swap file monitors
     // fn get_file_watcher(&self, path: Path) -> Box<dyn file_watcher::FileWatcher>;
     fn get_file_watcher(&self, path: &Path) -> Result<InotifyFileWatcher, Box<dyn Error>>;
+    fn get_corpus_syncer(&self) -> Result<CorpusSyncer, Box<dyn Error>>;
 
     fn get_pid(&self) -> u32;
 }

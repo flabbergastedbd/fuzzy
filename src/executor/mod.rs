@@ -26,7 +26,6 @@ pub struct ExecutorConfig {
     executable: String,
     args: Vec<String>,
     cwd: Box<Path>,
-    // cwd: String,
     envs: Vec<(String, String)>,
 }
 
@@ -35,12 +34,17 @@ pub trait Executor {
     fn new(config: ExecutorConfig) -> Self;
 
     async fn setup(&self) -> Result<(), Box<dyn Error>>;
-    fn launch(&mut self) -> Result<(), Box<dyn Error>>;
+    async fn launch(&mut self) -> Result<(), Box<dyn Error>>;
 
-    async fn get_stdout_line(&mut self) -> Option<String>;
-    async fn get_stderr_line(&mut self) -> Option<String>;
+    // TODO: Improve these ChildStdout signatures to support other executors
+    fn get_stdout_reader(&mut self) -> Option<Lines<BufReader<ChildStdout>>>;
+    fn get_stderr_reader(&mut self) -> Option<Lines<BufReader<ChildStderr>>>;
 
-    fn id(&self) -> u32;
+    fn add_watch(&mut self, path: &Path) -> Result<usize, Box<dyn Error>>;
+    async fn get_watched_files(&mut self, watch_index: usize) -> Option<String>;
+    fn rm_watch(&mut self, watch_index: usize) -> Result<bool, Box<dyn Error>>;
+
+    fn get_pid(&self) -> u32;
 }
 
 pub fn new(config: ExecutorConfig) -> impl Executor {

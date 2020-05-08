@@ -109,6 +109,13 @@ subcommands:
               - executor:
                   about: Test only executor profile
                   args:
+                    - watch:
+                        help: A path to watch for newly created files
+                        long: watch
+                        takes_value: true
+                    - stdout:
+                        help: Get stdout/stderr to print
+                        long: stdout
                     - file_path:
                         help: Path to executor profile json
                         takes_value: true

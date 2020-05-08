@@ -1,3 +1,4 @@
+use std::path::Path;
 use std::error::Error;
 
 use log::{warn, info, error, debug};
@@ -27,21 +28,30 @@ pub async fn cli(args: &ArgMatches, _: String) -> Result<(), Box<dyn Error>> {
             let mut executor = executor::new(config);
 
             executor.setup().await?;
-            executor.launch()?;
+            executor.launch().await?;
 
-            /*
-                let reader = executor.get_stdout_reader().unwrap();
-                let mut lines = reader.lines();
-                while let Some(l) = lines.next_line().await? {
-                    info!("{}", l);
+            info!("Child PID: {}", executor.get_pid());
+
+            if let Some(path) = sub_matches.value_of("watch") {
+                debug!("Watching for files in {}", path);
+                let i = executor.add_watch(Path::new(path))?;
+                while let Some(file) = executor.get_watched_files(i).await {
+                    info!("New file created: {}", file);
                 }
-            */
-
-            while let Some(line) = executor.get_stdout_line().await {
-                info!("{}", line);
+                executor.rm_watch(i)?;
             }
 
-            info!("{}", executor.id())
+            if sub_matches.is_present("stdout") {
+                let mut stdout_reader = executor.get_stdout_reader().unwrap();
+                let mut stderr_reader = executor.get_stderr_reader().unwrap();
+                while let Some(line) = stdout_reader.next_line().await? {
+                    info!("Stdout: {}", line);
+                }
+
+                while let Some(line) = stderr_reader.next_line().await? {
+                    warn!("Stderr: {}", line);
+                }
+            }
 
         },
         ("fuzz_driver", Some(_)) => {

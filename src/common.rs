@@ -1,3 +1,5 @@
+use std::path::Path;
+use std::time::SystemTime;
 use std::error::Error;
 
 use data_encoding::HEXUPPER;
@@ -15,7 +17,7 @@ pub fn checksum(bytes: &Vec<u8>) -> String {
     HEXUPPER.encode(actual.as_ref())
 }
 
-pub async fn read_file(file_path: String) -> Result<Vec<u8>, Box<dyn Error>> {
+pub async fn read_file(file_path: &Path) -> Result<Vec<u8>, Box<dyn Error>> {
     debug!("Reading full file");
     let mut content = vec![];
     let mut file = File::open(file_path).await?;
@@ -25,14 +27,15 @@ pub async fn read_file(file_path: String) -> Result<Vec<u8>, Box<dyn Error>> {
 
 // Corpus related utilities
 pub async fn upload_corpus(
-        file_path: String,
+        file_path: &Path,
         label: String,
+        worker_task_id: Option<i32>,
         client: &mut OrchestratorClient<Channel>) {
 
-    let content = read_file(file_path.clone()).await;
+    let content = read_file(file_path).await;
 
     if let Err(e) = content {
-        error!("Unable to upload provided corpus {}: {}", file_path, e);
+        error!("Unable to upload provided corpus {:?}: {}", file_path, e);
         return
     }
 
@@ -45,27 +48,29 @@ pub async fn upload_corpus(
         content,
         checksum,
         label,
+        worker_task_id,
     };
 
     let response = client.submit_corpus(Request::new(new_corpus)).await;
     if let Err(e) = response {
-        error!("Failed to add {}: {:?}", file_path, e);
+        error!("Failed to add {:?}: {:?}", file_path, e);
     } else {
-        info!("Successfully added: {}", file_path);
+        info!("Successfully added: {:?}", file_path);
     }
 }
 
-pub async fn get_corpus(
+pub async fn download_corpus(
         label: String,
-        client: &mut OrchestratorClient<Channel>) -> Vec<Corpus> {
+        worker_task_id: Option<i32>,
+        created_after: SystemTime,
+        client: &mut OrchestratorClient<Channel>) -> Result<Vec<Corpus>, Box<dyn Error>> {
     debug!("Getting corpus");
 
-    let filter_corpus = xpc::FilterCorpus { label };
-    let response = client.get_corpus(Request::new(filter_corpus)).await;
-    if let Err(e) = response {
-        error!("Failed to get corpus: {}", e);
-        return vec![]
-    } else {
-        response.unwrap().into_inner().data
-    }
+    let filter_corpus = xpc::FilterCorpus {
+        label,
+        created_after: prost_types::Timestamp::from(created_after),
+        worker_task_id,
+    };
+    let response = client.get_corpus(Request::new(filter_corpus)).await?;
+    Ok(response.into_inner().data)
 }

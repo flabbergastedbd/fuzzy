@@ -3,6 +3,10 @@
 	"executable": "echo",
 	"args": ["hello", "world"],
 	"cwd": "/tmp",
-	"corpus": "/tmp/corpus",
-	"envs": []
+	"envs": [],
+	"corpus": {
+		"path": "/tmp/corpus",
+		"label": "ipc"
+	},
+	"refresh_interval": 600
 }

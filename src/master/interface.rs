@@ -1,3 +1,5 @@
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
+
 use diesel::prelude::*;
 use log::{error, debug};
 use tonic::{Request, Response, Status, Code};
@@ -80,9 +82,13 @@ impl Orchestrator for OrchestratorService {
 
         let filter_corpus = request.into_inner();
         let conn = self.db_broker.get_conn();
+        let created_after = UNIX_EPOCH + Duration::from_secs(filter_corpus.created_after.seconds as u64);
 
         let corpus_list = corpora::table
-            .filter(corpora::label.ilike(filter_corpus.label))
+            .filter(
+                corpora::label.ilike(filter_corpus.label).and(
+                corpora::created_at.gt(created_after))
+            )
             .load::<Corpus>(&conn);
 
         if let Err(e) = corpus_list {

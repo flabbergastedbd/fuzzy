@@ -1,3 +1,4 @@
+use std::time::Duration;
 use std::path::Path;
 use std::error::Error;
 
@@ -8,7 +9,6 @@ use tokio::{
     io::{BufReader, Lines},
 };
 
-use file_watcher::InotifyFileWatcher;
 use corpus_syncer::CorpusSyncer;
 
 pub mod file_watcher;
@@ -25,18 +25,25 @@ pub enum ExecutorEnum {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct CorpusConfig {
+    path: Box<Path>,
+    label: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ExecutorConfig {
     executor: ExecutorEnum,
     executable: String,
     args: Vec<String>,
     cwd: Box<Path>,
-    corpus: Box<Path>,
+    corpus: CorpusConfig,
     envs: Vec<(String, String)>,
+    refresh_interval: u64,
 }
 
 #[tonic::async_trait]
 pub trait Executor {
-    fn new(config: ExecutorConfig) -> Self;
+    fn new(config: ExecutorConfig, worker_task_id: Option<i32>) -> Self;
 
     async fn setup(&self) -> Result<(), Box<dyn Error>>;
     async fn launch(&mut self) -> Result<(), Box<dyn Error>>;
@@ -47,17 +54,16 @@ pub trait Executor {
 
     // TODO: Switch to generic trait based returns so we can swap file monitors
     // fn get_file_watcher(&self, path: Path) -> Box<dyn file_watcher::FileWatcher>;
-    fn get_file_watcher(&self, path: &Path) -> Result<InotifyFileWatcher, Box<dyn Error>>;
     fn get_corpus_syncer(&self) -> Result<CorpusSyncer, Box<dyn Error>>;
 
     fn get_pid(&self) -> u32;
 }
 
-pub fn new(config: ExecutorConfig) -> impl Executor {
+pub fn new(config: ExecutorConfig, worker_task_id: Option<i32>) -> impl Executor {
     match config.executor {
         _ => {
             debug!("Creating doccker executor");
-            native::NativeExecutor::new(config)
+            native::NativeExecutor::new(config, worker_task_id)
         },
     }
 }

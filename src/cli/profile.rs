@@ -13,10 +13,10 @@ pub async fn cli(args: &ArgMatches, _: String) -> Result<(), Box<dyn Error>> {
         ("executor", Some(sub_matches)) => {
             debug!("Testing executor profile");
             // Get profile
-            let profile = sub_matches.value_of("file_path").unwrap().to_owned();
+            let profile = sub_matches.value_of("file_path").unwrap();
 
             // Read profile
-            let content = crate::common::read_file(profile).await?;
+            let content = crate::common::read_file(Path::new(profile)).await?;
             let content_str = String::from_utf8(content);
             assert!(content_str.is_ok());
 
@@ -24,7 +24,7 @@ pub async fn cli(args: &ArgMatches, _: String) -> Result<(), Box<dyn Error>> {
             let config: ExecutorConfig = serde_json::from_str(content_str.unwrap().as_str())?;
 
             // Create Executor
-            let mut executor = executor::new(config);
+            let mut executor = executor::new(config, None);
 
             executor.setup().await?;
             executor.launch().await?;
@@ -33,11 +33,7 @@ pub async fn cli(args: &ArgMatches, _: String) -> Result<(), Box<dyn Error>> {
 
             if let Some(path) = sub_matches.value_of("watch") {
                 debug!("Watching for files in {}", path);
-                let path = Path::new(path);
-                let mut fw = executor.get_file_watcher(path)?;
-                while let Some(file) = fw.get_new_file().await {
-                    info!("New file created: {}", file);
-                }
+                // TODO: Fix this
             }
 
             if sub_matches.is_present("stdout") {

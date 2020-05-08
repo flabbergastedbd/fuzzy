@@ -2,29 +2,28 @@ use std::process::Stdio;
 use std::error::Error;
 use std::path::Path;
 
-use inotify::{Inotify, WatchMask};
 use log::{trace, debug};
 use super::ExecutorConfig;
 use tokio::{
     fs,
-    process::{self, Command, Child, ChildStdout, ChildStderr},
+    process::{Command, Child, ChildStdout, ChildStderr},
     io::{BufReader, AsyncBufReadExt, Lines},
 };
 
-use super::file_watcher::InotifyFileWatcher;
 use super::corpus_syncer::CorpusSyncer;
 
 pub struct NativeExecutor {
     config: ExecutorConfig,
     child: Option<Child>,
+    worker_task_id: Option<i32>
 }
 
 #[tonic::async_trait]
 impl super::Executor for NativeExecutor {
-    fn new(config: ExecutorConfig) -> Self {
+    fn new(config: ExecutorConfig, worker_task_id: Option<i32>) -> Self {
         debug!("Creating new native executor with config: {:#?}", config);
         Self {
-            config, child: None,
+            config, child: None, worker_task_id
         }
     }
 
@@ -33,7 +32,7 @@ impl super::Executor for NativeExecutor {
 
         // Check if cwd exists, if not create
         Self::mkdir_p(&self.config.cwd).await?;
-        Self::mkdir_p(&self.config.corpus).await?;
+        Self::mkdir_p(&self.config.corpus.path).await?;
 
         Ok(())
     }
@@ -67,12 +66,12 @@ impl super::Executor for NativeExecutor {
         Some(reader)
     }
 
-    fn get_file_watcher(&self, path: &Path) -> Result<InotifyFileWatcher, Box<dyn Error>> {
-        Ok(InotifyFileWatcher::new(path)?)
-    }
-
     fn get_corpus_syncer(&self) -> Result<CorpusSyncer, Box<dyn Error>> {
-        Ok(CorpusSyncer::new(&self.config.corpus)?)
+        let corpus_config = self.config.corpus.clone();
+        Ok(CorpusSyncer::new(
+                corpus_config,
+                self.worker_task_id
+        )?)
     }
 
     fn get_pid(&self) -> u32 {

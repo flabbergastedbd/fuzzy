@@ -8,12 +8,14 @@ use tokio::{
     io::{BufReader, Lines},
 };
 
+use file_watcher::InotifyFileWatcher;
+
+pub mod file_watcher;
+mod native;
+
 /**
  * For every addition here, make changes to src/cli.yaml possible values
  */
-
-mod native;
-
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum ExecutorEnum {
     Native,
@@ -40,9 +42,9 @@ pub trait Executor {
     fn get_stdout_reader(&mut self) -> Option<Lines<BufReader<ChildStdout>>>;
     fn get_stderr_reader(&mut self) -> Option<Lines<BufReader<ChildStderr>>>;
 
-    fn add_watch(&mut self, path: &Path) -> Result<usize, Box<dyn Error>>;
-    async fn get_watched_files(&mut self, watch_index: usize) -> Option<String>;
-    fn rm_watch(&mut self, watch_index: usize) -> Result<bool, Box<dyn Error>>;
+    // TODO: Switch to generic trait based returns so we can swap file monitors
+    // fn get_file_watcher(&self, path: Path) -> Box<dyn file_watcher::FileWatcher>;
+    fn get_file_watcher(&self, path: &Path) -> Result<InotifyFileWatcher, Box<dyn Error>>;
 
     fn get_pid(&self) -> u32;
 }

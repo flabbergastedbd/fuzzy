@@ -3,7 +3,6 @@ use std::error::Error;
 
 use log::{warn, info, error, debug};
 use clap::ArgMatches;
-use tokio::io::AsyncBufReadExt;
 
 use crate::executor::{self, Executor, ExecutorConfig};
 
@@ -34,11 +33,11 @@ pub async fn cli(args: &ArgMatches, _: String) -> Result<(), Box<dyn Error>> {
 
             if let Some(path) = sub_matches.value_of("watch") {
                 debug!("Watching for files in {}", path);
-                let i = executor.add_watch(Path::new(path))?;
-                while let Some(file) = executor.get_watched_files(i).await {
+                let path = Path::new(path);
+                let mut fw = executor.get_file_watcher(path)?;
+                while let Some(file) = fw.get_new_file().await {
                     info!("New file created: {}", file);
                 }
-                executor.rm_watch(i)?;
             }
 
             if sub_matches.is_present("stdout") {

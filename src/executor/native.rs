@@ -2,7 +2,6 @@ use std::process::Stdio;
 use std::error::Error;
 use std::path::Path;
 
-use tokio::stream::StreamExt;
 use inotify::{Inotify, WatchMask};
 use log::{trace, debug};
 use super::ExecutorConfig;
@@ -11,6 +10,8 @@ use tokio::{
     process::{self, Command, Child, ChildStdout, ChildStderr},
     io::{BufReader, AsyncBufReadExt, Lines},
 };
+
+use super::file_watcher::InotifyFileWatcher;
 
 pub struct NativeExecutor {
     config: ExecutorConfig,
@@ -25,8 +26,7 @@ impl super::Executor for NativeExecutor {
     fn new(config: ExecutorConfig) -> Self {
         debug!("Creating new native executor with config: {:#?}", config);
         Self {
-            config,
-            child: None,
+            config, child: None,
             // We use one inotify per watch,
             // TODO: Need to improve this
             watchers: Vec::new(),
@@ -72,38 +72,8 @@ impl super::Executor for NativeExecutor {
         Some(reader)
     }
 
-    fn add_watch(&mut self, path: &Path) -> Result<usize, Box<dyn Error>> {
-        debug!("Adding watch at {:?}", path);
-        let index = self.watchers.len();
-
-        let mut i = Inotify::init()?;
-        i.add_watch(path, WatchMask::CREATE)?;
-        let buffer = [0; 32];
-        let stream = i.event_stream(buffer)?;
-
-        self.watchers.push(i);
-        self.streams.push(stream);
-
-        Ok(index)
-    }
-
-    // async fn read_event(&mut self, watch_index: usize) -> Result<Option<String>, Box<dyn Error>> {
-    async fn get_watched_files(&mut self, watch_index: usize) -> Option<String> {
-        let event_or_error = self.streams[watch_index].next().await?;
-        trace!("Received inotify event: {:?}", event_or_error);
-        if let Ok(event) = event_or_error {
-            Some(event.name?.into_string().unwrap())
-        } else {
-            None
-        }
-    }
-
-    fn rm_watch(&mut self, watch_index: usize) -> Result<bool, Box<dyn Error>> {
-        debug!("Removing watch at index: {}", watch_index);
-
-        self.watchers.remove(watch_index).close()?;
-        self.streams.remove(watch_index);
-        Ok(true)
+    fn get_file_watcher(&self, path: &Path) -> Result<InotifyFileWatcher, Box<dyn Error>> {
+        Ok(InotifyFileWatcher::new(path)?)
     }
 
     fn get_pid(&self) -> u32 {

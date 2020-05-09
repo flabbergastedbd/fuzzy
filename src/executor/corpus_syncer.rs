@@ -11,6 +11,7 @@ use crate::utils::fs::InotifyFileWatcher;
 use super::CorpusConfig;
 use crate::common::corpora::{upload_corpus_from_disk, download_corpus_to_disk, CORPUS_FILE_EXT};
 
+/// A file system corpus syncer. Need to convert this into trait when implementing docker
 pub struct CorpusSyncer {
     config: CorpusConfig,
     worker_task_id: Option<i32>,
@@ -41,7 +42,6 @@ impl CorpusSyncer {
         debug!("Will try to keep corpus in sync at: {:?}", self.config.path);
         let mut client = OrchestratorClient::connect(connect_addr).await?;
         let worker_task_id = self.worker_task_id;
-
 
         // Create a local set
         let local_set = task::LocalSet::new();

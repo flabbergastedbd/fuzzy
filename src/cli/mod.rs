@@ -1,6 +1,6 @@
 use std::error::Error;
 
-use log::debug;
+use log::{error, debug};
 use clap::ArgMatches;
 use prettytable::{Table, Row};
 
@@ -51,6 +51,7 @@ pub fn main(args: &ArgMatches) {
     debug!("Cli launched");
     // All errors are propagated up till here
     if let Err(e) = main_loop(args) {
-        panic!("Error encountered: {}", e);
+        error!("Error encountered: {}", e);
+        std::process::exit(1)
     }
 }

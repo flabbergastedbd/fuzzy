@@ -10,6 +10,7 @@ mod worker;
 mod utils;
 mod common;
 mod executor;
+mod fuzz_driver;
 
 // TODO https://github.com/diesel-rs/diesel/issues/2155
 #[macro_use] extern crate diesel;

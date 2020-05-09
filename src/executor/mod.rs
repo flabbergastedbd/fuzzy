@@ -16,9 +16,6 @@ use corpus_syncer::CorpusSyncer;
 pub mod corpus_syncer;
 mod native;
 
-/**
- * For every addition here, make changes to src/cli.yaml possible values
- */
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum ExecutorEnum {
     Native,
@@ -75,7 +72,7 @@ pub trait Executor {
 pub fn new(config: ExecutorConfig, worker_task_id: Option<i32>) -> impl Executor {
     match config.executor {
         _ => {
-            debug!("Creating doccker executor");
+            debug!("Creating native executor");
             native::NativeExecutor::new(config, worker_task_id)
         },
     }

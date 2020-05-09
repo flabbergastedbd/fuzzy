@@ -6,6 +6,7 @@ use clap::ArgMatches;
 use tokio::task::LocalSet;
 
 use crate::executor::{self, Executor, ExecutorConfig};
+use crate::utils::fs::read_file;
 
 pub async fn cli(args: &ArgMatches, connect_addr: String) -> Result<(), Box<dyn Error>> {
 
@@ -17,7 +18,7 @@ pub async fn cli(args: &ArgMatches, connect_addr: String) -> Result<(), Box<dyn 
             let profile = sub_matches.value_of("file_path").unwrap();
 
             // Read profile
-            let content = crate::common::read_file(Path::new(profile)).await?;
+            let content = read_file(Path::new(profile)).await?;
             let content_str = String::from_utf8(content);
             assert!(content_str.is_ok());
 

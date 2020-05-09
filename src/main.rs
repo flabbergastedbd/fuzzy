@@ -7,6 +7,7 @@ mod db;
 mod xpc;
 mod master;
 mod worker;
+mod utils;
 mod common;
 mod executor;
 

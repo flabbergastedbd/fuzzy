@@ -1,5 +1,4 @@
 use std::error::Error;
-use std::str::FromStr;
 
 use log::debug;
 use clap::ArgMatches;

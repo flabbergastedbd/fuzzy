@@ -6,7 +6,7 @@ use log::debug;
 use clap::ArgMatches;
 use tokio::task;
 
-use crate::common::{upload_corpus, download_corpus};
+use crate::common::corpora::{upload_corpus_from_disk, download_corpus};
 use crate::xpc::orchestrator_client::OrchestratorClient;
 
 pub async fn cli(args: &ArgMatches, connect_addr: String) -> Result<(), Box<dyn Error>> {
@@ -27,7 +27,7 @@ pub async fn cli(args: &ArgMatches, connect_addr: String) -> Result<(), Box<dyn 
                 let label            = sub_matches.value_of("label").unwrap().to_owned();
                 let mut local_client = client.clone(); // Create new client clones to pass
                 task_set.spawn_local(async move {
-                    upload_corpus(Path::new(file_path.as_str()), label, None, &mut local_client).await
+                    upload_corpus_from_disk(Path::new(file_path.as_str()), label, None, &mut local_client).await
                 });
             }
             task_set.await;

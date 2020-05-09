@@ -1,4 +1,3 @@
-use std::time::Duration;
 use std::path::Path;
 use std::error::Error;
 use std::collections::HashMap;
@@ -6,7 +5,7 @@ use std::collections::HashMap;
 use regex::Regex;
 use log::debug;
 use serde::{Serialize, Deserialize};
-use serde_regex::{Serialize, Deserialize};
+// use serde_regex::{Serialize, Deserialize};
 use tokio::{
     process::{ChildStdout, ChildStderr},
     io::{BufReader, Lines},
@@ -14,7 +13,6 @@ use tokio::{
 
 use corpus_syncer::CorpusSyncer;
 
-pub mod file_watcher;
 pub mod corpus_syncer;
 mod native;
 
@@ -35,7 +33,7 @@ pub struct CorpusConfig {
     upload: bool,
 
     #[serde(with = "serde_regex")]
-    pattern: Regex,
+    upload_filter: Regex,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

@@ -48,20 +48,28 @@ pub struct ExecutorConfig {
 
 #[tonic::async_trait]
 pub trait Executor {
+    /// Create a new executor with this configuration
     fn new(config: ExecutorConfig, worker_task_id: Option<i32>) -> Self;
 
+    /// Setup stage often involves preparing things like download
+    /// corpus, make it ready for launch
     async fn setup(&self) -> Result<(), Box<dyn Error>>;
-    async fn launch(&mut self) -> Result<(), Box<dyn Error>>;
+
+    /// Actually responsible for launching of the process
+    async fn spawn(&mut self) -> Result<(), Box<dyn Error>>;
 
     // TODO: Improve these ChildStdout signatures to support other executors
+    /// Get stdout reader
     fn get_stdout_reader(&mut self) -> Option<Lines<BufReader<ChildStdout>>>;
+    /// Get stderr reader
     fn get_stderr_reader(&mut self) -> Option<Lines<BufReader<ChildStderr>>>;
 
     // TODO: Switch to generic trait based returns so we can swap file monitors
     // fn get_file_watcher(&self, path: Path) -> Box<dyn file_watcher::FileWatcher>;
     fn get_corpus_syncer(&self) -> Result<CorpusSyncer, Box<dyn Error>>;
 
-    fn get_pid(&self) -> Option<u32>;
+    // Clean up all spawned children
+    fn close(&mut self) -> Result<(), Box<dyn Error>>;
 }
 
 pub fn new(config: ExecutorConfig, worker_task_id: Option<i32>) -> impl Executor {

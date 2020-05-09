@@ -3,7 +3,7 @@ use std::error::Error;
 
 use log::{warn, info, error, debug};
 use clap::ArgMatches;
-use tokio::task::LocalSet;
+use tokio::{signal::unix::{signal, SignalKind}, task::LocalSet};
 
 use crate::executor::{self, Executor, ExecutorConfig};
 use crate::utils::fs::read_file;
@@ -30,20 +30,18 @@ pub async fn cli(args: &ArgMatches, connect_addr: String) -> Result<(), Box<dyn 
 
             executor.setup().await?;
 
-
             let local_set = LocalSet::new();
 
             // Spawn off corpus sync
             let corpus_syncer = executor.get_corpus_syncer()?;
             corpus_syncer.setup_corpus(connect_addr.clone()).await?;
-            local_set.spawn_local(async move {
+            let corpus_sync_handle = local_set.spawn_local(async move {
                 if let Err(e) = corpus_syncer.sync_corpus(connect_addr.clone()).await {
                     error!("Unable to sync corpus: {}", e);
                 }
             });
 
-            executor.launch().await?;
-            info!("Child PID: {:?}", executor.get_pid());
+            executor.spawn().await?;
 
             // Spawn off stdout output
             let mut stdout_reader = executor.get_stdout_reader().unwrap();
@@ -61,8 +59,18 @@ pub async fn cli(args: &ArgMatches, connect_addr: String) -> Result<(), Box<dyn 
                 }
             });
 
-            local_set.await;
-
+            let mut stream = signal(SignalKind::interrupt())?;
+            tokio::select! {
+                _ = corpus_sync_handle => {
+                    warn!("Corpus sync exited first, something is wrong");
+                },
+                _ = local_set => {
+                    warn!("Executor exited first, something is wrong");
+                },
+                _ = stream.recv() => {
+                    info!("Received Ctrl-c for task set")
+                },
+            }
 
         },
         ("fuzz_driver", Some(_)) => {

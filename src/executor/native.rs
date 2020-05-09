@@ -15,7 +15,7 @@ use super::corpus_syncer::CorpusSyncer;
 pub struct NativeExecutor {
     config: ExecutorConfig,
     child: Option<Child>,
-    worker_task_id: Option<i32>
+    worker_task_id: Option<i32>,
 }
 
 #[tonic::async_trait]
@@ -37,7 +37,7 @@ impl super::Executor for NativeExecutor {
         Ok(())
     }
 
-    async fn launch(&mut self) -> Result<(), Box<dyn Error>> {
+    async fn spawn(&mut self) -> Result<(), Box<dyn Error>> {
         debug!("Launching child process");
         info!("{:?}", self.config.envs);
         let mut cmd = Command::new(self.config.executable.clone());
@@ -75,8 +75,9 @@ impl super::Executor for NativeExecutor {
         )?)
     }
 
-    fn get_pid(&self) -> Option<u32> {
-        self.child.as_ref().map(|c| c.id())
+    fn close(&mut self) -> Result<(), Box<dyn Error>> {
+        debug!("Closing out executor");
+        Ok(self.child.as_mut().map(|c| c.kill()).unwrap()?)
     }
 }
 

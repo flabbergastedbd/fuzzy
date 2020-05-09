@@ -5,7 +5,7 @@ use log::{error, debug};
 use tonic::{Request, Response, Status, Code};
 
 use crate::db::DbBroker;
-use crate::schema::{tasks, corpora, worker_tasks};
+use crate::schema::{tasks, corpora};
 use crate::models::{Task, NewTask, Corpus, NewCorpus};
 use crate::xpc;
 use crate::xpc::orchestrator_server::Orchestrator;

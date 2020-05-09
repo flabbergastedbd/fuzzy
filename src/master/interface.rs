@@ -5,7 +5,7 @@ use log::{error, debug};
 use tonic::{Request, Response, Status, Code};
 
 use crate::db::DbBroker;
-use crate::schema::{tasks, corpora};
+use crate::schema::{tasks, corpora, worker_tasks};
 use crate::models::{Task, NewTask, Corpus, NewCorpus};
 use crate::xpc;
 use crate::xpc::orchestrator_server::Orchestrator;
@@ -84,12 +84,18 @@ impl Orchestrator for OrchestratorService {
         let conn = self.db_broker.get_conn();
         let created_after = UNIX_EPOCH + Duration::from_secs(filter_corpus.created_after.seconds as u64);
 
-        let corpus_list = corpora::table
+        let mut query = corpora::table
             .filter(
                 corpora::label.ilike(filter_corpus.label).and(
                 corpora::created_at.gt(created_after))
-            )
-            .load::<Corpus>(&conn);
+            ).into_boxed();
+
+        // If worker is asking for corpus, don't return the same corpus already found by it
+        if let Some(worker_task_id) = filter_corpus.worker_task_id {
+            query = query.filter(corpora::worker_task_id.ne(worker_task_id));
+        }
+
+        let corpus_list = query.load::<Corpus>(&conn);
 
         if let Err(e) = corpus_list {
             error!("Unable to get task: {}", e);

@@ -3,9 +3,10 @@ use std::error::Error;
 
 use log::{warn, info, error, debug};
 use clap::ArgMatches;
-use tokio::{signal::unix::{signal, SignalKind}, task::LocalSet};
+use tokio::{sync::oneshot, signal::unix::{signal, SignalKind}, task::LocalSet};
 
 use crate::executor::{self, Executor, ExecutorConfig};
+use crate::fuzz_driver::{self, FuzzDriver, FuzzConfig};
 use crate::utils::fs::read_file;
 
 pub async fn cli(args: &ArgMatches, connect_addr: String) -> Result<(), Box<dyn Error>> {
@@ -33,7 +34,7 @@ pub async fn cli(args: &ArgMatches, connect_addr: String) -> Result<(), Box<dyn 
             let local_set = LocalSet::new();
 
             // Spawn off corpus sync
-            let corpus_syncer = executor.get_corpus_syncer()?;
+            let corpus_syncer = executor.get_corpus_syncer().await?;
             corpus_syncer.setup_corpus(connect_addr.clone()).await?;
             let corpus_sync_handle = local_set.spawn_local(async move {
                 if let Err(e) = corpus_syncer.sync_corpus(connect_addr.clone()).await {
@@ -72,9 +73,45 @@ pub async fn cli(args: &ArgMatches, connect_addr: String) -> Result<(), Box<dyn 
                 },
             }
 
+            executor.close()?;
+
         },
-        ("fuzz_driver", Some(_)) => {
+        ("task", Some(sub_matches)) => {
             debug!("Testing fuzz driver profile");
+
+            let local = LocalSet::new();
+
+            // Get profile
+            let profile = sub_matches.value_of("file_path").unwrap();
+
+            // Read profile
+            let content = read_file(Path::new(profile)).await?;
+            let content_str = String::from_utf8(content);
+            assert!(content_str.is_ok());
+
+            // Convert to json
+            let config: FuzzConfig = serde_json::from_str(content_str.unwrap().as_str())?;
+
+            let driver = fuzz_driver::new(config, None);
+
+            // Fake tx, will not be used
+            let (tx, rx) = oneshot::channel::<u8>();
+
+            let mut stream = signal(SignalKind::interrupt())?;
+            tokio::select! {
+                result = driver.start(connect_addr, rx) => {
+                    error!("Fuzz driver exited first, something is wrong");
+                    if let Err(e) = result {
+                        error!("Cause: {}", e);
+                    }
+                },
+                _ = stream.recv() => {
+                    info!("Received Ctrl-c for task set");
+                    let _ = tx.send(0);
+                },
+            }
+
+            local.await;
         },
         // Listing all tasks
         _ => {},

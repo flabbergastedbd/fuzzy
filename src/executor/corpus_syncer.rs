@@ -44,24 +44,22 @@ impl CorpusSyncer {
         let worker_task_id = self.worker_task_id;
 
         // Create a local set
-        let local_set = task::LocalSet::new();
+        // let local_set = task::LocalSet::new();
 
         // Create necessary clones and pass along for upload sync if upload enabled
-        if self.config.upload {
-            let client_clone = client.clone();
-            let corpus_config = self.config.clone();
-            local_set.spawn_local(async move {
-                if let Err(e) = upload(corpus_config, worker_task_id, client_clone).await {
-                    error!("Upload sync job failed: {}", e);
-                }
-            });
-        }
+        let client_clone = client.clone();
+        let corpus_config = self.config.clone();
+        let upload_handle = task::spawn(async move {
+            if let Err(e) = upload(corpus_config, worker_task_id, client_clone).await {
+                error!("Upload sync job failed: {}", e);
+            }
+        });
 
         // Create necessary clones and pass along for download sync
         let mut last_updated = SystemTime::now();
         let corpus_config = self.config.clone();
         let refresh_interval = self.config.refresh_interval;
-        local_set.spawn_local(async move {
+        let download_handle = task::spawn(async move {
             let mut interval = tokio::time::interval(Duration::from_secs(refresh_interval));
             loop {
                 interval.tick().await;
@@ -79,7 +77,10 @@ impl CorpusSyncer {
             }
         });
 
-        local_set.await;
+        // Error handled at spawn level
+        let (_, _) = tokio::join!(upload_handle, download_handle);
+
+        // local_set.await;
 
         Ok(())
     }
@@ -89,21 +90,25 @@ async fn upload(
         corpus: CorpusConfig,
         worker_task_id: Option<i32>,
         client: OrchestratorClient<Channel>) -> Result<(), Box<dyn Error>> {
-    let mut client = client;
-    info!("Creating corpus upload sync");
-    let ext_regex = Regex::new(format!(".*\\.{}$", CORPUS_FILE_EXT).as_str()).unwrap();
-    let mut watcher = InotifyFileWatcher::new(&corpus.path, Some(ext_regex))?;
+    if corpus.upload == true {
+        let mut client = client;
+        info!("Creating corpus upload sync");
+        let ext_regex = Regex::new(format!(".*\\.{}$", CORPUS_FILE_EXT).as_str()).unwrap();
+        let mut watcher = InotifyFileWatcher::new(&corpus.path, Some(corpus.upload_filter))?;
 
-    while let Some(file) = watcher.get_new_file().await {
-        // Match user provided match pattern
-        if corpus.upload_filter.is_match(file.as_str()) {
-            let file_path = corpus.path.clone();
-            let file_path = file_path.join(file);
-            info!("Uploading new corpus: {:?}", file_path);
-            upload_corpus_from_disk(file_path.as_path(), corpus.label.clone(), worker_task_id, &mut client).await?
-        } else {
-            debug!("Skipping upload of a user unmatched pattern: {:?}", file);
+        while let Some(file) = watcher.get_new_file().await {
+            // Match user provided match pattern
+            if ext_regex.is_match(file.as_str()) == false {
+                let file_path = corpus.path.clone();
+                let file_path = file_path.join(file);
+                info!("Uploading new corpus: {:?}", file_path);
+                upload_corpus_from_disk(file_path.as_path(), corpus.label.clone(), worker_task_id, &mut client).await?
+            } else {
+                debug!("Skipping upload of a user unmatched pattern: {:?}", file);
+            }
         }
+    } else {
+        debug!("Returning early as corpus upload seems to have been disabled for {:?}", worker_task_id);
     }
     Ok(())
 }

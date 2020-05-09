@@ -5,6 +5,7 @@ pub use crate::xpc::{
     NewWorker, Worker,
     NewTask, Task,
     NewCorpus, Corpus,
+    NewCrash,
 };
 
 #[derive(Clone, Queryable, Insertable, Associations)]

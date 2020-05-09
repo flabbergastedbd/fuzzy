@@ -48,9 +48,10 @@ impl InotifyFileWatcher {
             } else {
                 let file_name = event_or_error.unwrap().name?.into_string().unwrap();
                 if self.filter.as_ref().map(|r| r.is_match(&file_name)) == Some(true) {
-                    continue;
+                    break Some(file_name)
                 }
-                break Some(file_name)
+                debug!("Skipping {:?}, due to filter match", file_name);
+                continue;
             }
         };
         result

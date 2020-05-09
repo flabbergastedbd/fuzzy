@@ -46,6 +46,9 @@ service Orchestrator {
     // Corpus related functions
     rpc GetCorpus(FilterCorpus) returns (Corpora);
     rpc SubmitCorpus(NewCorpus) returns (google.protobuf.Empty);
+
+    // Crash related
+    rpc SubmitCrash(NewCrash) returns (google.protobuf.Empty);
 }
 
 message Tasks {
@@ -90,4 +93,12 @@ message Corpus {
 
 message Corpora {
     repeated Corpus data = 1;
+}
+
+message NewCrash {
+    required bytes content = 1;
+    required string checksum = 2;
+    required string label = 3;
+    required bool verified = 4;
+    optional int32 worker_task_id = 5;
 }

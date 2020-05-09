@@ -3,14 +3,15 @@ use std::error::Error;
 use std::path::Path;
 
 use log::{info, debug};
-use super::ExecutorConfig;
 use tokio::{
     fs,
     process::{Command, Child, ChildStdout, ChildStderr},
     io::{BufReader, AsyncBufReadExt, Lines},
 };
 
+use super::{CrashConfig, ExecutorConfig};
 use super::corpus_syncer::CorpusSyncer;
+use super::crash_syncer::CrashSyncer;
 
 pub struct NativeExecutor {
     config: ExecutorConfig,
@@ -67,12 +68,29 @@ impl super::Executor for NativeExecutor {
         Some(reader)
     }
 
-    fn get_corpus_syncer(&self) -> Result<CorpusSyncer, Box<dyn Error>> {
+    async fn get_corpus_syncer(&self) -> Result<CorpusSyncer, Box<dyn Error>> {
         let corpus_config = self.config.corpus.clone();
         Ok(CorpusSyncer::new(
                 corpus_config,
                 self.worker_task_id
         )?)
+    }
+
+    async fn get_crash_syncer(&self, config: CrashConfig) -> Result<CrashSyncer, Box<dyn Error>> {
+        Ok(CrashSyncer::new(
+                config,
+                self.worker_task_id
+        )?)
+    }
+
+    async fn get_reader_for_file(&self, path: &Path) -> Result<BufReader<fs::File>, Box<dyn Error>> {
+        debug!("Creating reader for file path: {:?}", path);
+        let file_path = self.config.cwd.clone();
+        let absolute_path = file_path.join(path);
+
+        let file = fs::File::open(absolute_path).await?;
+        let reader = BufReader::new(file);
+        Ok(reader)
     }
 
     fn close(&mut self) -> Result<(), Box<dyn Error>> {

@@ -1,7 +1,10 @@
+use std::error::Error;
+
 use log::debug;
 use serde::{Serialize, Deserialize};
+use tokio::sync::oneshot;
 
-use super::executor::{self, ExecutorConfig};
+use super::executor::ExecutorConfig;
 
 mod libfuzzer;
 
@@ -16,12 +19,14 @@ pub enum FuzzDriverEnum {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct FuzzConfig {
     driver: FuzzDriverEnum,
-    // execution: ExecutorConfig,
+    execution: ExecutorConfig,
 }
 
 #[tonic::async_trait]
 pub trait FuzzDriver {
     fn new(config: FuzzConfig, worker_task_id: Option<i32>) -> Self;
+
+    async fn start(&self, connect_addr: String, kill_switch: oneshot::Receiver<u8>) -> Result<(), Box<dyn Error>>;
 }
 
 pub fn new(config: FuzzConfig, worker_task_id: Option<i32>) -> impl FuzzDriver {

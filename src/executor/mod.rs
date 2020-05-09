@@ -9,12 +9,23 @@ use serde::{Serialize, Deserialize};
 use tokio::{
     process::{ChildStdout, ChildStderr},
     io::{BufReader, Lines},
+    fs::File,
 };
 
 use corpus_syncer::CorpusSyncer;
+use crash_syncer::CrashSyncer;
 
+// Both of filesystem variants, need to change
 pub mod corpus_syncer;
+pub mod crash_syncer;
 mod native;
+
+#[derive(Debug, Clone)]
+pub struct CrashConfig {
+    pub path: Box<Path>,
+    pub label: String,
+    pub filter: Regex,
+}
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum ExecutorEnum {
@@ -24,23 +35,23 @@ pub enum ExecutorEnum {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct CorpusConfig {
-    path: Box<Path>,
-    label: String,
-    refresh_interval: u64,
-    upload: bool,
+    pub path: Box<Path>,
+    pub label: String,
+    pub refresh_interval: u64,
+    pub upload: bool,
 
     #[serde(with = "serde_regex")]
-    upload_filter: Regex,
+    pub upload_filter: Regex,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ExecutorConfig {
-    executor: ExecutorEnum,
-    executable: String,
-    args: Vec<String>,
-    cwd: Box<Path>,
-    corpus: CorpusConfig,
-    envs: HashMap<String, String>,
+    pub executor: ExecutorEnum,
+    pub executable: String,
+    pub args: Vec<String>,
+    pub cwd: Box<Path>,
+    pub corpus: CorpusConfig,
+    pub envs: HashMap<String, String>,
 }
 
 #[tonic::async_trait]
@@ -63,7 +74,10 @@ pub trait Executor {
 
     // TODO: Switch to generic trait based returns so we can swap file monitors
     // fn get_file_watcher(&self, path: Path) -> Box<dyn file_watcher::FileWatcher>;
-    fn get_corpus_syncer(&self) -> Result<CorpusSyncer, Box<dyn Error>>;
+    async fn get_corpus_syncer(&self) -> Result<CorpusSyncer, Box<dyn Error>>;
+    async fn get_crash_syncer(&self, config: CrashConfig) -> Result<CrashSyncer, Box<dyn Error>>;
+
+    async fn get_reader_for_file(&self, path: &Path) -> Result<BufReader<File>, Box<dyn Error>>;
 
     // Clean up all spawned children
     fn close(&mut self) -> Result<(), Box<dyn Error>>;

@@ -5,8 +5,8 @@ use log::{error, debug};
 use tonic::{Request, Response, Status, Code};
 
 use crate::db::DbBroker;
-use crate::schema::{tasks, corpora};
-use crate::models::{Task, NewTask, Corpus, NewCorpus};
+use crate::schema::{tasks, corpora, crashes};
+use crate::models::{Task, NewTask, Corpus, NewCorpus, NewCrash};
 use crate::xpc;
 use crate::xpc::orchestrator_server::Orchestrator;
 pub use crate::xpc::orchestrator_server::OrchestratorServer as OrchestratorServer;
@@ -78,9 +78,10 @@ impl Orchestrator for OrchestratorService {
     }
 
     async fn get_corpus(&self, request: Request<xpc::FilterCorpus>) -> Result<Response<xpc::Corpora>, Status> {
-        debug!("Filtering and sending corpus");
 
         let filter_corpus = request.into_inner();
+        debug!("Filtering and sending corpus for worker task {:?}", filter_corpus.worker_task_id);
+
         let conn = self.db_broker.get_conn();
         let created_after = UNIX_EPOCH + Duration::from_secs(filter_corpus.created_after.seconds as u64);
 
@@ -102,6 +103,27 @@ impl Orchestrator for OrchestratorService {
             Err(Status::new(Code::NotFound, ""))
         } else {
             Ok(Response::new(xpc::Corpora { data: corpus_list.unwrap() }))
+        }
+    }
+
+    // Crash related calls
+    async fn submit_crash(&self, request: Request<NewCrash>) -> Result<Response<()>, Status> {
+        debug!("Received new crash");
+
+        let new_crash: NewCrash = request.into_inner();
+
+        let conn = self.db_broker.get_conn();
+        let rows_inserted = diesel::insert_into(crashes::table)
+            .values(&new_crash)
+            .returning(crashes::id)
+            .execute(&conn);
+
+        // Failure of constraint will be logged here
+        if let Err(e) = rows_inserted {
+            error!("Unable to add crash : {}", e);
+            Err(Status::new(Code::InvalidArgument, format!("{}", e)))
+        } else {
+            Ok(Response::new({}))
         }
     }
 }

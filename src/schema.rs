@@ -12,9 +12,11 @@ table! {
 table! {
     crashes (id) {
         id -> Int4,
-        task_id -> Int4,
-        worker_id -> Int4,
+        content -> Bytea,
+        checksum -> Nullable<Varchar>,
+        label -> Varchar,
         verified -> Bool,
+        worker_task_id -> Nullable<Int4>,
         created_at -> Timestamp,
     }
 }
@@ -53,8 +55,7 @@ table! {
 }
 
 joinable!(corpora -> tasks (worker_task_id));
-joinable!(crashes -> tasks (task_id));
-joinable!(crashes -> workers (worker_id));
+joinable!(crashes -> tasks (worker_task_id));
 joinable!(worker_tasks -> tasks (task_id));
 joinable!(worker_tasks -> workers (worker_id));
 

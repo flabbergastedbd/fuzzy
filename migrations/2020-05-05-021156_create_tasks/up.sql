@@ -29,10 +29,13 @@ CREATE TABLE corpora (
 
 CREATE TABLE crashes (
 	id SERIAL PRIMARY KEY,
-	task_id SERIAL REFERENCES tasks(id) ON DELETE CASCADE,
-	worker_id SERIAL REFERENCES workers(id) ON DELETE SET NULL,
+	content bytea NOT NULL,
+	checksum VARCHAR(64),
+	label VARCHAR(100) NOT NULL,
 	verified BOOLEAN NOT NULL DEFAULT FALSE,
-	created_at TIMESTAMP NOT NULL DEFAULT current_timestamp
+	worker_task_id INTEGER REFERENCES tasks(id) ON DELETE SET NULL,
+	created_at TIMESTAMP NOT NULL DEFAULT current_timestamp,
+	UNIQUE(checksum, label, worker_task_id)
 );
 
 SELECT diesel_manage_updated_at('tasks');

@@ -42,6 +42,7 @@ service Orchestrator {
     // Task related functions for interface
     rpc GetTasks(google.protobuf.Empty) returns (Tasks);
     rpc SubmitTask(NewTask) returns (google.protobuf.Empty);
+    rpc UpdateTask(PatchTask) returns (google.protobuf.Empty);
 
     // Corpus related functions
     rpc GetCorpus(FilterCorpus) returns (Corpora);
@@ -63,6 +64,13 @@ message NewTask {
     required string name = 1;
     required bool active = 2;
     required string profile = 3;
+}
+
+message PatchTask {
+    required int32 id = 1;
+    required string name = 2;
+    required bool active = 3;
+    required string profile = 4;
 }
 
 message Task {

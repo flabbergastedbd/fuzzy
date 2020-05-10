@@ -64,6 +64,34 @@ impl Orchestrator for OrchestratorService {
         }
     }
 
+    async fn update_task(&self, request: Request<xpc::PatchTask>) -> Result<Response<()>, Status> {
+
+        // First get inner type of tonic::Request & then use our From traits
+        let patch_task: xpc::PatchTask = request.into_inner();
+
+        if let Err(e) = construct_profile(patch_task.profile.as_str()) {
+            error!("Bad profile: {}", e);
+            return Err(Status::new(Code::InvalidArgument, format!("{}", e)))
+        }
+
+        // Check profile is valid
+        debug!("Inserting new task into database");
+        // Get connection from pool (r2d2)
+        let conn = self.db_broker.get_conn();
+        // Upsert the new agent
+        let tasks = diesel::update(tasks::table)
+            .set(&patch_task)
+            .returning(tasks::all_columns)
+            .load::<Task>(&conn);
+
+        if let Err(e) = tasks {
+            error!("Unable to update db due to {}", e);
+            Err(Status::new(Code::InvalidArgument, format!("{}", e)))
+        } else {
+            Ok(Response::new({}))
+        }
+    }
+
     // Corpus related calls
     async fn submit_corpus(&self, request: Request<NewCorpus>) -> Result<Response<()>, Status> {
         debug!("Received new corpus");

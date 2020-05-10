@@ -32,6 +32,7 @@ impl TaskManager {
     }
 
     async fn remove_worker_task(&mut self, worker_task_id: &i32) -> Result<(), Box<dyn Error>> {
+        debug!("Removing worker task: {:?}", worker_task_id);
         let driver_handle = self.driver_handles.remove(worker_task_id).unwrap();
         let kill_switch = self.kill_switches.remove(worker_task_id).unwrap();
 
@@ -43,6 +44,7 @@ impl TaskManager {
     }
 
     async fn add_worker_task(&mut self, wtask: xpc::WorkerTaskFull) -> Result<(), Box<dyn Error>> {
+        debug!("Adding worker task: {:?}", wtask);
         let profile: FuzzConfig = serde_json::from_str(wtask.task.profile.as_str())?;
         let (tx, rx) = oneshot::channel::<u8>();
         let driver = fuzz_driver::new(profile, Some(wtask.id));
@@ -66,7 +68,9 @@ impl TaskManager {
     }
 
     async fn handle_tasks_update(&mut self, worker_tasks: Vec<xpc::WorkerTaskFull>) -> Result<(), Box<dyn Error>> {
+        debug!("Handling task updates, iterating over {} tasks", worker_tasks.len());
         for worker_task in worker_tasks.into_iter() {
+            debug!("Looping on task: {:?}", worker_task);
             // Remove if we run the worker_task but active is false
             if self.driver_handles.contains_key(&worker_task.id) && worker_task.task.active == false {
                 self.remove_worker_task(&worker_task.id).await?;
@@ -98,7 +102,6 @@ impl TaskManager {
                     error!("Getting worker task failed: {}", e);
                 } else {
                     let worker_tasks = response.unwrap().into_inner();
-                    info!("Getting tasks was successful!, adding & cleaning up now");
                     if let Err(e) = self.handle_tasks_update(worker_tasks.data).await {
                         error!("Error while handling task updates: {}", e);
                     }

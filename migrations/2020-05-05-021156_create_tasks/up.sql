@@ -6,7 +6,7 @@ CREATE TABLE tasks (
 	id SERIAL PRIMARY KEY,
 	name VARCHAR(100) NOT NULL,
 	active BOOLEAN NOT NULL DEFAULT FALSE,
-	profile VARCHAR,
+	profile VARCHAR NOT NULL,
 	created_at TIMESTAMP NOT NULL DEFAULT current_timestamp,
 	updated_at TIMESTAMP NOT NULL DEFAULT current_timestamp
 );
@@ -15,6 +15,7 @@ CREATE TABLE worker_tasks (
 	id SERIAL PRIMARY KEY,
 	task_id SERIAL REFERENCES tasks(id) ON DELETE CASCADE,
 	worker_id SERIAL REFERENCES workers(id) ON DELETE CASCADE,
+	cpus INT NOT NULL,
 	created_at TIMESTAMP NOT NULL DEFAULT current_timestamp
 );
 

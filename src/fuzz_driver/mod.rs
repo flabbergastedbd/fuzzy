@@ -18,13 +18,13 @@ pub enum FuzzDriverEnum {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct FuzzConfig {
-    driver: FuzzDriverEnum,
-    execution: ExecutorConfig,
+    pub driver: FuzzDriverEnum,
+    pub execution: ExecutorConfig,
 }
 
 #[tonic::async_trait]
 pub trait FuzzDriver {
-    fn new(config: FuzzConfig, worker_task_id: Option<i32>) -> Self;
+    fn new(config: FuzzConfig, worker_task_id: Option<i32>) -> Self where Self: Sized;
 
     async fn start(&self, connect_addr: String, kill_switch: oneshot::Receiver<u8>) -> Result<(), Box<dyn Error>>;
 }

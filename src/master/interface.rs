@@ -5,10 +5,11 @@ use log::{error, debug};
 use tonic::{Request, Response, Status, Code};
 
 use crate::db::DbBroker;
-use crate::schema::{tasks, corpora, crashes};
+use crate::schema::{workers, tasks, corpora, crashes, worker_tasks};
 use crate::models::{Task, NewTask, Corpus, NewCorpus, NewCrash};
 use crate::xpc;
 use crate::xpc::orchestrator_server::Orchestrator;
+use crate::common::profiles::construct_profile;
 pub use crate::xpc::orchestrator_server::OrchestratorServer as OrchestratorServer;
 
 #[derive(Clone)]
@@ -40,6 +41,12 @@ impl Orchestrator for OrchestratorService {
         // First get inner type of tonic::Request & then use our From traits
         let new_task: NewTask = request.into_inner();
 
+        if let Err(e) = construct_profile(new_task.profile.as_str()) {
+            error!("Bad profile: {}", e);
+            return Err(Status::new(Code::InvalidArgument, format!("{}", e)))
+        }
+
+        // Check profile is valid
         debug!("Inserting new task into database");
         // Get connection from pool (r2d2)
         let conn = self.db_broker.get_conn();
@@ -124,6 +131,32 @@ impl Orchestrator for OrchestratorService {
             Err(Status::new(Code::InvalidArgument, format!("{}", e)))
         } else {
             Ok(Response::new({}))
+        }
+    }
+
+    // Worker task related calls
+    async fn get_worker_task(&self, request: Request<xpc::FilterWorkerTask>) -> Result<Response<xpc::WorkerTasks>, Status> {
+        let filter_worker_task = request.into_inner();
+        debug!("Filtering worker tasks with {:#?}", filter_worker_task);
+
+        let conn = self.db_broker.get_conn();
+        let tasks = worker_tasks::table.inner_join(tasks::table).inner_join(workers::table)
+            .filter(
+                workers::uuid.eq(filter_worker_task.worker_uuid)
+                .and(worker_tasks::worker_id.eq(workers::id))
+                // Not active tasks only, as previous ones need to be stopped
+                // .and(tasks::active.eq(true)) // Active tasks only
+                // .and(worker_tasks::task_id.eq(tasks::id))
+            )
+            .select((worker_tasks::id, tasks::all_columns, worker_tasks::cpus))
+            .load::<xpc::WorkerTaskFull>(&conn);
+
+        // Failure of constraint will be logged here
+        if let Err(e) = tasks {
+            error!("Unable to fetch worker tasks : {}", e);
+            Err(Status::new(Code::InvalidArgument, format!("{}", e)))
+        } else {
+            Ok(Response::new(xpc::WorkerTasks { data: tasks.unwrap() }))
         }
     }
 }

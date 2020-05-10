@@ -1,3 +1,4 @@
+use std::path::Path;
 use std::error::Error;
 
 use log::debug;
@@ -5,6 +6,7 @@ use clap::ArgMatches;
 use tonic::Request;
 
 use crate::models::NewTask;
+use crate::common::profiles::construct_profile_from_disk;
 use crate::xpc::orchestrator_client::OrchestratorClient;
 
 pub async fn cli(args: &ArgMatches, connect_addr: String) -> Result<(), Box<dyn Error>> {
@@ -15,10 +17,16 @@ pub async fn cli(args: &ArgMatches, connect_addr: String) -> Result<(), Box<dyn 
         // Adding a new task
         ("add", Some(sub_matches)) => {
             debug!("Adding a new task");
+            let profile_path = sub_matches.value_of("profile_path").unwrap();
+
+            let profile = construct_profile_from_disk(Path::new(profile_path)).await?;
+
             let new_task = NewTask {
                 name: sub_matches.value_of("name").unwrap().to_owned(),
-                active: false,
+                active: true,
+                profile: serde_json::to_string(&profile)?,
             };
+
             // Validate executor & driver as we do crude transforms via enums & strum
             let response = client.submit_task(Request::new(new_task)).await?;
             // TODO: Error handling

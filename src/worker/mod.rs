@@ -5,12 +5,13 @@ use std::fmt;
 use clap::ArgMatches;
 use log::{error, info, debug};
 use uuid::Uuid;
-use tokio::sync::RwLock;
+use tokio::{sync::RwLock, signal::unix::{signal, SignalKind}};
 use heim::units::information;
 
 use crate::models::NewWorker;
 
 mod dispatcher;
+mod tasks;
 
 impl NewWorker {
     pub fn new() -> Self {
@@ -30,8 +31,7 @@ impl NewWorker {
     pub fn with_name(mut self, name: Option<&str>) -> Self {
         if let Some(custom_name) = name {
             self.name = Some(custom_name.to_owned());
-        }
-        self
+        } self
     }
 
     // Assign given name to this worker
@@ -82,9 +82,38 @@ pub async fn main_loop(worker: Arc<RwLock<NewWorker>>, connect_addr: &str) -> Re
     });
 
     let d = dispatcher::Dispatcher::new(String::from(connect_addr));
+
     // Launch periodic heartbeat dispatcher
     info!("Launching heartbeat task");
-    tokio::spawn(d.heartbeat(worker)).await?;
+    let worker_clone = worker.clone();
+    let heartbeat_handle = tokio::spawn(d.heartbeat(worker_clone));
+
+    // Launch task manager
+    info!("Launching task manager task");
+    let mut task_manager = tasks::TaskManager::new(String::from(connect_addr));
+    let worker_clone = worker.clone();
+    let task_manager_handle = tokio::spawn(async move {
+        if let Err(e) = task_manager.spawn(worker_clone).await {
+            error!("Task manager exited with error: {}", e);
+        }
+    });
+
+    let mut stream = signal(SignalKind::interrupt())?;
+    tokio::select! {
+        result = heartbeat_handle => {
+            if let Err(e) = result {
+                error!("Heartbeat handle exited first: {}", e);
+            }
+        },
+        result = task_manager_handle => {
+            if let Err(e) = result {
+                error!("Task manager exited first: {}", e);
+            }
+        },
+        _ = stream.recv() => {
+            info!("Keyboard interrput received");
+        },
+    }
 
     Ok(())
 }

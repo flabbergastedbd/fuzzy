@@ -1,7 +1,9 @@
-use clap::ArgMatches;
-use log::{info, debug};
 use std::net::SocketAddr;
+
+use clap::ArgMatches;
+use log::{error, info, debug};
 use tonic::transport::Server;
+use tokio::{sync::RwLock, signal::unix::{signal, SignalKind}};
 
 use crate::db::DbBroker;
 use crate::xpc::collector_server::CollectorServer;
@@ -9,6 +11,7 @@ use interface::{OrchestratorService, OrchestratorServer};
 
 mod collector;
 mod interface;
+mod scheduler;
 
 #[derive(Debug)]
 pub struct Master {
@@ -37,12 +40,28 @@ impl Master {
         let collector_service = collector::CollectorService::new(db_broker.clone());
         let orchestrator_service = OrchestratorService::new(db_broker.clone());
 
+        // Spawn off scheduler service
+        let scheduler_service = scheduler::Scheduler::new(db_broker.clone());
+        let scheduler_handle = tokio::spawn(async move {
+            if let Err(e) = scheduler_service.spawn().await {
+                error!("Scheduler exited early with error: {}", e);
+            }
+        });
+
         debug!("Starting master event loop on {}", self.listen_addr);
-        Server::builder()
+        let interface_server = Server::builder()
             .add_service(CollectorServer::new(collector_service))
             .add_service(OrchestratorServer::new(orchestrator_service))
-            .serve(self.listen_addr)
-            .await?;
+            .serve(self.listen_addr);
+
+        let mut stream = signal(SignalKind::interrupt())?;
+        tokio::select! {
+            _ = scheduler_handle => {},
+            _ = interface_server => {},
+            _ = stream.recv() => {
+                info!("Keyboard interrput received");
+            },
+        }
 
         Ok(())
     }

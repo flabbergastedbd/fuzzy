@@ -64,6 +64,10 @@ subcommands:
                             help: Name of the task
                             takes_value: true
                             index: 1
+                        - profile_path:
+                            help: Path to profile path
+                            takes_value: true
+                            index: 2
                 - delete:
                     about: Delete a task
                     args:

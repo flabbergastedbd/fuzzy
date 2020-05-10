@@ -26,7 +26,7 @@ table! {
         id -> Int4,
         name -> Varchar,
         active -> Bool,
-        profile -> Nullable<Varchar>,
+        profile -> Varchar,
         created_at -> Timestamp,
         updated_at -> Timestamp,
     }
@@ -37,6 +37,7 @@ table! {
         id -> Int4,
         task_id -> Int4,
         worker_id -> Int4,
+        cpus -> Int4,
         created_at -> Timestamp,
     }
 }

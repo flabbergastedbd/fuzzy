@@ -15,7 +15,7 @@ message Id {
 
 // Worker related
 service Collector {
-    rpc Heartbeat(NewWorker) returns (google.protobuf.Empty);
+    rpc Heartbeat(NewWorker) returns (Worker);
 }
 
 message NewWorker {
@@ -29,17 +29,17 @@ message NewWorker {
 message Worker {
     required int32 id = 1;
     required string uuid = 2;
-    required string name = 3;
+    optional string name = 3;
     required int32 cpus = 4;
     required int32 memory = 5;
     required bool active = 6;
     required google.protobuf.Timestamp created_at = 7;
-    // google.protobuf.Timestamp updated_at = 8;
+    required google.protobuf.Timestamp updated_at = 8;
 }
 
 // User interface related
 service Orchestrator {
-    // Task related functions
+    // Task related functions for interface
     rpc GetTasks(google.protobuf.Empty) returns (Tasks);
     rpc SubmitTask(NewTask) returns (google.protobuf.Empty);
 
@@ -49,7 +49,11 @@ service Orchestrator {
 
     // Crash related
     rpc SubmitCrash(NewCrash) returns (google.protobuf.Empty);
+
+    // Worker tasks
+    rpc GetWorkerTask(FilterWorkerTask) returns (WorkerTasks);
 }
+
 
 message Tasks {
     repeated Task data = 1;
@@ -58,13 +62,14 @@ message Tasks {
 message NewTask {
     required string name = 1;
     required bool active = 2;
+    required string profile = 3;
 }
 
 message Task {
     required int32 id = 1;
     required string name = 2;
     required bool active = 3;
-    optional string profile = 4;
+    required string profile = 4;
     required google.protobuf.Timestamp created_at = 5;
     required google.protobuf.Timestamp updated_at = 6;
 }
@@ -101,4 +106,26 @@ message NewCrash {
     required string label = 3;
     required bool verified = 4;
     optional int32 worker_task_id = 5;
+}
+
+message WorkerTask {
+    required int32 id = 1;
+    required int32 task_id = 2;
+    required int32 worker_id = 3;
+    required int32 cpus = 4;
+    required google.protobuf.Timestamp created_at = 5;
+}
+
+message WorkerTaskFull {
+    required int32 id = 1;
+    required Task task = 2;
+    required int32 cpus = 3;
+}
+
+message WorkerTasks {
+    repeated WorkerTaskFull data = 1;
+}
+
+message FilterWorkerTask {
+    required string worker_uuid = 1;
 }

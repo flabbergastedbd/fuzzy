@@ -47,6 +47,7 @@ pub struct CorpusConfig {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ExecutorConfig {
     pub executor: ExecutorEnum,
+    pub cpus: i32,
     pub executable: String,
     pub args: Vec<String>,
     pub cwd: Box<Path>,

@@ -6,8 +6,10 @@ pub use crate::xpc::{
     NewTask, Task,
     NewCorpus, Corpus,
     NewCrash,
+    WorkerTask,
 };
 
+/*
 #[derive(Clone, Queryable, Insertable, Associations)]
 #[table_name = "worker_tasks"]
 #[belongs_to(Task)]
@@ -16,3 +18,4 @@ pub struct WorkerTask {
     pub worker_id: i32,
     pub task_id: i32
 }
+*/

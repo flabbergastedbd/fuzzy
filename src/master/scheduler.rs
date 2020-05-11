@@ -10,8 +10,6 @@ use crate::models::{Task, WorkerTask, Worker};
 use crate::schema::{tasks, worker_tasks, workers};
 use crate::common::profiles::construct_profile;
 
-const UPDATE_INTERVAL: Duration = Duration::from_secs(10);
-
 #[derive(Clone)]
 pub struct Scheduler {
     db_broker: DbBroker,
@@ -97,12 +95,12 @@ impl Scheduler {
     pub async fn spawn(&self) -> Result<(), Box<dyn Error>> {
         debug!("Spawning scheduler");
 
-        let mut interval = tokio::time::interval(UPDATE_INTERVAL);
+        let mut interval = tokio::time::interval(crate::common::intervals::MASTER_SCHEDULER_INTERVAL);
         loop {
             interval.tick().await;
             if let Err(e) = self.update_worker_tasks() {
                 error!("Failed to schedule tasks: {}", e);
-                warn!("Will try again in {:?}", UPDATE_INTERVAL);
+                warn!("Will try again in {:?}", crate::common::intervals::MASTER_SCHEDULER_INTERVAL);
             }
         }
     }

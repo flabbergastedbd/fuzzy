@@ -115,8 +115,6 @@ impl super::FuzzDriver for LibFuzzerDriver {
     }
 }
 
-const STAT_UPLOAD_INTERVAL: Duration = Duration::from_secs(60);
-
 pub struct LibFuzzerStatCollector {
     instances: i32,
     worker_task_id: i32,
@@ -139,7 +137,7 @@ impl LibFuzzerStatCollector {
     pub async fn start(self, connect_addr: String) -> Result<(), Box<dyn Error>> {
         debug!("Spawning lib fuzzer stat collector");
 
-        let mut interval = tokio::time::interval(STAT_UPLOAD_INTERVAL);
+        let mut interval = tokio::time::interval(crate::common::intervals::WORKER_FUZZDRIVER_STAT_UPLOAD_INTERVAL);
         let client = &OrchestratorClient::connect(connect_addr).await?;
 
         loop {

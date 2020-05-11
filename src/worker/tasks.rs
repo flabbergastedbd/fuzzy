@@ -1,6 +1,5 @@
 use std::sync::Arc;
 use std::error::Error;
-use std::time::Duration;
 use std::collections::HashMap;
 
 use log::{debug, error, info};
@@ -10,9 +9,6 @@ use crate::xpc;
 use crate::worker::NewWorker;
 use crate::xpc::orchestrator_client::OrchestratorClient;
 use crate::fuzz_driver::{self, FuzzConfig, FuzzDriver};
-
-// Heartbeat interval in seconds
-const TASK_REFRESH_INTERVAL: Duration = Duration::from_secs(5);
 
 pub struct TaskManager {
     connect_addr: String,
@@ -84,7 +80,7 @@ impl TaskManager {
     }
 
     pub async fn spawn(&mut self, worker_lock: Arc<RwLock<NewWorker>>) -> Result<(), Box<dyn std::error::Error>> {
-        let mut interval = tokio::time::interval(TASK_REFRESH_INTERVAL);
+        let mut interval = tokio::time::interval(crate::common::intervals::WORKER_TASK_REFRESH_INTERVAL);
         loop {
             debug!("Trying to get tasks and update");
             if let Ok(mut client) = OrchestratorClient::connect(self.connect_addr.clone()).await {

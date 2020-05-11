@@ -1,12 +1,11 @@
 use std::error::Error;
-use std::time::Duration;
 
 use log::{error, warn, debug};
 use diesel::prelude::*;
 use diesel::dsl::sum;
 
 use crate::db::DbBroker;
-use crate::models::{Task, WorkerTask, Worker};
+use crate::models::{Task, Worker};
 use crate::schema::{tasks, worker_tasks, workers};
 use crate::common::profiles::construct_profile;
 

@@ -9,7 +9,6 @@ use serde::{Serialize, Deserialize};
 use tokio::{
     process::{ChildStdout, ChildStderr},
     io::{BufReader, Lines},
-    fs::File,
 };
 
 use corpus_syncer::CorpusSyncer;

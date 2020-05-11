@@ -3,7 +3,7 @@ use std::net::SocketAddr;
 use clap::ArgMatches;
 use log::{error, info, debug};
 use tonic::transport::Server;
-use tokio::{sync::RwLock, signal::unix::{signal, SignalKind}};
+use tokio::{signal::unix::{signal, SignalKind}};
 
 use crate::db::DbBroker;
 use crate::xpc::collector_server::CollectorServer;

@@ -2,10 +2,9 @@ use std::process::Stdio;
 use std::error::Error;
 use std::path::{Path, PathBuf};
 
-use regex::Regex;
 use log::{info, debug};
 use tokio::{
-    fs::{self, File},
+    fs,
     process::{Command, Child, ChildStdout, ChildStderr},
     io::{BufReader, AsyncBufReadExt, Lines},
 };

@@ -79,7 +79,7 @@ pub trait Executor {
     async fn get_crash_syncer(&self, config: CrashConfig) -> Result<CrashSyncer, Box<dyn Error>>;
 
     // Get absolute path for relative to cwd
-    fn get_abs_path(&self, relative_path: &Path) -> PathBuf;
+    fn get_cwd_path(&self) -> PathBuf;
 
     // Clean up all spawned children
     fn close(&mut self) -> Result<(), Box<dyn Error>>;

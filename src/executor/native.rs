@@ -84,8 +84,8 @@ impl super::Executor for NativeExecutor {
         )?)
     }
 
-    fn get_abs_path(&self, relative_path: &Path) -> PathBuf {
-        self.config.cwd.join(relative_path)
+    fn get_cwd_path(&self) -> PathBuf {
+        self.config.cwd.clone().to_path_buf()
     }
 
     fn close(&mut self) -> Result<(), Box<dyn Error>> {

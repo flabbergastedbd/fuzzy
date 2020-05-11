@@ -176,7 +176,7 @@ impl Orchestrator for OrchestratorService {
                 // .and(tasks::active.eq(true)) // Active tasks only
                 // .and(worker_tasks::task_id.eq(tasks::id))
             )
-            .select((worker_tasks::id, tasks::all_columns, worker_tasks::cpus))
+            .select((worker_tasks::id, tasks::all_columns, worker_tasks::cpus, worker_tasks::active))
             .load::<xpc::WorkerTaskFull>(&conn);
 
         // Failure of constraint will be logged here
@@ -185,6 +185,22 @@ impl Orchestrator for OrchestratorService {
             Err(Status::new(Code::InvalidArgument, format!("{}", e)))
         } else {
             Ok(Response::new(xpc::WorkerTasks { data: tasks.unwrap() }))
+        }
+    }
+
+    async fn update_worker_task(&self, request: Request<xpc::PatchWorkerTask>) -> Result<Response<()>, Status> {
+        let patch_worker_task = request.into_inner();
+
+        let conn = self.db_broker.get_conn();
+        let worker_tasks = diesel::update(worker_tasks::table)
+            .set(&patch_worker_task)
+            .execute(&conn);
+
+        if let Err(e) = worker_tasks {
+            error!("Unable to fetch worker tasks : {}", e);
+            Err(Status::new(Code::InvalidArgument, format!("{}", e)))
+        } else {
+            Ok(Response::new({}))
         }
     }
 

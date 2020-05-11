@@ -11,6 +11,7 @@ use tonic::Request;
 use super::FuzzConfig;
 use crate::executor::{self, CrashConfig, Executor};
 use crate::xpc::orchestrator_client::OrchestratorClient;
+use crate::common::worker_tasks::{mark_worker_task_active, mark_worker_task_inactive};
 use crate::models::NewFuzzStat;
 
 pub struct LibFuzzerDriver {
@@ -73,6 +74,18 @@ impl super::FuzzDriver for LibFuzzerDriver {
         // Start the actual process
         runner.spawn().await?;
 
+        // Spawn of stderr so that we stop when process exits
+        // Needed for libfuzzer
+        let stderr_reader = runner.get_stderr_reader();
+        let stderr_handle = tokio::spawn(async move {
+            if let Some(mut reader) = stderr_reader {
+                while let Ok(line) = reader.next_line().await {
+                    warn!("LibFuzzer STDERR: {:?}", line);
+                }
+            }
+        });
+
+        mark_worker_task_active(self.worker_task_id, connect_addr.clone()).await?;
         // Listen and wait for all and kill switch
         tokio::select! {
             _ = corpus_sync_handle => {
@@ -84,10 +97,14 @@ impl super::FuzzDriver for LibFuzzerDriver {
             _ = stats_collector_handle => {
                 error!("Stats collector exited first instead of kill switch");
             },
+            _ = stderr_handle => {
+                warn!("Stderr exited first instead of kill switch, probably libfuzzer exited first");
+            },
             _ = kill_switch => {
                 info!("Received kill for lib fuzzer driver");
             },
         }
+        mark_worker_task_inactive(self.worker_task_id, connect_addr.clone()).await?;
 
         // local.await;
         // If we reached here means one of the watches failed or kill switch triggered
@@ -98,7 +115,7 @@ impl super::FuzzDriver for LibFuzzerDriver {
     }
 }
 
-const STAT_UPLOAD_INTERVAL: Duration = Duration::from_secs(5);
+const STAT_UPLOAD_INTERVAL: Duration = Duration::from_secs(60);
 
 pub struct LibFuzzerStatCollector {
     instances: i32,

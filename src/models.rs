@@ -3,6 +3,6 @@ pub use crate::xpc::{
     NewTask, Task,
     NewCorpus, Corpus,
     NewCrash,
-    WorkerTask,
+    WorkerTask, PatchWorkerTask,
     NewFuzzStat,
 };

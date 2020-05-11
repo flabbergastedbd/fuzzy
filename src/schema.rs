@@ -59,6 +59,7 @@ table! {
         task_id -> Int4,
         worker_id -> Int4,
         cpus -> Int4,
+        active -> Bool,
         created_at -> Timestamp,
     }
 }

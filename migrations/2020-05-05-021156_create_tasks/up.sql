@@ -16,6 +16,7 @@ CREATE TABLE worker_tasks (
 	task_id SERIAL REFERENCES tasks(id) ON DELETE CASCADE,
 	worker_id SERIAL REFERENCES workers(id) ON DELETE CASCADE,
 	cpus INT NOT NULL,
+	active BOOLEAN NOT NULL DEFAULT FALSE,
 	created_at TIMESTAMP NOT NULL DEFAULT current_timestamp
 );
 

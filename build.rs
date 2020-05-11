@@ -42,6 +42,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .type_attribute("WorkerTask", "#[belongs_to(Task)]")
         .type_attribute("WorkerTask", "#[belongs_to(Worker)]")
 
+        // PatchWorkerTask (Patch Worker Task to update state)
+        .type_attribute("PatchWorkerTask", "#[derive(Queryable, AsChangeset, Associations)]")
+        .type_attribute("PatchWorkerTask", "#[table_name = \"worker_tasks\"]")
+
         // WorkerTask (Worker Task)
         .type_attribute("WorkerTaskFull", "#[derive(Queryable, Associations)]")
         // .type_attribute("WorkerTaskFull", "#[table_name = \"worker_tasks\"]")

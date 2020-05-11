@@ -53,6 +53,7 @@ service Orchestrator {
 
     // Worker tasks
     rpc GetWorkerTask(FilterWorkerTask) returns (WorkerTasks);
+    rpc UpdateWorkerTask(PatchWorkerTask) returns (google.protobuf.Empty);
 
     // Fuzz stats
     rpc SubmitFuzzStat(NewFuzzStat) returns (google.protobuf.Empty);
@@ -124,13 +125,15 @@ message WorkerTask {
     required int32 task_id = 2;
     required int32 worker_id = 3;
     required int32 cpus = 4;
-    required google.protobuf.Timestamp created_at = 5;
+    required bool active = 5;
+    required google.protobuf.Timestamp created_at = 6;
 }
 
 message WorkerTaskFull {
     required int32 id = 1;
     required Task task = 2;
     required int32 cpus = 3;
+    required bool active = 4;
 }
 
 message WorkerTasks {
@@ -139,6 +142,11 @@ message WorkerTasks {
 
 message FilterWorkerTask {
     required string worker_uuid = 1;
+}
+
+message PatchWorkerTask {
+    required int32 id = 1;
+    required bool active = 2;
 }
 
 message NewFuzzStat {

@@ -6,6 +6,7 @@ datasources:
     url: postgres:5432
     database: fuzzy
     user: fuzzy
+    isDefault: true
     secureJsonData:
       password: "fuzzy"
     jsonData:

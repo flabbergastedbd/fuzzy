@@ -61,7 +61,7 @@ impl super::FuzzDriver for LibFuzzerDriver {
         });
 
         // Stat collector
-        let log_path = runner.get_abs_path(Path::new("."));
+        let log_path = runner.get_cwd_path();
         let stats_collector = LibFuzzerStatCollector::new(self.config.execution.cpus, self.worker_task_id, log_path)?;
         let connect_addr_clone = connect_addr.clone();
         let stats_collector_handle = task::spawn(async move {
@@ -98,7 +98,7 @@ impl super::FuzzDriver for LibFuzzerDriver {
     }
 }
 
-const STAT_UPLOAD_INTERVAL: Duration = Duration::from_secs(60);
+const STAT_UPLOAD_INTERVAL: Duration = Duration::from_secs(5);
 
 pub struct LibFuzzerStatCollector {
     instances: i32,
@@ -128,40 +128,55 @@ impl LibFuzzerStatCollector {
         loop {
             interval.tick().await;
             let mut client_clone = client.clone();
-            // Iterate over logs
+
+            // Iterate over logs and get stats
             let active_logs = self.get_active_logs().await?;
+            let mut stats: Vec<NewFuzzStat> = Vec::new();
             for log in active_logs.into_iter() {
-                let log = log.into_std().await;
-                if let Ok(new_fuzz_stat) = self.get_stat_from_log(log) {
-                    if new_fuzz_stat.is_some() {
-                        let request = Request::new(new_fuzz_stat.unwrap());
-                        let response = client_clone.submit_fuzz_stat(request).await;
-                        /*
-                        if let Err(e) = client_clone.submit_fuzz_stat(request).await {
-                            error!("Failed to submit a fuzz stat: {}", e);
-                        }
-                        */
-                    }
+                let new_fuzz_stat = self.get_stat_from_log(log.as_path());
+                if let Err(e) = new_fuzz_stat {
+                    error!("Error during gathering stat from {:?}: {}", log, e);
+                } else {
+                    stats.push(new_fuzz_stat.unwrap());
                 }
             }
+
+            // Submit gathered stats
+            for stat in stats.into_iter() {
+                let request = Request::new(stat);
+                if let Err(e) = client_clone.submit_fuzz_stat(request).await {
+                    error!("Failed to submit a fuzz stat: {}", e);
+                }
+            }
+
         }
     }
 
-    fn get_stat_from_log(&self, file: std::fs::File) -> Result<Option<NewFuzzStat>, Box<dyn Error>> {
-        file.seek(SeekFrom::End(400))?;
+    fn get_stat_from_log(&self, relative_path: &Path) -> Result<NewFuzzStat, Box<dyn Error>> {
+        let file_path = self.path.join(relative_path); // Add path to directory path in config
+        let mut file = std::fs::File::open(file_path.as_path())?;
+        let length = file.metadata()?.len();
+
+        // Always seek from start
+        // debug!("File {:?} length found to be {}", file_path.as_path(), length);
+        file.seek(SeekFrom::Start(length - 300))?;
 
         let reader = std::io::BufReader::new(file);
-        let mut lines: Vec<_> = reader.lines().map(|line| { line.unwrap() }).collect();
+        let mut lines: Vec<String> = reader.lines().map(|line| { line.unwrap() }).collect();
 
-        if let Some(line) = lines.pop() {
+        debug!("Collected lines from log file {:?}: {:?}", file_path.as_path(), lines);
+        let line = lines.pop();
+        if let Some(line) = line {
             let new_stat = self.get_stat(line.as_str())?;
             Ok(new_stat)
         } else {
-            Ok(None)
+            Err(Box::new(std::io::Error::new(
+                        std::io::ErrorKind::InvalidData,
+                        format!("Unable to get stat from libfuzzer log: {:?}", line))))
         }
     }
 
-    async fn get_active_logs(&self) -> Result<Vec<fs::File>, Box<dyn Error>> {
+    async fn get_active_logs(&self) -> Result<Vec<PathBuf>, Box<dyn Error>> {
         debug!("Trying to get active logs at {:?}", self.path);
 
         let mut logs = Vec::new();
@@ -181,18 +196,17 @@ impl LibFuzzerStatCollector {
             let (logs, _) = logs.split_at(self.instances as usize);
             let mut files = Vec::new();
             for e in logs {
-                let file_path = self.path.join(e.file_name());
-                files.push(fs::File::open(file_path).await?);
+                files.push(e.path());
             }
             debug!("Found active logs: {:?}", files);
             Ok(files)
         } else {
-            Err(Box::new(std::io::Error::new(std::io::ErrorKind::InvalidData,
-                "Unable to find necessary number of lib fuzzer log files")))
+            warn!("Unable to find necessary number of lib fuzzer log files");
+            Ok(vec![])
         }
     }
 
-    pub fn get_stat(&self, line: &str) -> Result<Option<NewFuzzStat>, Box<dyn Error>> {
+    pub fn get_stat(&self, line: &str) -> Result<NewFuzzStat, Box<dyn Error>> {
         debug!("Trying to extract stat from libFuzzer line: {}", line);
         if let Some(captures) = self.stat_filter.captures(line) {
             let coverage = captures.name("coverage");
@@ -208,10 +222,11 @@ impl LibFuzzerStatCollector {
                     worker_task_id: self.worker_task_id,
                 };
                 debug!("Found stat: {:?}", new_fuzz_stat);
-                return Ok(Some(new_fuzz_stat))
+                return Ok(new_fuzz_stat)
             }
         }
-        Ok(None)
+        Err(Box::new(std::io::Error::new(std::io::ErrorKind::InvalidData,
+            format!("Unable to get stat from line: {}", line))))
     }
 }
 
@@ -225,7 +240,7 @@ mod tests {
 #3963 NEW    cov: 6 ft: 5 corp: 4/6b exec/s: 0 rss: 25Mb L: 2 MS: 2 ShuffleBytes-ChangeBit-
 #4167 NEW    cov: 7 ft: 6 corp: 5/9b exec/s: 0 rss: 25Mb L: 3 MS: 1 InsertByte-";
 
-        let stats_collector = LibFuzzerStatCollector::new(0, PathBuf::new()).unwrap();
+        let stats_collector = LibFuzzerStatCollector::new(0, Some(0), PathBuf::new()).unwrap();
         for line in stats.lines().into_iter() {
             println!("{:?}", stats_collector.get_stat(line).unwrap());
         }

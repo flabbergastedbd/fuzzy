@@ -1,0 +1,27 @@
+version: "3.5"
+services:
+  postgres:
+    image: postgres:alpine
+    hostname: postgres
+    environment:
+      POSTGRES_PASSWORD: "fuzzy"
+      POSTGRES_USER: "fuzzy"
+      POSTGRES_DB: "fuzzy"
+    ports:
+      - "127.0.0.1:5432:5432"
+    networks:
+      - internal
+  grafana:
+    image: grafana/grafana
+    hostname: grafana
+    environment:
+      GF_SECURITY_ADMIN_USER: "fuzzy"
+      GF_SECURITY_ADMIN_PASSWORD: "fuzzy"
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - ./grafana:/etc/grafana/provisioning
+    networks:
+      - internal
+networks:
+  internal:

@@ -79,7 +79,11 @@ impl super::FuzzDriver for LibFuzzerDriver {
         let stderr_handle = tokio::spawn(async move {
             if let Some(mut reader) = stderr_reader {
                 while let Ok(line) = reader.next_line().await {
-                    warn!("LibFuzzer STDERR: {:?}", line);
+                    if line.is_none() {
+                        break
+                    } else {
+                        warn!("LibFuzzer STDERR: {:?}", line);
+                    }
                 }
             }
         });

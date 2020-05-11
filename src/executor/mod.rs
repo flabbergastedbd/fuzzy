@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::error::Error;
 use std::collections::HashMap;
 
@@ -78,7 +78,8 @@ pub trait Executor {
     async fn get_corpus_syncer(&self) -> Result<CorpusSyncer, Box<dyn Error>>;
     async fn get_crash_syncer(&self, config: CrashConfig) -> Result<CrashSyncer, Box<dyn Error>>;
 
-    async fn get_reader_for_file(&self, path: &Path) -> Result<BufReader<File>, Box<dyn Error>>;
+    // Get absolute path for relative to cwd
+    fn get_abs_path(&self, relative_path: &Path) -> PathBuf;
 
     // Clean up all spawned children
     fn close(&mut self) -> Result<(), Box<dyn Error>>;

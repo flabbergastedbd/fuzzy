@@ -1,10 +1,11 @@
 use std::process::Stdio;
 use std::error::Error;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
+use regex::Regex;
 use log::{info, debug};
 use tokio::{
-    fs,
+    fs::{self, File},
     process::{Command, Child, ChildStdout, ChildStderr},
     io::{BufReader, AsyncBufReadExt, Lines},
 };
@@ -83,14 +84,8 @@ impl super::Executor for NativeExecutor {
         )?)
     }
 
-    async fn get_reader_for_file(&self, path: &Path) -> Result<BufReader<fs::File>, Box<dyn Error>> {
-        debug!("Creating reader for file path: {:?}", path);
-        let file_path = self.config.cwd.clone();
-        let absolute_path = file_path.join(path);
-
-        let file = fs::File::open(absolute_path).await?;
-        let reader = BufReader::new(file);
-        Ok(reader)
+    fn get_abs_path(&self, relative_path: &Path) -> PathBuf {
+        self.config.cwd.join(relative_path)
     }
 
     fn close(&mut self) -> Result<(), Box<dyn Error>> {

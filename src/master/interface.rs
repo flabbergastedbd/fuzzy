@@ -5,8 +5,8 @@ use log::{error, debug};
 use tonic::{Request, Response, Status, Code};
 
 use crate::db::DbBroker;
-use crate::schema::{workers, tasks, corpora, crashes, worker_tasks};
-use crate::models::{Task, NewTask, Corpus, NewCorpus, NewCrash};
+use crate::schema::{workers, tasks, corpora, crashes, worker_tasks, fuzz_stats};
+use crate::models::{Task, NewTask, Corpus, NewCorpus, NewCrash, NewFuzzStat};
 use crate::xpc;
 use crate::xpc::orchestrator_server::Orchestrator;
 use crate::common::profiles::construct_profile;
@@ -185,6 +185,24 @@ impl Orchestrator for OrchestratorService {
             Err(Status::new(Code::InvalidArgument, format!("{}", e)))
         } else {
             Ok(Response::new(xpc::WorkerTasks { data: tasks.unwrap() }))
+        }
+    }
+
+    // Fuzz stat related calls
+    async fn submit_fuzz_stat(&self, request: Request<NewFuzzStat>) -> Result<Response<()>, Status> {
+        let new_fuzz_stat = request.into_inner();
+
+        let conn = self.db_broker.get_conn();
+
+        let rows_inserted = diesel::insert_into(fuzz_stats::table)
+            .values(&new_fuzz_stat)
+            .execute(&conn);
+
+        if let Err(e) = rows_inserted {
+            error!("Unable to add crash : {}", e);
+            Err(Status::new(Code::InvalidArgument, format!("{}", e)))
+        } else {
+            Ok(Response::new({}))
         }
     }
 }

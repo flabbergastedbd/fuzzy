@@ -53,6 +53,9 @@ service Orchestrator {
 
     // Worker tasks
     rpc GetWorkerTask(FilterWorkerTask) returns (WorkerTasks);
+
+    // Fuzz stats
+    rpc SubmitFuzzStat(NewFuzzStat) returns (google.protobuf.Empty);
 }
 
 
@@ -136,4 +139,11 @@ message WorkerTasks {
 
 message FilterWorkerTask {
     required string worker_uuid = 1;
+}
+
+message NewFuzzStat {
+    required int32 coverage = 1;
+    required int32 execs = 2;
+    optional int32 memory = 3;
+    required int32 worker_task_id = 4;
 }

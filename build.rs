@@ -46,6 +46,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .type_attribute("WorkerTaskFull", "#[derive(Queryable, Associations)]")
         // .type_attribute("WorkerTaskFull", "#[table_name = \"worker_tasks\"]")
 
+        // NewFuzzStat (FuzzStat without time field)
+        .type_attribute("NewFuzzStat", "#[derive(Queryable, Insertable, AsChangeset, Associations)]")
+        .type_attribute("NewFuzzStat", "#[table_name = \"fuzz_stats\"]")
+        .type_attribute("NewFuzzStat", "#[belongs_to(WorkerTask)]")
+
         // All fields of this name, prost converts them to prost_types::Timestamp, which diesel
         // doesn't support natively so we customize deserialization behaviour for one field
         //

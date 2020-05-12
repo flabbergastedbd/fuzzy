@@ -1,3 +1,4 @@
+use std::env;
 use std::sync::Arc;
 use std::error::Error;
 use std::fmt;
@@ -9,6 +10,7 @@ use tokio::{sync::RwLock, signal::unix::{signal, SignalKind}};
 use heim::units::information;
 
 use crate::models::NewWorker;
+use crate::common::constants::WORKER_CONNECT_ADDR_ENV_KEY;
 
 mod dispatcher;
 mod tasks;
@@ -22,7 +24,6 @@ impl NewWorker {
             cpus: 0,
             memory: 0,
             active: true,
-            // connect_addr: None,
         };
         worker
     }
@@ -73,7 +74,7 @@ impl fmt::Display for NewWorker {
 }
 
 #[tokio::main]
-pub async fn main_loop(worker: Arc<RwLock<NewWorker>>, connect_addr: &str) -> Result<(), Box<dyn Error>> {
+pub async fn main_loop(worker: Arc<RwLock<NewWorker>>) -> Result<(), Box<dyn Error>> {
     // Launch a cpu update task, because of well `heim` and async only
     let worker_clone = worker.clone();
     tokio::task::spawn(async move {
@@ -81,17 +82,19 @@ pub async fn main_loop(worker: Arc<RwLock<NewWorker>>, connect_addr: &str) -> Re
         worker_writable.update_self().await
     });
 
-    let d = dispatcher::Dispatcher::new(String::from(connect_addr));
 
     // Launch periodic heartbeat dispatcher
     info!("Launching heartbeat task");
     let worker_clone = worker.clone();
-    let heartbeat_handle = tokio::spawn(d.heartbeat(worker_clone));
+    let heartbeat_handle = tokio::spawn(async move {
+        // let d = dispatcher::Dispatcher::new();
+        dispatcher::heartbeat(worker_clone).await;
+    });
 
     // Launch task manager
-    info!("Launching task manager task");
-    let mut task_manager = tasks::TaskManager::new(String::from(connect_addr));
+    let mut task_manager = tasks::TaskManager::new();
     let worker_clone = worker.clone();
+    info!("Launching task manager task");
     let task_manager_handle = tokio::spawn(async move {
         if let Err(e) = task_manager.spawn(worker_clone).await {
             error!("Task manager exited with error: {}", e);
@@ -129,8 +132,16 @@ pub fn main(arg_matches: &ArgMatches) {
                 .with_uuid(sub_matches.value_of("uuid"))
                 .with_name(sub_matches.value_of("name"));
 
+            // Set up connect addr environment variable
+            if let Some(connect_addr) = sub_matches.value_of("connect_addr") {
+                env::set_var(WORKER_CONNECT_ADDR_ENV_KEY, connect_addr);
+            } else {
+                error!("Connect address not provided");
+                panic!("Exiting");
+            }
+
             // Start main loop
-            if let Err(e) = main_loop(Arc::new(RwLock::new(w)), sub_matches.value_of("connect_addr").unwrap()) {
+            if let Err(e) = main_loop(Arc::new(RwLock::new(w))) {
                 error!("{}", e);
                 panic!("Failed to start main loop")
             }

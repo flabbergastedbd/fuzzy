@@ -2,26 +2,24 @@ use std::sync::Arc;
 use std::error::Error;
 use std::collections::HashMap;
 
-use log::{debug, error, info};
+use log::{warn, debug, error, info};
 use tokio::{sync::RwLock, sync::oneshot, task::JoinHandle};
 
 use crate::xpc;
 use crate::worker::NewWorker;
-use crate::xpc::orchestrator_client::OrchestratorClient;
 use crate::fuzz_driver::{self, FuzzConfig, FuzzDriver};
+use crate::common::xpc::{get_connect_url, get_orchestrator_client};
+use crate::xpc::orchestrator_client::OrchestratorClient;
+use crate::common::intervals::WORKER_TASK_REFRESH_INTERVAL;
 
 pub struct TaskManager {
-    connect_addr: String,
     driver_handles: HashMap<i32, JoinHandle<()>>,
     kill_switches: HashMap<i32, oneshot::Sender<u8>>,
 }
 
 impl TaskManager {
-    pub fn new(addr: String) -> Self {
-        let mut connect_addr = "http://".to_owned();
-        connect_addr.push_str(addr.as_str());
+    pub fn new() -> Self {
         Self {
-            connect_addr,
             driver_handles: HashMap::new(),
             kill_switches: HashMap::new(),
         }
@@ -48,12 +46,10 @@ impl TaskManager {
         // self.drivers.insert(wtask.id,Box::new(driver));
         self.kill_switches.insert(wtask.id, tx);
 
-        let connect_addr = self.connect_addr.clone();
-
         info!("Spawning new task: {:#?}", wtask);
 
         let driver_handle = tokio::spawn(async move {
-            if let Err(e) = driver.start(connect_addr, rx).await {
+            if let Err(e) = driver.start(rx).await {
                 error!("Driver exited with error: {}", e);
             }
         });
@@ -80,10 +76,12 @@ impl TaskManager {
     }
 
     pub async fn spawn(&mut self, worker_lock: Arc<RwLock<NewWorker>>) -> Result<(), Box<dyn std::error::Error>> {
-        let mut interval = tokio::time::interval(crate::common::intervals::WORKER_TASK_REFRESH_INTERVAL);
+        let mut interval = tokio::time::interval(WORKER_TASK_REFRESH_INTERVAL);
         loop {
             debug!("Trying to get tasks and update");
-            if let Ok(mut client) = OrchestratorClient::connect(self.connect_addr.clone()).await {
+            // TODO: Fix this later, unable to send future error
+            let url = get_connect_url()?;
+            if let Ok(mut client) = OrchestratorClient::connect(url).await {
                 // Aquire read lock
                 let worker = worker_lock.read().await;
 
@@ -102,6 +100,8 @@ impl TaskManager {
                         error!("Error while handling task updates: {}", e);
                     }
                 }
+            } else {
+                warn!("Failed to get tasks, will try after {:?}", WORKER_TASK_REFRESH_INTERVAL);
             }
             interval.tick().await;
         }

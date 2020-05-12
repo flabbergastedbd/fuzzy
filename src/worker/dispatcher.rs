@@ -1,40 +1,35 @@
 use std::sync::Arc;
 
-use log::{debug, error, info};
+use log::{warn, debug, error, info};
 use tokio::sync::RwLock;
 
 use crate::models::NewWorker;
 use crate::xpc::collector_client::CollectorClient;
+use crate::common::xpc::{get_connect_url, get_collector_client};
+use crate::common::intervals::WORKER_HEARTBEAT_INTERVAL;
 
 // Heartbeat interval in seconds
 
-pub struct Dispatcher {
-    connect_addr: String
-}
-
-impl Dispatcher {
-    pub fn new(addr: String) -> Self {
-        let mut connect_addr = "http://".to_owned();
-        connect_addr.push_str(addr.as_str());
-        Dispatcher { connect_addr }
-    }
-
-    pub async fn heartbeat(self, worker_lock: Arc<RwLock<NewWorker>>) { // -> Result<(), Box<dyn std::error::Error>> {
-        let mut interval = tokio::time::interval(crate::common::intervals::WORKER_HEARTBEAT_INTERVAL);
-        loop {
-            debug!("Trying to send heartbeat to given address");
-            if let Ok(mut client) = CollectorClient::connect(self.connect_addr.clone()).await {
-                // Aquire read lock
-                let worker = worker_lock.read().await;
-                // Create new request
-                let request = tonic::Request::new(worker.clone());
-                if let Err(e) = client.heartbeat(request).await {
-                    error!("Sending heartbeat failed: {}", e);
-                } else {
-                    info!("Heartbeat sending was successful!");
-                }
+pub async fn heartbeat(worker_lock: Arc<RwLock<NewWorker>>) -> Result<(), Box<dyn std::error::Error>> {
+    let mut interval = tokio::time::interval(WORKER_HEARTBEAT_INTERVAL);
+    let url = get_connect_url()?;
+    loop {
+        debug!("Trying to send heartbeat to given address");
+        let client = CollectorClient::connect(url.clone()).await;
+        if let Ok(mut client) = client {
+            // Aquire read lock
+            let worker = worker_lock.read().await;
+            // Create new request
+            let request = tonic::Request::new(worker.clone());
+            if let Err(e) = client.heartbeat(request).await {
+                error!("Sending heartbeat failed: {}", e);
+            } else {
+                info!("Heartbeat sending was successful!");
             }
-            interval.tick().await;
+        } else {
+            warn!("Failed to send a heartbeat, will try after {:?}", WORKER_HEARTBEAT_INTERVAL);
         }
+        interval.tick().await;
     }
 }
+

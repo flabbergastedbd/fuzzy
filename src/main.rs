@@ -1,3 +1,5 @@
+use std::env;
+
 use log::debug;
 use clap::{App, load_yaml};
 use pretty_env_logger;
@@ -18,12 +20,19 @@ pub mod schema;
 pub mod models;
 
 fn main() {
+    let yaml = load_yaml!("cli.yml");
+    let arg_matches = App::from(yaml).get_matches();
+
+    if arg_matches.is_present("verbose") {
+        env::set_var("RUST_LOG", "fuzzy=debug");
+    } else {
+        env::set_var("RUST_LOG", "info");
+    }
+
     // Logger initialization is first
     pretty_env_logger::init();
     debug!("Log initialization complete");
 
-    let yaml = load_yaml!("cli.yml");
-    let arg_matches = App::from(yaml).get_matches();
 
     debug!("Matching subcommand and will launch appropriate main()");
     match arg_matches.subcommand() {

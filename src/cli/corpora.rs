@@ -7,11 +7,11 @@ use clap::ArgMatches;
 use tokio::task;
 
 use crate::common::corpora::{upload_corpus_from_disk, download_corpus};
-use crate::xpc::orchestrator_client::OrchestratorClient;
+use crate::common::xpc::get_orchestrator_client;
 
-pub async fn cli(args: &ArgMatches, connect_addr: String) -> Result<(), Box<dyn Error>> {
+pub async fn cli(args: &ArgMatches) -> Result<(), Box<dyn Error>> {
     debug!("Creating interface client");
-    let mut client = OrchestratorClient::connect(connect_addr).await?;
+    let mut client = get_orchestrator_client().await?;
 
     match args.subcommand() {
         // Adding a new task

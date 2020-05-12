@@ -26,7 +26,7 @@ pub struct FuzzConfig {
 pub trait FuzzDriver {
     fn new(config: FuzzConfig, worker_task_id: Option<i32>) -> Self where Self: Sized;
 
-    async fn start(&self, connect_addr: String, kill_switch: oneshot::Receiver<u8>) -> Result<(), Box<dyn Error>>;
+    async fn start(&self, kill_switch: oneshot::Receiver<u8>) -> Result<(), Box<dyn Error>>;
 }
 
 pub fn new(config: FuzzConfig, worker_task_id: Option<i32>) -> impl FuzzDriver {

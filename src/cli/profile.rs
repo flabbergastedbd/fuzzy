@@ -9,7 +9,7 @@ use crate::executor::{self, Executor, ExecutorConfig};
 use crate::fuzz_driver::{self, FuzzDriver, FuzzConfig};
 use crate::utils::fs::read_file;
 
-pub async fn cli(args: &ArgMatches, connect_addr: String) -> Result<(), Box<dyn Error>> {
+pub async fn cli(args: &ArgMatches) -> Result<(), Box<dyn Error>> {
 
     match args.subcommand() {
         // Adding a new task
@@ -35,9 +35,9 @@ pub async fn cli(args: &ArgMatches, connect_addr: String) -> Result<(), Box<dyn 
 
             // Spawn off corpus sync
             let corpus_syncer = executor.get_corpus_syncer().await?;
-            corpus_syncer.setup_corpus(connect_addr.clone()).await?;
+            corpus_syncer.setup_corpus().await?;
             let corpus_sync_handle = local_set.spawn_local(async move {
-                if let Err(e) = corpus_syncer.sync_corpus(connect_addr.clone()).await {
+                if let Err(e) = corpus_syncer.sync_corpus().await {
                     error!("Unable to sync corpus: {}", e);
                 }
             });
@@ -99,7 +99,7 @@ pub async fn cli(args: &ArgMatches, connect_addr: String) -> Result<(), Box<dyn 
 
             let mut stream = signal(SignalKind::interrupt())?;
             tokio::select! {
-                result = driver.start(connect_addr, rx) => {
+                result = driver.start(rx) => {
                     error!("Fuzz driver exited first, something is wrong");
                     if let Err(e) = result {
                         error!("Cause: {}", e);

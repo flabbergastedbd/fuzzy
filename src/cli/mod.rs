@@ -32,15 +32,15 @@ async fn main_loop(arg_matches: &ArgMatches) -> Result<(), Box<dyn Error>> {
     match arg_matches.subcommand() {
         ("tasks", Some(sub_matches)) => {
             debug!("Launched tasks subcommand");
-            tasks::cli(sub_matches, connect_addr).await?;
+            tasks::cli(sub_matches).await?;
         },
         ("corpora", Some(sub_matches)) => {
             debug!("Launched tasks subcommand");
-            corpora::cli(sub_matches, connect_addr).await?;
+            corpora::cli(sub_matches).await?;
         },
         ("profile", Some(sub_matches)) => {
             debug!("Launched profile subcommand");
-            profile::cli(sub_matches, connect_addr).await?;
+            profile::cli(sub_matches).await?;
         },
         _ => {}
     }

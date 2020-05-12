@@ -10,6 +10,7 @@ use crate::xpc::orchestrator_client::OrchestratorClient;
 use crate::utils::fs::InotifyFileWatcher;
 use super::CorpusConfig;
 use crate::common::corpora::{upload_corpus_from_disk, download_corpus_to_disk, CORPUS_FILE_EXT};
+use crate::common::xpc::get_orchestrator_client;
 
 /// A file system corpus syncer. Need to convert this into trait when implementing docker
 pub struct CorpusSyncer {
@@ -22,9 +23,9 @@ impl CorpusSyncer {
         Ok(Self { config, worker_task_id })
     }
 
-    pub async fn setup_corpus(&self, connect_addr: String) -> Result<(), Box<dyn Error>> {
+    pub async fn setup_corpus(&self) -> Result<(), Box<dyn Error>> {
         debug!("Syncing initial corpus");
-        let mut client = OrchestratorClient::connect(connect_addr).await?;
+        let mut client = get_orchestrator_client().await?;
         download_corpus_to_disk(
             self.config.label.clone(),
             self.worker_task_id,
@@ -36,11 +37,10 @@ impl CorpusSyncer {
 
     pub async fn sync_corpus(
             &self,
-            connect_addr: String,
         ) -> Result<(), Box<dyn Error>> {
 
         debug!("Will try to keep corpus in sync at: {:?}", self.config.path);
-        let mut client = OrchestratorClient::connect(connect_addr).await?;
+        let mut client = get_orchestrator_client().await?;
         let worker_task_id = self.worker_task_id;
 
         // Create a local set

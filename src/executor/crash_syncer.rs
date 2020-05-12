@@ -7,6 +7,7 @@ use crate::xpc::orchestrator_client::OrchestratorClient;
 use crate::utils::fs::InotifyFileWatcher;
 use super::CrashConfig;
 use crate::common::crashes::upload_crash_from_disk;
+use crate::common::xpc::get_orchestrator_client;
 
 /// A file system corpus syncer. Need to convert this into trait when implementing docker
 pub struct CrashSyncer {
@@ -21,11 +22,10 @@ impl CrashSyncer {
 
     pub async fn upload_crashes(
             &self,
-            connect_addr: String,
         ) -> Result<(), Box<dyn Error>> {
 
         debug!("Will try to keep crashes in sync at: {:?}", self.config.path);
-        let client = OrchestratorClient::connect(connect_addr).await?;
+        let client = get_orchestrator_client().await?;
         let worker_task_id = self.worker_task_id;
 
         // Create necessary clones and pass along for upload sync if upload enabled

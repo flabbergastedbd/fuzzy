@@ -9,9 +9,9 @@ use tonic::Request;
 
 use super::FuzzConfig;
 use crate::executor::{self, CrashConfig, Executor};
-use crate::xpc::orchestrator_client::OrchestratorClient;
 use crate::common::worker_tasks::{mark_worker_task_active, mark_worker_task_inactive};
 use crate::models::NewFuzzStat;
+use crate::common::xpc::get_orchestrator_client;
 
 pub struct LibFuzzerDriver {
     config: FuzzConfig,
@@ -29,7 +29,7 @@ impl super::FuzzDriver for LibFuzzerDriver {
     /// 1. Setup corpus
     /// 2. Start corpus sync
     /// 3. Collect metrics from log files
-    async fn start(&self, connect_addr: String, kill_switch: oneshot::Receiver<u8>) -> Result<(), Box<dyn Error>> {
+    async fn start(&self, kill_switch: oneshot::Receiver<u8>) -> Result<(), Box<dyn Error>> {
         info!("Starting libfuzzer driver for {:#?}", self.worker_task_id);
 
         let mut runner = executor::new(self.config.execution.clone(), self.worker_task_id);
@@ -38,10 +38,9 @@ impl super::FuzzDriver for LibFuzzerDriver {
 
         // Spawn off corpus sync
         let corpus_syncer = runner.get_corpus_syncer().await?;
-        corpus_syncer.setup_corpus(connect_addr.clone()).await?;
-        let connect_addr_clone = connect_addr.clone();
+        corpus_syncer.setup_corpus().await?;
         let corpus_sync_handle = task::spawn(async move {
-            if let Err(e) = corpus_syncer.sync_corpus(connect_addr_clone).await {
+            if let Err(e) = corpus_syncer.sync_corpus().await {
                 error!("Error in syncing corpus: {}", e);
             }
         });
@@ -53,9 +52,8 @@ impl super::FuzzDriver for LibFuzzerDriver {
             filter: Regex::new("crash-.*")?,
         };
         let crash_syncer = runner.get_crash_syncer(crash_config).await?;
-        let connect_addr_clone = connect_addr.clone();
         let crash_sync_handle = task::spawn(async move {
-            if let Err(e) = crash_syncer.upload_crashes(connect_addr_clone).await {
+            if let Err(e) = crash_syncer.upload_crashes().await {
                 error!("Error in syncing crashes: {}", e);
             }
         });
@@ -63,9 +61,8 @@ impl super::FuzzDriver for LibFuzzerDriver {
         // Stat collector
         let log_path = runner.get_cwd_path();
         let stats_collector = LibFuzzerStatCollector::new(self.config.execution.cpus, self.worker_task_id, log_path)?;
-        let connect_addr_clone = connect_addr.clone();
         let stats_collector_handle = task::spawn(async move {
-            if let Err(e) = stats_collector.start(connect_addr_clone).await {
+            if let Err(e) = stats_collector.start().await {
                 error!("Error in syncing crashes: {}", e);
             }
         });
@@ -88,7 +85,7 @@ impl super::FuzzDriver for LibFuzzerDriver {
             }
         });
 
-        mark_worker_task_active(self.worker_task_id, connect_addr.clone()).await?;
+        mark_worker_task_active(self.worker_task_id).await?;
         // Listen and wait for all and kill switch
         tokio::select! {
             _ = corpus_sync_handle => {
@@ -107,7 +104,7 @@ impl super::FuzzDriver for LibFuzzerDriver {
                 info!("Received kill for lib fuzzer driver");
             },
         }
-        mark_worker_task_inactive(self.worker_task_id, connect_addr.clone()).await?;
+        mark_worker_task_inactive(self.worker_task_id).await?;
 
         // local.await;
         // If we reached here means one of the watches failed or kill switch triggered
@@ -137,11 +134,11 @@ impl LibFuzzerStatCollector {
         })
     }
 
-    pub async fn start(self, connect_addr: String) -> Result<(), Box<dyn Error>> {
+    pub async fn start(self) -> Result<(), Box<dyn Error>> {
         debug!("Spawning lib fuzzer stat collector");
 
         let mut interval = tokio::time::interval(crate::common::intervals::WORKER_FUZZDRIVER_STAT_UPLOAD_INTERVAL);
-        let client = &OrchestratorClient::connect(connect_addr).await?;
+        let client = &get_orchestrator_client().await?;
 
         loop {
             interval.tick().await;

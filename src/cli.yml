@@ -9,7 +9,7 @@ args:
       short: v
       long: verbose
       global: true
-
+      multiple: true
 subcommands:
   - master:
       about: Master that can manage workers
@@ -22,6 +22,14 @@ subcommands:
                   help: "Address to listen for worker connections (Default: 127.0.0.1:12700)"
                   long: listen-addr
                   takes_value: true
+              - server_pem:
+                  help: "PEM file consisting both server cert and key (Default: server.pem)"
+                  long: server-identity
+                  takes_value: true
+              - ca:
+                  help: "CA cert file (Default: ca.crt)"
+                  long: cert-authority
+                  takes_value: true
               - db_connect_str:
                   help: "Postgres database connection string (Default: postgres://fuzzy:fuzzy@127.0.0.1:5432/fuzzy)"
                   long: db
@@ -33,8 +41,16 @@ subcommands:
         - start:
             about: Start a worker agent
             args:
+              - ca:
+                  help: "CA cert file"
+                  long: cert-authority
+                  takes_value: true
+              - worker_pem:
+                  help: "PEM file consisting both client cert and key (Default: worker.pem)"
+                  long: worker-identity
+                  takes_value: true
               - connect_addr:
-                  help: master address to connect (127.0.0.1:12700)
+                  help: "Address to connect (https://127.0.0.1:12700)"
                   index: 1
               - name:
                   help: Identifier for this worker agent
@@ -50,8 +66,12 @@ subcommands:
       version: "0.1"
       args:
         - connect_addr:
-            help: "Address to listen for worker connections (Default: 127.0.0.1:12700)"
+            help: "Address to connect (Default: https://127.0.0.1:12700)"
             long: server-addr
+            takes_value: true
+        - ca:
+            help: "CA cert file (Default: ca.crt)"
+            long: cert-authority
             takes_value: true
       subcommands:
         - tasks:

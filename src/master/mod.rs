@@ -1,12 +1,15 @@
+use std::path::Path;
+use std::error::Error;
 use std::net::SocketAddr;
 
 use clap::ArgMatches;
 use log::{error, info, debug};
-use tonic::transport::Server;
-use tokio::{signal::unix::{signal, SignalKind}};
+use tonic::transport::{Server, ServerTlsConfig};
+use tokio::signal::unix::{signal, SignalKind};
 
 use crate::db::DbBroker;
 use crate::xpc::collector_server::CollectorServer;
+use crate::utils::fs::read_file;
 use interface::{OrchestratorService, OrchestratorServer};
 
 mod collector;
@@ -33,7 +36,8 @@ impl Master {
     }
 
     #[tokio::main]
-    async fn main_loop(&self) -> Result<(), Box<dyn std::error::Error>> {
+    async fn main_loop(&self, server_pem_path: &str, ca_cert_path: &str) -> Result<(), Box<dyn std::error::Error>> {
+        let tls_config = create_server_tls_config(server_pem_path, ca_cert_path).await?;
 
         let db_broker = DbBroker::new(self.db_connect_str.clone());
         // Initialize all grpc services with database handle
@@ -50,6 +54,7 @@ impl Master {
 
         debug!("Starting master event loop on {}", self.listen_addr);
         let interface_server = Server::builder()
+            .tls_config(tls_config)
             .add_service(CollectorServer::new(collector_service))
             .add_service(OrchestratorServer::new(orchestrator_service))
             .serve(self.listen_addr);
@@ -67,6 +72,21 @@ impl Master {
     }
 }
 
+async fn create_server_tls_config(server_pem: &str, ca_cert: &str) -> Result<ServerTlsConfig, Box<dyn Error>> {
+    let server_pem = read_file(Path::new(server_pem)).await;
+    let ca_cert = read_file(Path::new(ca_cert)).await;
+    if server_pem.is_err() || ca_cert.is_err() {
+        error!("Unable to find either server pem or ca cert");
+    }
+    let server_pem = server_pem?;
+    let ca_cert = ca_cert?;
+
+    let config = ServerTlsConfig::new()
+        .identity(tonic::transport::Identity::from_pem(server_pem.clone(), server_pem))
+        .client_ca_root(tonic::transport::Certificate::from_pem(ca_cert));
+    Ok(config)
+}
+
 pub fn main(arg_matches: &ArgMatches) {
     debug!("Master main launched!");
 
@@ -78,8 +98,12 @@ pub fn main(arg_matches: &ArgMatches) {
                 sub_matches.value_of("db_connect_str").unwrap_or("postgres://fuzzy:fuzzy@127.0.0.1:5432/fuzzy"),
             );
 
-            if let Err(e) = master.main_loop() {
-                panic!("{}", e);
+            let server_pem_path = sub_matches.value_of("server_pem").unwrap_or("server.pem");
+            let ca_cert_path = sub_matches.value_of("ca").unwrap_or("ca.crt");
+
+            if let Err(e) = master.main_loop(server_pem_path, ca_cert_path) {
+                error!("Master exited with error: {}", e);
+                std::process::exit(1);
             }
         },
         _ => {}

@@ -8,7 +8,6 @@ use tokio::{sync::RwLock, sync::oneshot, task::JoinHandle};
 use crate::xpc;
 use crate::worker::NewWorker;
 use crate::fuzz_driver::{self, FuzzConfig, FuzzDriver};
-use crate::common::xpc::{get_connect_url, get_orchestrator_client};
 use crate::xpc::orchestrator_client::OrchestratorClient;
 use crate::common::intervals::WORKER_TASK_REFRESH_INTERVAL;
 
@@ -80,8 +79,9 @@ impl TaskManager {
         loop {
             debug!("Trying to get tasks and update");
             // TODO: Fix this later, unable to send future error
-            let url = get_connect_url()?;
-            if let Ok(mut client) = OrchestratorClient::connect(url).await {
+            let endpoint = crate::common::xpc::get_server_endpoint().await?;
+            if let Ok(channel) = endpoint.connect().await {
+                let mut client = OrchestratorClient::new(channel);
                 // Aquire read lock
                 let worker = worker_lock.read().await;
 

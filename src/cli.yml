@@ -7,9 +7,10 @@ args:
   - verbose:
       help: Enable debug logging
       short: v
-      long: verbose
-      global: true
+      long: debug
       multiple: true
+      global: true
+      takes_value: false
 subcommands:
   - master:
       about: Master that can manage workers

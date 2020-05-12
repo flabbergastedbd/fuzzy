@@ -23,7 +23,11 @@ fn main() {
     let yaml = load_yaml!("cli.yml");
     let arg_matches = App::from(yaml).get_matches();
 
-    if arg_matches.is_present("verbose") {
+    // Enable debug logging as per -vvv
+    let verbose_count = arg_matches.occurrences_of("verbose");
+    if verbose_count > 1 {
+        env::set_var("RUST_LOG", "debug");
+    } else if verbose_count == 1 {
         env::set_var("RUST_LOG", "fuzzy=debug");
     } else {
         env::set_var("RUST_LOG", "info");

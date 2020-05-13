@@ -69,7 +69,7 @@ impl TaskManager {
             } else if self.driver_handles.contains_key(&worker_task.id) == false && worker_task.task.active == true {
                 self.add_worker_task(worker_task).await?;
             } else { // We contain key & task is active
-                debug!("Doing nothing, as we seem to be running the task already");
+                debug!("Doing nothing, as it seems to be in desired state");
             }
         }
         Ok(())

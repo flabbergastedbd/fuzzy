@@ -92,7 +92,7 @@ pub trait Executor: std::marker::Send {
     async fn wait(self: Box<Self>) -> Result<Output, Box<dyn Error>>;
 
     // Clean up all spawned children
-    fn close(&mut self) -> Result<(), Box<dyn Error>>;
+    async fn close(self: Box<Self>) -> Result<(), Box<dyn Error>>;
 }
 
 pub fn new(config: ExecutorConfig, worker_task_id: Option<i32>) -> Box<dyn Executor> {

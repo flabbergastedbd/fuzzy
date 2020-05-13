@@ -75,7 +75,7 @@ pub async fn cli(args: &ArgMatches) -> Result<(), Box<dyn Error>> {
                 },
             }
 
-            executor.close()?;
+            executor.close().await?;
 
         },
         ("task", Some(sub_matches)) => {

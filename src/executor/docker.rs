@@ -4,7 +4,7 @@ use std::path::PathBuf;
 use std::os::unix::fs::MetadataExt;
 use std::io::{self, ErrorKind};
 
-use log::{error, debug};
+use log::{info, warn, error, debug};
 use tokio::{
     fs,
     process::{Command, Child, ChildStdout, ChildStderr},
@@ -150,9 +150,24 @@ impl super::Executor for DockerExecutor {
         self.mapped_cwd.clone()
     }
 
-    fn close(&mut self) -> Result<(), Box<dyn Error>> {
+    async fn close(self: Box<Self>) -> Result<(), Box<dyn Error>> {
         debug!("Closing out executor");
-        Ok(self.child.as_mut().map(|c| c.kill()).unwrap()?)
+        if let Some(mut child) = self.child {
+            let mut cmd = Command::new("docker");
+            cmd
+                .arg("stop")
+                .arg(self.identifier.clone())
+                .kill_on_drop(true);
+
+            let output = cmd.output().await?;
+            if output.status.success() == false {
+                error!("Unable to stop container: {}", self.identifier);
+                info!("Stdout: {:?}", String::from_utf8(output.stdout));
+                warn!("Stderr: {:?}", String::from_utf8(output.stderr));
+            }
+            child.kill()?;
+        }
+        Ok(())
     }
 }
 

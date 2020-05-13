@@ -69,6 +69,7 @@ impl super::FuzzDriver for LibFuzzerDriver {
 
         // Start the actual process
         runner.spawn().await?;
+        /*
         let runner_handle = tokio::spawn(async move {
             if let Ok(output) = runner.wait().await {
                 info!("Command exited first with code: {:?}", output.status.code());
@@ -76,6 +77,7 @@ impl super::FuzzDriver for LibFuzzerDriver {
                 warn!("Stderr: {:?}", String::from_utf8(output.stderr));
             }
         });
+        */
 
         mark_worker_task_active(self.worker_task_id).await?;
         // Listen and wait for all and kill switch
@@ -92,15 +94,18 @@ impl super::FuzzDriver for LibFuzzerDriver {
             _ = kill_switch => {
                 info!("Received kill for lib fuzzer driver");
             },
+            /*
             _ = runner_handle => {
                 error!("Command exited first");
             },
+            */
         }
         mark_worker_task_inactive(self.worker_task_id).await?;
 
         // local.await;
         // If we reached here means one of the watches failed or kill switch triggered
         info!("Kill fuzzer process for {:?}", self.worker_task_id);
+        runner.close().await?;
 
         Ok(())
     }

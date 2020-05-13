@@ -94,9 +94,12 @@ impl super::Executor for NativeExecutor {
         self.config.cwd.clone().to_path_buf()
     }
 
-    fn close(&mut self) -> Result<(), Box<dyn Error>> {
+    async fn close(self: Box<Self>) -> Result<(), Box<dyn Error>> {
         debug!("Closing out executor");
-        Ok(self.child.as_mut().map(|c| c.kill()).unwrap()?)
+        if let Some(mut child) = self.child {
+            child.kill()?;
+        }
+        Ok(())
     }
 }
 

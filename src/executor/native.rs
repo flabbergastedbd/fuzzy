@@ -1,8 +1,9 @@
-use std::process::Stdio;
+use std::process::{Stdio, Output};
 use std::error::Error;
 use std::path::PathBuf;
+use std::io::{self, ErrorKind};
 
-use log::debug;
+use log::{error, debug};
 use tokio::{
     process::{Command, Child, ChildStdout, ChildStderr},
     io::{BufReader, AsyncBufReadExt, Lines},
@@ -34,6 +35,15 @@ impl super::Executor for NativeExecutor {
         Ok(())
     }
 
+    async fn wait(self: Box<Self>) -> Result<Output, Box<dyn Error>> {
+        if let Some(out) = self.child {
+            Ok(out.wait_with_output().await?)
+        } else {
+            Err(Box::new(io::Error::new(ErrorKind::InvalidData,
+                             "wait() called on executor")))
+        }
+    }
+
     async fn spawn(&mut self) -> Result<(), Box<dyn Error>> {
         debug!("Launching child process");
         let mut cmd = Command::new(self.config.executable.clone());
@@ -42,8 +52,8 @@ impl super::Executor for NativeExecutor {
             .envs(self.config.envs.clone())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
-            .current_dir(self.config.cwd.clone());
-            // .kill_on_drop(true);
+            .current_dir(self.config.cwd.clone())
+            .kill_on_drop(true);
         debug!("Command: {:#?}", cmd);
 
         let child = cmd.spawn()?;

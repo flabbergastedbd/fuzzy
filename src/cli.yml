@@ -100,7 +100,6 @@ subcommands:
                           long: profile
                       - active:
                           help: Mark task as active, lack of this will mark it inactive
-                          takes_value: true
                           long: active
                 - list:
                     about: List all tasks

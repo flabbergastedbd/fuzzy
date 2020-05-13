@@ -62,8 +62,9 @@ impl TaskManager {
         debug!("Handling task updates, iterating over {} tasks", worker_tasks.len());
         for worker_task in worker_tasks.into_iter() {
             debug!("Looping on task: {:?}", worker_task);
+            debug!("Is task active already?: {}", self.driver_handles.contains_key(&worker_task.id));
             // Remove if we run the worker_task but active is false
-            if self.driver_handles.contains_key(&worker_task.id) && worker_task.task.active == false {
+            if self.driver_handles.contains_key(&worker_task.id) == true && worker_task.task.active == false {
                 self.remove_worker_task(&worker_task.id).await?;
             } else if self.driver_handles.contains_key(&worker_task.id) == false && worker_task.task.active == true {
                 self.add_worker_task(worker_task).await?;

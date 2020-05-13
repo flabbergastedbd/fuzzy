@@ -25,10 +25,12 @@ fn main() {
 
     // Enable debug logging as per -vvv
     let verbose_count = arg_matches.occurrences_of("verbose");
-    if verbose_count > 1 {
-        env::set_var("RUST_LOG", "debug");
-    } else if verbose_count == 1 {
+    if verbose_count == 1 {
         env::set_var("RUST_LOG", "fuzzy=debug");
+    } else if verbose_count == 2 {
+        env::set_var("RUST_LOG", "fuzzy=trace");
+    } else if verbose_count > 2 {
+        env::set_var("RUST_LOG", "debug");
     } else {
         env::set_var("RUST_LOG", "info");
     }

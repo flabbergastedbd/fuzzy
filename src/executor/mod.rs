@@ -1,5 +1,6 @@
 use std::path::{Path, PathBuf};
 use std::error::Error;
+use std::process::Output;
 use std::collections::HashMap;
 
 use regex::Regex;
@@ -87,6 +88,8 @@ pub trait Executor: std::marker::Send {
 
     // Get absolute path for relative to cwd
     fn get_cwd_path(&self) -> PathBuf;
+
+    async fn wait(self: Box<Self>) -> Result<Output, Box<dyn Error>>;
 
     // Clean up all spawned children
     fn close(&mut self) -> Result<(), Box<dyn Error>>;

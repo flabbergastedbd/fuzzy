@@ -1,9 +1,10 @@
-use std::process::Stdio;
+use std::process::{Stdio, Output};
 use std::error::Error;
 use std::path::PathBuf;
 use std::os::unix::fs::MetadataExt;
+use std::io::{self, ErrorKind};
 
-use log::debug;
+use log::{error, debug};
 use tokio::{
     fs,
     process::{Command, Child, ChildStdout, ChildStderr},
@@ -47,6 +48,15 @@ impl super::Executor for DockerExecutor {
         mkdir_p(mapped_corpus_path.as_path()).await?;
 
         Ok(())
+    }
+
+    async fn wait(self: Box<Self>) -> Result<Output, Box<dyn Error>> {
+        if let Some(out) = self.child {
+            Ok(out.wait_with_output().await?)
+        } else {
+            Err(Box::new(io::Error::new(ErrorKind::InvalidData,
+                             "wait() called on executor")))
+        }
     }
 
     async fn spawn(&mut self) -> Result<(), Box<dyn Error>> {
@@ -98,8 +108,8 @@ impl super::Executor for DockerExecutor {
             .envs(self.config.envs.clone())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
-            .current_dir(self.mapped_cwd.as_path());
-            // .kill_on_drop(true);
+            .current_dir(self.mapped_cwd.as_path())
+            .kill_on_drop(true);
         debug!("Command: {:#?}", cmd);
 
         let child = cmd.spawn()?;

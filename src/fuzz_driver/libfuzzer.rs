@@ -2,7 +2,7 @@ use std::io::{BufRead, Seek, SeekFrom};
 use std::path::{Path, PathBuf};
 use std::error::Error;
 
-use log::{error, info, debug, warn};
+use log::{trace, error, info, debug, warn};
 use regex::Regex;
 use tokio::{fs, task, sync::oneshot};
 use tonic::Request;
@@ -69,6 +69,13 @@ impl super::FuzzDriver for LibFuzzerDriver {
 
         // Start the actual process
         runner.spawn().await?;
+        let runner_handle = tokio::spawn(async move {
+            if let Ok(output) = runner.wait().await {
+                info!("Command exited first with code: {:?}", output.status.code());
+                info!("Stdout: {:?}", String::from_utf8(output.stdout));
+                warn!("Stderr: {:?}", String::from_utf8(output.stderr));
+            }
+        });
 
         mark_worker_task_active(self.worker_task_id).await?;
         // Listen and wait for all and kill switch
@@ -85,13 +92,15 @@ impl super::FuzzDriver for LibFuzzerDriver {
             _ = kill_switch => {
                 info!("Received kill for lib fuzzer driver");
             },
+            _ = runner_handle => {
+                error!("Command exited first");
+            },
         }
         mark_worker_task_inactive(self.worker_task_id).await?;
 
         // local.await;
         // If we reached here means one of the watches failed or kill switch triggered
         info!("Kill fuzzer process for {:?}", self.worker_task_id);
-        runner.close()?;
 
         Ok(())
     }
@@ -161,7 +170,7 @@ impl LibFuzzerStatCollector {
         let reader = std::io::BufReader::new(file);
         let mut lines: Vec<String> = reader.lines().map(|line| { line.unwrap() }).collect();
 
-        debug!("Collected lines from log file {:?}: {:?}", file_path.as_path(), lines);
+        trace!("Collected lines from log file {:?}: {:?}", file_path.as_path(), lines);
         let line = lines.pop();
         if let Some(line) = line {
             let new_stat = self.get_stat(line.as_str())?;
@@ -181,7 +190,7 @@ impl LibFuzzerStatCollector {
         while let Some(entry) = entries.next_entry().await? {
             let name = entry.file_name().into_string().unwrap();
             if entry.file_type().await?.is_file() && self.log_filter.is_match(name.as_str()) {
-                debug!("Matched {} for libfuzzer log file", name);
+                trace!("Matched {} for libfuzzer log file", name);
                 logs.push(entry);
             }
         }
@@ -204,7 +213,7 @@ impl LibFuzzerStatCollector {
     }
 
     pub fn get_stat(&self, line: &str) -> Result<NewFuzzStat, Box<dyn Error>> {
-        debug!("Trying to extract stat from libFuzzer line: {}", line);
+        trace!("Trying to extract stat from libFuzzer line: {}", line);
         if let Some(captures) = self.stat_filter.captures(line) {
             let coverage = captures.name("coverage");
             if coverage.is_some() {
@@ -218,7 +227,7 @@ impl LibFuzzerStatCollector {
                     memory: Some(memory),
                     worker_task_id: self.worker_task_id,
                 };
-                debug!("Found stat: {:?}", new_fuzz_stat);
+                trace!("Found stat: {:?}", new_fuzz_stat);
                 return Ok(new_fuzz_stat)
             }
         }

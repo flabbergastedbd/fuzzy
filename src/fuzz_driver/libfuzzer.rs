@@ -8,7 +8,7 @@ use tokio::{fs, task, sync::oneshot};
 use tonic::Request;
 
 use super::FuzzConfig;
-use crate::executor::{self, CrashConfig, Executor};
+use crate::executor::{self, CrashConfig};
 use crate::common::worker_tasks::{mark_worker_task_active, mark_worker_task_inactive};
 use crate::models::NewFuzzStat;
 use crate::common::xpc::get_orchestrator_client;

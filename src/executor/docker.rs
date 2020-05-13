@@ -1,9 +1,9 @@
 use std::process::Stdio;
 use std::error::Error;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::os::unix::fs::MetadataExt;
 
-use log::{info, error, debug};
+use log::debug;
 use tokio::{
     fs,
     process::{Command, Child, ChildStdout, ChildStderr},
@@ -25,11 +25,6 @@ pub struct DockerExecutor {
 
     identifier: String,
     /// mapped_path (On fuzzy's container) == host_path (On Host) == config.cwd (On target
-    // container)
-    // Host path is on actual host, mapped path is one where host_path is accessible to fuzzy
-    host_path: PathBuf, // Only useful for mounting volumes
-    mapped_path: PathBuf,
-
     // Path accessible to fuzzy as cwd, that is also cwd for fuzzer
     // inside docker but with a different name
     mapped_cwd: PathBuf,
@@ -173,8 +168,6 @@ impl DockerExecutor {
             config,
             child: None,
             worker_task_id,
-            host_path,
-            mapped_path,
             mapped_cwd,
             identifier,
             host_cwd,

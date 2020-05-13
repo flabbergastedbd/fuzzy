@@ -1,10 +1,9 @@
 use std::process::Stdio;
 use std::error::Error;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
-use log::{info, debug};
+use log::debug;
 use tokio::{
-    fs,
     process::{Command, Child, ChildStdout, ChildStderr},
     io::{BufReader, AsyncBufReadExt, Lines},
 };

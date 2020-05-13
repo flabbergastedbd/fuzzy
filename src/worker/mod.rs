@@ -1,18 +1,14 @@
-use std::env;
 use std::sync::Arc;
 use std::error::Error;
 use std::fmt;
 
 use clap::ArgMatches;
-use log::{error, info, debug};
-use uuid::Uuid;
+use log::{error, info, debug}; use uuid::Uuid;
 use tokio::{sync::RwLock, signal::unix::{signal, SignalKind}};
-use tonic::transport::ClientTlsConfig;
 use heim::units::information;
 
 use crate::models::NewWorker;
-use crate::common::constants::WORKER_CONNECT_ADDR_ENV_KEY;
-use crate::common::xpc::{set_connect_url, set_ca_crt, set_worker_pem};
+use crate::common::cli::{parse_global_settings, parse_volume_map_settings};
 
 mod dispatcher;
 mod tasks;
@@ -90,7 +86,9 @@ pub async fn main_loop(worker: Arc<RwLock<NewWorker>>) -> Result<(), Box<dyn Err
     let worker_clone = worker.clone();
     let heartbeat_handle = tokio::spawn(async move {
         // let d = dispatcher::Dispatcher::new();
-        dispatcher::heartbeat(worker_clone).await;
+        if let Err(e) = dispatcher::heartbeat(worker_clone).await {
+            error!("Dispatcher exited with error: {}", e);
+        }
     });
 
     // Launch task manager
@@ -103,6 +101,7 @@ pub async fn main_loop(worker: Arc<RwLock<NewWorker>>) -> Result<(), Box<dyn Err
         }
     });
 
+    // Listen for SIGINT
     let mut stream = signal(SignalKind::interrupt())?;
     tokio::select! {
         result = heartbeat_handle => {
@@ -123,21 +122,6 @@ pub async fn main_loop(worker: Arc<RwLock<NewWorker>>) -> Result<(), Box<dyn Err
     Ok(())
 }
 
-/*
- * TODO: Remove
-async fn create_client_tls_config(ca_cert: &str) -> Result<ClientTlsConfig, Box<dyn Error>> {
-    let ca_cert = read_file(Path::new(ca_cert)).await;
-    if ca_cert.is_err() {
-        error!("Unable to find ca cert");
-    }
-    let ca_cert = ca_cert?;
-
-    let config = ClientTlsConfig::new()
-        .certificate(tonic::transport::Certificate::from_pem(ca_cert));
-    Ok(config)
-}
-*/
-
 // Called from main if woker subcommand found, parameters can be seen in src/cli.yml
 pub fn main(arg_matches: &ArgMatches) {
     debug!("Worker main function launched");
@@ -149,21 +133,8 @@ pub fn main(arg_matches: &ArgMatches) {
                 .with_uuid(sub_matches.value_of("uuid"))
                 .with_name(sub_matches.value_of("name"));
 
-            // Set up connect addr environment variable
-            if let Some(connect_addr) = sub_matches.value_of("connect_addr") {
-                set_connect_url(connect_addr);
-            } else {
-                error!("Connect address not provided");
-                panic!("Exiting");
-            }
-
-            // Set up connect addr environment variable
-            let ca_cert_path = sub_matches.value_of("ca").unwrap_or("ca.crt");
-            set_ca_crt(ca_cert_path);
-
-            // Set up connect addr environment variable
-            let worker_pem_path = sub_matches.value_of("worker_pem").unwrap_or("worker.pem");
-            set_worker_pem(worker_pem_path);
+            parse_global_settings(sub_matches);
+            parse_volume_map_settings(sub_matches);
 
             // Start main loop
             if let Err(e) = main_loop(Arc::new(RwLock::new(w))) {

@@ -12,6 +12,7 @@ use tokio::{
 use super::{CrashConfig, ExecutorConfig};
 use super::corpus_syncer::CorpusSyncer;
 use super::crash_syncer::CrashSyncer;
+use crate::utils::fs::mkdir_p;
 
 pub struct NativeExecutor {
     config: ExecutorConfig,
@@ -21,26 +22,21 @@ pub struct NativeExecutor {
 
 #[tonic::async_trait]
 impl super::Executor for NativeExecutor {
-    fn new(config: ExecutorConfig, worker_task_id: Option<i32>) -> Self {
-        debug!("Creating new native executor with config: {:#?}", config);
-        Self {
-            config, child: None, worker_task_id
-        }
-    }
-
     async fn setup(&self) -> Result<(), Box<dyn Error>> {
         debug!("Setting up execution environment");
 
         // Check if cwd exists, if not create
-        Self::mkdir_p(&self.config.cwd).await?;
-        Self::mkdir_p(&self.config.corpus.path).await?;
+        mkdir_p(&self.config.cwd).await?;
+
+        // Check if corpus dir exists, if not create it
+        let absolute_corpus_path = self.config.cwd.join(&self.config.corpus.path);
+        mkdir_p(absolute_corpus_path.as_path()).await?;
 
         Ok(())
     }
 
     async fn spawn(&mut self) -> Result<(), Box<dyn Error>> {
         debug!("Launching child process");
-        info!("{:?}", self.config.envs);
         let mut cmd = Command::new(self.config.executable.clone());
         cmd
             .args(self.config.args.clone())
@@ -49,6 +45,7 @@ impl super::Executor for NativeExecutor {
             .stderr(Stdio::piped())
             .current_dir(self.config.cwd.clone());
             // .kill_on_drop(true);
+        debug!("Command: {:#?}", cmd);
 
         let child = cmd.spawn()?;
         self.child = Some(child);
@@ -68,15 +65,16 @@ impl super::Executor for NativeExecutor {
         Some(reader)
     }
 
-    async fn get_corpus_syncer(&self) -> Result<CorpusSyncer, Box<dyn Error>> {
-        let corpus_config = self.config.corpus.clone();
+    fn get_corpus_syncer(&self) -> Result<CorpusSyncer, Box<dyn Error>> {
+        let mut corpus_config = self.config.corpus.clone();
+        corpus_config.path = self.config.cwd.join(corpus_config.path).into_boxed_path();
         Ok(CorpusSyncer::new(
                 corpus_config,
                 self.worker_task_id
         )?)
     }
 
-    async fn get_crash_syncer(&self, config: CrashConfig) -> Result<CrashSyncer, Box<dyn Error>> {
+    fn get_crash_syncer(&self, config: CrashConfig) -> Result<CrashSyncer, Box<dyn Error>> {
         Ok(CrashSyncer::new(
                 config,
                 self.worker_task_id
@@ -94,9 +92,10 @@ impl super::Executor for NativeExecutor {
 }
 
 impl NativeExecutor {
-    async fn mkdir_p(path: &Path) -> std::io::Result<()> {
-        debug!("Creating directory tree");
-        fs::create_dir_all(path).await?;
-        Ok(())
+    pub fn new(config: ExecutorConfig, worker_task_id: Option<i32>) -> Self {
+        debug!("Creating new native executor with config: {:#?}", config);
+        Self {
+            config, child: None, worker_task_id
+        }
     }
 }

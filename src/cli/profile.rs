@@ -8,12 +8,14 @@ use tokio::{sync::oneshot, signal::unix::{signal, SignalKind}, task::LocalSet};
 use crate::executor::{self, Executor, ExecutorConfig};
 use crate::fuzz_driver::{self, FuzzDriver, FuzzConfig};
 use crate::utils::fs::read_file;
+use crate::common::cli::parse_volume_map_settings;
 
 pub async fn cli(args: &ArgMatches) -> Result<(), Box<dyn Error>> {
 
     match args.subcommand() {
         // Adding a new task
         ("executor", Some(sub_matches)) => {
+            parse_volume_map_settings(sub_matches);
             debug!("Testing executor profile");
             // Get profile
             let profile = sub_matches.value_of("file_path").unwrap();
@@ -34,7 +36,7 @@ pub async fn cli(args: &ArgMatches) -> Result<(), Box<dyn Error>> {
             let local_set = LocalSet::new();
 
             // Spawn off corpus sync
-            let corpus_syncer = executor.get_corpus_syncer().await?;
+            let corpus_syncer = executor.get_corpus_syncer()?;
             corpus_syncer.setup_corpus().await?;
             let corpus_sync_handle = local_set.spawn_local(async move {
                 if let Err(e) = corpus_syncer.sync_corpus().await {
@@ -77,6 +79,7 @@ pub async fn cli(args: &ArgMatches) -> Result<(), Box<dyn Error>> {
 
         },
         ("task", Some(sub_matches)) => {
+            parse_volume_map_settings(sub_matches);
             debug!("Testing fuzz driver profile");
 
             let local = LocalSet::new();

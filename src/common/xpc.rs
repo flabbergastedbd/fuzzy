@@ -6,7 +6,6 @@ use log::{error, debug};
 use tonic::transport::{ClientTlsConfig, Channel, Endpoint, Identity, Certificate};
 
 use crate::xpc::orchestrator_client::OrchestratorClient;
-use crate::xpc::collector_client::CollectorClient;
 use crate::common::constants::{
     WORKER_CONNECT_CACERT_ENV_KEY,
     WORKER_CONNECT_WORKERPEM_ENV_KEY,
@@ -37,7 +36,7 @@ pub fn set_ca_crt(path: &str) {
 pub fn get_ca_crt() -> Result<String, Box<dyn Error>> {
     let path = env::var(WORKER_CONNECT_CACERT_ENV_KEY);
     if path.is_err() {
-        error!("Environment variable path not defined");
+        error!("Environment variable ca cert path not defined");
     }
     let path = path?.to_owned();
     Ok(path)

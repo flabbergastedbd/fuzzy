@@ -37,7 +37,7 @@ impl super::FuzzDriver for LibFuzzerDriver {
         // let local = task::LocalSet::new();
 
         // Spawn off corpus sync
-        let corpus_syncer = runner.get_corpus_syncer().await?;
+        let corpus_syncer = runner.get_corpus_syncer()?;
         corpus_syncer.setup_corpus().await?;
         let corpus_sync_handle = task::spawn(async move {
             if let Err(e) = corpus_syncer.sync_corpus().await {
@@ -48,10 +48,10 @@ impl super::FuzzDriver for LibFuzzerDriver {
         // Spawn off crash sync
         let crash_config = CrashConfig {
             label: self.config.execution.corpus.label.clone(),
-            path: self.config.execution.cwd.clone(),
+            path: runner.get_cwd_path().into_boxed_path(),
             filter: Regex::new("crash-.*")?,
         };
-        let crash_syncer = runner.get_crash_syncer(crash_config).await?;
+        let crash_syncer = runner.get_crash_syncer(crash_config)?;
         let crash_sync_handle = task::spawn(async move {
             if let Err(e) = crash_syncer.upload_crashes().await {
                 error!("Error in syncing crashes: {}", e);
@@ -70,21 +70,6 @@ impl super::FuzzDriver for LibFuzzerDriver {
         // Start the actual process
         runner.spawn().await?;
 
-        // Spawn of stderr so that we stop when process exits
-        // Needed for libfuzzer
-        let stderr_reader = runner.get_stderr_reader();
-        let stderr_handle = tokio::spawn(async move {
-            if let Some(mut reader) = stderr_reader {
-                while let Ok(line) = reader.next_line().await {
-                    if line.is_none() {
-                        break
-                    } else {
-                        warn!("LibFuzzer STDERR: {:?}", line);
-                    }
-                }
-            }
-        });
-
         mark_worker_task_active(self.worker_task_id).await?;
         // Listen and wait for all and kill switch
         tokio::select! {
@@ -92,13 +77,10 @@ impl super::FuzzDriver for LibFuzzerDriver {
                 error!("Corpus sync exited first instead of kill switch");
             },
             _ = crash_sync_handle => {
-                error!("Corpus sync exited first instead of kill switch");
+                error!("Crash sync exited first instead of kill switch");
             },
             _ = stats_collector_handle => {
                 error!("Stats collector exited first instead of kill switch");
-            },
-            _ = stderr_handle => {
-                warn!("Stderr exited first instead of kill switch, probably libfuzzer exited first");
             },
             _ = kill_switch => {
                 info!("Received kill for lib fuzzer driver");

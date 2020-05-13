@@ -5,10 +5,16 @@ use log::{error, debug};
 use regex::Regex;
 use inotify::{Inotify, WatchMask, EventStream};
 use tokio::{
-    fs::File,
+    fs::{self, File},
     stream::StreamExt,
     io::AsyncReadExt,
 };
+
+pub async fn mkdir_p(path: &Path) -> std::io::Result<()> {
+    debug!("Creating directory tree {:?}", path);
+    fs::create_dir_all(path).await?;
+    Ok(())
+}
 
 pub async fn read_file(file_path: &Path) -> Result<Vec<u8>, Box<dyn Error>> {
     debug!("Reading full file: {:?}", file_path);

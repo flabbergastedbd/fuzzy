@@ -18,6 +18,7 @@ use crash_syncer::CrashSyncer;
 pub mod corpus_syncer;
 pub mod crash_syncer;
 mod native;
+mod docker;
 
 #[derive(Debug, Clone)]
 pub struct CrashConfig {
@@ -47,6 +48,11 @@ pub struct CorpusConfig {
 pub struct ExecutorConfig {
     pub executor: ExecutorEnum,
     pub cpus: i32,
+
+    // Only used if executor is docker
+    #[serde(default)]
+    pub image: String,
+
     pub executable: String,
     pub args: Vec<String>,
     pub cwd: Box<Path>,
@@ -54,10 +60,12 @@ pub struct ExecutorConfig {
     pub envs: HashMap<String, String>,
 }
 
+
+// Only fear was tokio::process::Child which seems to obey Send so we do too
 #[tonic::async_trait]
-pub trait Executor {
-    /// Create a new executor with this configuration
-    fn new(config: ExecutorConfig, worker_task_id: Option<i32>) -> Self;
+pub trait Executor: std::marker::Send {
+    // Create a new executor with this configuration
+    // fn new(config: ExecutorConfig, worker_task_id: Option<i32>) -> Self;
 
     /// Setup stage often involves preparing things like download
     /// corpus, make it ready for launch
@@ -74,8 +82,8 @@ pub trait Executor {
 
     // TODO: Switch to generic trait based returns so we can swap file monitors
     // fn get_file_watcher(&self, path: Path) -> Box<dyn file_watcher::FileWatcher>;
-    async fn get_corpus_syncer(&self) -> Result<CorpusSyncer, Box<dyn Error>>;
-    async fn get_crash_syncer(&self, config: CrashConfig) -> Result<CrashSyncer, Box<dyn Error>>;
+    fn get_corpus_syncer(&self) -> Result<CorpusSyncer, Box<dyn Error>>;
+    fn get_crash_syncer(&self, config: CrashConfig) -> Result<CrashSyncer, Box<dyn Error>>;
 
     // Get absolute path for relative to cwd
     fn get_cwd_path(&self) -> PathBuf;
@@ -84,11 +92,15 @@ pub trait Executor {
     fn close(&mut self) -> Result<(), Box<dyn Error>>;
 }
 
-pub fn new(config: ExecutorConfig, worker_task_id: Option<i32>) -> impl Executor {
+pub fn new(config: ExecutorConfig, worker_task_id: Option<i32>) -> Box<dyn Executor> {
     match config.executor {
-        _ => {
+        ExecutorEnum::Native => {
             debug!("Creating native executor");
-            native::NativeExecutor::new(config, worker_task_id)
+            Box::new(native::NativeExecutor::new(config, worker_task_id))
         },
+        ExecutorEnum::Docker => {
+            debug!("Creating docker executor");
+            Box::new(docker::DockerExecutor::new(config, worker_task_id))
+        }
     }
 }

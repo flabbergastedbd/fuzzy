@@ -11,6 +11,21 @@ args:
       multiple: true
       global: true
       takes_value: false
+  - ca:
+      help: "CA cert file (Default: ca.crt)"
+      long: cert-authority
+      takes_value: true
+      global: true
+  - worker_pem:
+      help: "Client identity to talk to server, necessary even for cli (Default: worker.pem)"
+      long: client-identity
+      takes_value: true
+      global: true
+  - connect_addr:
+      help: "Server address to connect (Default: https://localhost:12700)"
+      long: server-url
+      takes_value: true
+      global: true
 subcommands:
   - master:
       about: Master that can manage workers
@@ -27,10 +42,6 @@ subcommands:
                   help: "PEM file consisting both server cert and key (Default: server.pem)"
                   long: server-identity
                   takes_value: true
-              - ca:
-                  help: "CA cert file (Default: ca.crt)"
-                  long: cert-authority
-                  takes_value: true
               - db_connect_str:
                   help: "Postgres database connection string (Default: postgres://fuzzy:fuzzy@127.0.0.1:5432/fuzzy)"
                   long: db
@@ -42,17 +53,6 @@ subcommands:
         - start:
             about: Start a worker agent
             args:
-              - ca:
-                  help: "CA cert file"
-                  long: cert-authority
-                  takes_value: true
-              - worker_pem:
-                  help: "PEM file consisting both client cert and key (Default: worker.pem)"
-                  long: worker-identity
-                  takes_value: true
-              - connect_addr:
-                  help: "Address to connect (https://127.0.0.1:12700)"
-                  index: 1
               - name:
                   help: Identifier for this worker agent
                   long: name
@@ -61,19 +61,13 @@ subcommands:
                   help: Incase of restarting an old agent
                   long: uuid
                   takes_value: true
-
+              - container_volume:
+                  help: "Start agent with docker executor support by providing a mount mapping (<host_path>:<path_inside_container_running_worker>)"
+                  takes_value: true
+                  index: 1
   - cli:
       about: Command line interface to interact with master
       version: "0.1"
-      args:
-        - connect_addr:
-            help: "Address to connect (Default: https://127.0.0.1:12700)"
-            long: server-addr
-            takes_value: true
-        - ca:
-            help: "CA cert file (Default: ca.crt)"
-            long: cert-authority
-            takes_value: true
       subcommands:
         - tasks:
             about: Access/Edit/Remove task information
@@ -138,6 +132,10 @@ subcommands:
                         help: Path to executor profile json
                         takes_value: true
                         index: 1
+                    - container_volume:
+                        help: "Start agent with docker executor support by providing a mount mapping (<host_path>:<path_inside_container_running_worker>)"
+                        takes_value: true
+                        index: 2
               - task:
                   about: Test fuzz profile
                   args:
@@ -145,3 +143,7 @@ subcommands:
                         help: Path to full task profile json
                         takes_value: true
                         index: 1
+                    - container_volume:
+                        help: "Start agent with docker executor support by providing a mount mapping (<host_path>:<path_inside_container_running_worker>)"
+                        takes_value: true
+                        index: 2

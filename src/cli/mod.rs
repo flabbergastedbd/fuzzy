@@ -4,7 +4,7 @@ use log::{error, debug};
 use clap::ArgMatches;
 use prettytable::{Table, Row};
 
-use crate::common::xpc::set_connect_url;
+use crate::common::cli::parse_global_settings;
 
 mod formatter;
 mod tasks;
@@ -27,7 +27,7 @@ fn print_results<T>(headings: Vec<&str>, entries: Vec<Vec<T>>)
 #[tokio::main]
 async fn main_loop(arg_matches: &ArgMatches) -> Result<(), Box<dyn Error>> {
     // Create url for server & create a client
-    set_connect_url(arg_matches.value_of("connect_addr").unwrap_or("https://127.0.0.1:12700"));
+    parse_global_settings(arg_matches);
 
     // Start matching
     match arg_matches.subcommand() {

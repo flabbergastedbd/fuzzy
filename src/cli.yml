@@ -83,13 +83,25 @@ subcommands:
                             help: Path to profile path
                             takes_value: true
                             index: 2
-                - delete:
-                    about: Delete a task
+                - edit:
+                    about: Edit a task
                     args:
                       - id:
                           help: Id of task
                           takes_value: true
                           index: 1
+                      - name:
+                          help: Name of the task
+                          takes_value: true
+                          long: name
+                      - profile_path:
+                          help: Path to profile path
+                          takes_value: true
+                          long: profile
+                      - active:
+                          help: Mark task as active, lack of this will mark it inactive
+                          takes_value: true
+                          long: active
                 - list:
                     about: List all tasks
         - corpora:

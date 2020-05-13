@@ -72,9 +72,9 @@ message NewTask {
 
 message PatchTask {
     required int32 id = 1;
-    required string name = 2;
+    optional string name = 2;
     required bool active = 3;
-    required string profile = 4;
+    optional string profile = 4;
 }
 
 message Task {

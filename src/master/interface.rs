@@ -69,17 +69,23 @@ impl Orchestrator for OrchestratorService {
         // First get inner type of tonic::Request & then use our From traits
         let patch_task: xpc::PatchTask = request.into_inner();
 
-        if let Err(e) = construct_profile(patch_task.profile.as_str()) {
-            error!("Bad profile: {}", e);
-            return Err(Status::new(Code::InvalidArgument, format!("{}", e)))
+            // .into_boxed();
+
+        if let Some(patch_profile) = patch_task.profile.clone() {
+            if let Ok(_) = construct_profile(patch_profile.as_str()) {
+                debug!("Valid profile submitted");
+            } else {
+                return Err(Status::new(Code::InvalidArgument, "Bad profile submitted"))
+            }
         }
 
         // Check profile is valid
-        debug!("Inserting new task into database");
+        debug!("Updating task into database");
         // Get connection from pool (r2d2)
         let conn = self.db_broker.get_conn();
         // Upsert the new agent
         let tasks = diesel::update(tasks::table)
+            .filter(tasks::id.eq(patch_task.id))
             .set(&patch_task)
             .returning(tasks::all_columns)
             .load::<Task>(&conn);

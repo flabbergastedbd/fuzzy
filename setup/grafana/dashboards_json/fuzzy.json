@@ -17,11 +17,11 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "iteration": 1589453542091,
+  "iteration": 1589473437956,
   "links": [],
   "panels": [
     {
-      "collapsed": true,
+      "collapsed": false,
       "datasource": null,
       "gridPos": {
         "h": 1,
@@ -30,284 +30,7 @@
         "y": 0
       },
       "id": 16,
-      "panels": [
-        {
-          "aliasColors": {},
-          "bars": false,
-          "dashLength": 10,
-          "dashes": false,
-          "datasource": null,
-          "fill": 1,
-          "fillGradient": 3,
-          "gridPos": {
-            "h": 8,
-            "w": 19,
-            "x": 0,
-            "y": 1
-          },
-          "hiddenSeries": false,
-          "id": 14,
-          "legend": {
-            "alignAsTable": false,
-            "avg": false,
-            "current": false,
-            "max": false,
-            "min": false,
-            "rightSide": true,
-            "show": true,
-            "total": false,
-            "values": false
-          },
-          "lines": true,
-          "linewidth": 2,
-          "nullPointMode": "null",
-          "options": {
-            "dataLinks": []
-          },
-          "percentage": false,
-          "pointradius": 2,
-          "points": false,
-          "renderer": "flot",
-          "repeat": null,
-          "repeatDirection": "v",
-          "scopedVars": {
-            "worker": {
-              "selected": true,
-              "text": "1337_h4x0r",
-              "value": "1337_h4x0r"
-            }
-          },
-          "seriesOverrides": [
-            {
-              "$$hashKey": "object:658",
-              "alias": "memory_total",
-              "color": "#E02F44",
-              "fill": 0,
-              "fillGradient": 0
-            },
-            {
-              "$$hashKey": "object:676",
-              "alias": "swap_total",
-              "color": "#FFA6B0",
-              "fill": 0,
-              "fillGradient": 0,
-              "linewidth": 1
-            },
-            {
-              "$$hashKey": "object:1028",
-              "alias": "memory_used",
-              "color": "#56A64B"
-            }
-          ],
-          "spaceLength": 10,
-          "stack": false,
-          "steppedLine": false,
-          "targets": [
-            {
-              "format": "time_series",
-              "group": [],
-              "metricColumn": "none",
-              "rawQuery": true,
-              "rawSql": "SELECT\n  created_at AS \"time\",\n  memory_total,\n  memory_used,\n  swap_total,\n  swap_used\nFROM sys_stats\nWHERE\n  $__timeFilter(created_at)\nORDER BY 1",
-              "refId": "A",
-              "select": [
-                [
-                  {
-                    "params": [
-                      "memory_total"
-                    ],
-                    "type": "column"
-                  }
-                ],
-                [
-                  {
-                    "params": [
-                      "memory_used"
-                    ],
-                    "type": "column"
-                  }
-                ],
-                [
-                  {
-                    "params": [
-                      "swap_total"
-                    ],
-                    "type": "column"
-                  }
-                ],
-                [
-                  {
-                    "params": [
-                      "swap_used"
-                    ],
-                    "type": "column"
-                  }
-                ],
-                [
-                  {
-                    "params": [
-                      "swap_used"
-                    ],
-                    "type": "column"
-                  }
-                ]
-              ],
-              "table": "sys_stats",
-              "timeColumn": "created_at",
-              "timeColumnType": "timestamp",
-              "where": [
-                {
-                  "name": "$__timeFilter",
-                  "params": [],
-                  "type": "macro"
-                }
-              ]
-            }
-          ],
-          "thresholds": [],
-          "timeFrom": null,
-          "timeRegions": [],
-          "timeShift": null,
-          "title": "$worker - Memory",
-          "tooltip": {
-            "shared": true,
-            "sort": 0,
-            "value_type": "individual"
-          },
-          "transparent": true,
-          "type": "graph",
-          "xaxis": {
-            "buckets": null,
-            "mode": "time",
-            "name": null,
-            "show": true,
-            "values": []
-          },
-          "yaxes": [
-            {
-              "$$hashKey": "object:117",
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            },
-            {
-              "$$hashKey": "object:118",
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            }
-          ],
-          "yaxis": {
-            "align": false,
-            "alignLevel": null
-          }
-        },
-        {
-          "datasource": null,
-          "gridPos": {
-            "h": 8,
-            "w": 5,
-            "x": 19,
-            "y": 1
-          },
-          "id": 18,
-          "options": {
-            "fieldOptions": {
-              "calcs": [
-                "lastNotNull"
-              ],
-              "defaults": {
-                "mappings": [],
-                "thresholds": {
-                  "mode": "absolute",
-                  "steps": [
-                    {
-                      "color": "green",
-                      "value": null
-                    },
-                    {
-                      "color": "red",
-                      "value": 1000000
-                    }
-                  ]
-                }
-              },
-              "overrides": [],
-              "values": false
-            },
-            "orientation": "horizontal",
-            "showThresholdLabels": false,
-            "showThresholdMarkers": true
-          },
-          "pluginVersion": "6.7.3",
-          "repeat": "worker",
-          "repeatDirection": "v",
-          "scopedVars": {
-            "worker": {
-              "selected": true,
-              "text": "1337_h4x0r",
-              "value": "1337_h4x0r"
-            }
-          },
-          "targets": [
-            {
-              "format": "time_series",
-              "group": [],
-              "metricColumn": "none",
-              "rawQuery": false,
-              "rawSql": "SELECT\n  created_at AS \"time\",\n  cpu_user_time,\n  cpu_system_time,\n  cpu_idle_time\nFROM sys_stats\nWHERE\n  $__timeFilter(created_at)\nORDER BY 1",
-              "refId": "A",
-              "select": [
-                [
-                  {
-                    "params": [
-                      "cpu_user_time"
-                    ],
-                    "type": "column"
-                  }
-                ],
-                [
-                  {
-                    "params": [
-                      "cpu_system_time"
-                    ],
-                    "type": "column"
-                  }
-                ],
-                [
-                  {
-                    "params": [
-                      "cpu_idle_time"
-                    ],
-                    "type": "column"
-                  }
-                ]
-              ],
-              "table": "sys_stats",
-              "timeColumn": "created_at",
-              "timeColumnType": "timestamp",
-              "where": [
-                {
-                  "name": "$__timeFilter",
-                  "params": [],
-                  "type": "macro"
-                }
-              ]
-            }
-          ],
-          "timeFrom": null,
-          "timeShift": null,
-          "title": "$worker - CPU",
-          "transparent": true,
-          "type": "gauge"
-        }
-      ],
+      "panels": [],
       "repeat": "worker",
       "scopedVars": {
         "worker": {
@@ -320,13 +43,331 @@
       "type": "row"
     },
     {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": null,
+      "fill": 1,
+      "fillGradient": 3,
+      "gridPos": {
+        "h": 8,
+        "w": 19,
+        "x": 0,
+        "y": 1
+      },
+      "hiddenSeries": false,
+      "id": 14,
+      "legend": {
+        "alignAsTable": false,
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "rightSide": false,
+        "show": false,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 2,
+      "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
+      "percentage": false,
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "repeat": null,
+      "repeatDirection": "v",
+      "scopedVars": {
+        "worker": {
+          "selected": true,
+          "text": "1337_h4x0r",
+          "value": "1337_h4x0r"
+        }
+      },
+      "seriesOverrides": [
+        {
+          "$$hashKey": "object:658",
+          "alias": "memory_total",
+          "color": "#E02F44",
+          "fill": 0,
+          "fillGradient": 0
+        },
+        {
+          "$$hashKey": "object:676",
+          "alias": "swap_total",
+          "color": "#FFA6B0",
+          "fill": 0,
+          "fillGradient": 0,
+          "linewidth": 1
+        },
+        {
+          "$$hashKey": "object:1028",
+          "alias": "memory_used",
+          "color": "#56A64B"
+        }
+      ],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "format": "time_series",
+          "group": [],
+          "metricColumn": "none",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  created_at AS \"time\",\n  memory_total,\n  memory_used,\n  swap_total,\n  swap_used\nFROM sys_stats\nWHERE\n  $__timeFilter(created_at)\nORDER BY 1",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "memory_total"
+                ],
+                "type": "column"
+              }
+            ],
+            [
+              {
+                "params": [
+                  "memory_used"
+                ],
+                "type": "column"
+              }
+            ],
+            [
+              {
+                "params": [
+                  "swap_total"
+                ],
+                "type": "column"
+              }
+            ],
+            [
+              {
+                "params": [
+                  "swap_used"
+                ],
+                "type": "column"
+              }
+            ],
+            [
+              {
+                "params": [
+                  "swap_used"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "table": "sys_stats",
+          "timeColumn": "created_at",
+          "timeColumnType": "timestamp",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "$worker - Memory",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "transparent": true,
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "$$hashKey": "object:117",
+          "format": "mbytes",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "$$hashKey": "object:118",
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": false
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "cacheTimeout": null,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": null,
+      "fill": 1,
+      "fillGradient": 1,
+      "gridPos": {
+        "h": 8,
+        "w": 5,
+        "x": 19,
+        "y": 1
+      },
+      "hiddenSeries": false,
+      "id": 18,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
+      "percentage": false,
+      "pluginVersion": "6.7.3",
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "repeat": null,
+      "repeatDirection": "v",
+      "scopedVars": {
+        "worker": {
+          "selected": true,
+          "text": "1337_h4x0r",
+          "value": "1337_h4x0r"
+        }
+      },
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "format": "time_series",
+          "group": [],
+          "metricColumn": "none",
+          "rawQuery": false,
+          "rawSql": "SELECT\n  created_at AS \"time\",\n  cpu_user_time,\n  cpu_system_time,\n  cpu_idle_time\nFROM sys_stats\nWHERE\n  $__timeFilter(created_at)\nORDER BY 1",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "cpu_user_time"
+                ],
+                "type": "column"
+              }
+            ],
+            [
+              {
+                "params": [
+                  "cpu_system_time"
+                ],
+                "type": "column"
+              }
+            ],
+            [
+              {
+                "params": [
+                  "cpu_idle_time"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "table": "sys_stats",
+          "timeColumn": "created_at",
+          "timeColumnType": "timestamp",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "$worker - CPU",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "transparent": true,
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "$$hashKey": "object:251",
+          "format": "ms",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "$$hashKey": "object:252",
+          "format": "ms",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": false
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
       "collapsed": true,
       "datasource": null,
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 1
+        "y": 9
       },
       "id": 2,
       "panels": [
@@ -906,8 +947,8 @@
     ]
   },
   "time": {
-    "from": "now-1h",
-    "to": "now"
+    "from": "2020-05-14T10:49:31.934Z",
+    "to": "2020-05-14T11:13:50.385Z"
   },
   "timepicker": {
     "refresh_intervals": [
@@ -929,5 +970,5 @@
   "variables": {
     "list": []
   },
-  "version": 1
+  "version": 2
 }

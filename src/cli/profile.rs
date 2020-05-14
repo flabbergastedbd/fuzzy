@@ -3,7 +3,7 @@ use std::error::Error;
 
 use log::{warn, info, error, debug};
 use clap::ArgMatches;
-use tokio::{sync::oneshot, signal::unix::{signal, SignalKind}, task::LocalSet};
+use tokio::{sync::oneshot, sync::broadcast, signal::unix::{signal, SignalKind}, task::LocalSet};
 
 use crate::executor::{self, ExecutorConfig};
 use crate::fuzz_driver::{self, FuzzDriver, FuzzConfig};
@@ -15,6 +15,7 @@ pub async fn cli(args: &ArgMatches) -> Result<(), Box<dyn Error>> {
     match args.subcommand() {
         // Adding a new task
         ("executor", Some(sub_matches)) => {
+            // TODO: Fix profile
             parse_volume_map_settings(sub_matches);
             debug!("Testing executor profile");
             // Get profile
@@ -30,6 +31,7 @@ pub async fn cli(args: &ArgMatches) -> Result<(), Box<dyn Error>> {
 
             // Create Executor
             let mut executor = executor::new(config, None);
+            let (longshot, longshot_recv) = broadcast::channel::<u8>(5);
 
             executor.setup().await?;
 
@@ -39,7 +41,7 @@ pub async fn cli(args: &ArgMatches) -> Result<(), Box<dyn Error>> {
             let corpus_syncer = executor.get_corpus_syncer()?;
             corpus_syncer.setup_corpus().await?;
             let corpus_sync_handle = local_set.spawn_local(async move {
-                if let Err(e) = corpus_syncer.sync_corpus().await {
+                if let Err(e) = corpus_syncer.sync_corpus(longshot_recv).await {
                     error!("Unable to sync corpus: {}", e);
                 }
             });
@@ -63,6 +65,7 @@ pub async fn cli(args: &ArgMatches) -> Result<(), Box<dyn Error>> {
             });
 
             let mut stream = signal(SignalKind::interrupt())?;
+            let executor_longshot_recv = longshot.subscribe();
             tokio::select! {
                 _ = corpus_sync_handle => {
                     warn!("Corpus sync exited first, something is wrong");
@@ -73,10 +76,14 @@ pub async fn cli(args: &ArgMatches) -> Result<(), Box<dyn Error>> {
                 _ = stream.recv() => {
                     info!("Received Ctrl-c for task set")
                 },
+                _ = executor.wait(executor_longshot_recv) => {},
+            }
+            debug!("select! has ended, firing longshot");
+            if let Err(e) = longshot.send(0) {
+                error!("Error sending longshot: {:?}", e);
             }
 
             executor.close().await?;
-
         },
         ("task", Some(sub_matches)) => {
             parse_volume_map_settings(sub_matches);

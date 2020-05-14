@@ -75,10 +75,10 @@ impl fmt::Display for NewWorker {
 pub async fn main_loop(worker: Arc<RwLock<NewWorker>>) -> Result<(), Box<dyn Error>> {
     // Launch a cpu update task, because of well `heim` and async only
     let worker_clone = worker.clone();
-    tokio::task::spawn(async move {
+    tokio::spawn(async move {
         let mut worker_writable = worker_clone.write().await;
         worker_writable.update_self().await
-    });
+    }).await?;
 
 
     // Launch periodic heartbeat dispatcher

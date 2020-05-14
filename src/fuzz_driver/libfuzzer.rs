@@ -4,7 +4,7 @@ use std::error::Error;
 
 use log::{trace, error, info, debug, warn};
 use regex::Regex;
-use tokio::{fs, task, sync::oneshot};
+use tokio::{fs, sync::oneshot, sync::broadcast};
 use tonic::Request;
 
 use super::FuzzConfig;
@@ -39,11 +39,6 @@ impl super::FuzzDriver for LibFuzzerDriver {
         // Spawn off corpus sync
         let corpus_syncer = runner.get_corpus_syncer()?;
         corpus_syncer.setup_corpus().await?;
-        let corpus_sync_handle = task::spawn(async move {
-            if let Err(e) = corpus_syncer.sync_corpus().await {
-                error!("Error in syncing corpus: {}", e);
-            }
-        });
 
         // Spawn off crash sync
         let crash_config = CrashConfig {
@@ -52,60 +47,51 @@ impl super::FuzzDriver for LibFuzzerDriver {
             filter: Regex::new("crash-.*")?,
         };
         let crash_syncer = runner.get_crash_syncer(crash_config)?;
-        let crash_sync_handle = task::spawn(async move {
-            if let Err(e) = crash_syncer.upload_crashes().await {
-                error!("Error in syncing crashes: {}", e);
-            }
-        });
 
         // Stat collector
         let log_path = runner.get_cwd_path();
         let stats_collector = LibFuzzerStatCollector::new(self.config.execution.cpus, self.worker_task_id, log_path)?;
-        let stats_collector_handle = task::spawn(async move {
-            if let Err(e) = stats_collector.start().await {
-                error!("Error in syncing crashes: {}", e);
-            }
-        });
 
         // Start the actual process
         runner.spawn().await?;
-        /*
-        let runner_handle = tokio::spawn(async move {
-            if let Ok(output) = runner.wait().await {
-                info!("Command exited first with code: {:?}", output.status.code());
-                info!("Stdout: {:?}", String::from_utf8(output.stdout));
-                warn!("Stderr: {:?}", String::from_utf8(output.stderr));
-            }
-        });
-        */
 
         mark_worker_task_active(self.worker_task_id).await?;
         // Listen and wait for all and kill switch
+        let (longshot, longshot_recv) = broadcast::channel(5);
+        let crash_longshot_recv = longshot.subscribe();
+        let stat_longshot_recv = longshot.subscribe();
+        let runner_longshot_recv = longshot.subscribe();
         tokio::select! {
-            _ = corpus_sync_handle => {
-                error!("Corpus sync exited first instead of kill switch");
+            result = corpus_syncer.sync_corpus(longshot_recv) => {
+                error!("Error in syncing corpus: {:?}", result);
             },
-            _ = crash_sync_handle => {
-                error!("Crash sync exited first instead of kill switch");
+            result = crash_syncer.upload_crashes(crash_longshot_recv) => {
+                error!("Error in syncing crashes: {:?}", result);
             },
-            _ = stats_collector_handle => {
-                error!("Stats collector exited first instead of kill switch");
+            result = stats_collector.start(stat_longshot_recv) => {
+                error!("Error in collecting stats : {:?}", result);
             },
             _ = kill_switch => {
-                info!("Received kill for lib fuzzer driver");
+                warn!("Received kill for lib fuzzer driver");
             },
-            /*
-            _ = runner_handle => {
-                error!("Command exited first");
+            result = runner.wait(runner_longshot_recv) => {
+                error!("Error in executor: {:?}", result);
             },
-            */
         }
+        // If we are here it means select wrapped up from above
+        // Close the fuzz process
+        if let Err(e) = longshot.send(0) {
+            error!("Error in sending longshot: {:?}", e);
+        }
+        info!("Sending kill signal for execturo {:?} as select! ended", self.worker_task_id);
+        runner.close().await?;
+
         mark_worker_task_inactive(self.worker_task_id).await?;
 
         // local.await;
         // If we reached here means one of the watches failed or kill switch triggered
         info!("Kill fuzzer process for {:?}", self.worker_task_id);
-        runner.close().await?;
+        // runner.close().await?;
 
         Ok(())
     }
@@ -130,12 +116,9 @@ impl LibFuzzerStatCollector {
         })
     }
 
-    pub async fn start(self) -> Result<(), Box<dyn Error>> {
-        debug!("Spawning lib fuzzer stat collector");
-
+    async fn main_loop(self) -> Result<(), Box<dyn Error>> {
         let mut interval = tokio::time::interval(crate::common::intervals::WORKER_FUZZDRIVER_STAT_UPLOAD_INTERVAL);
         let client = &get_orchestrator_client().await?;
-
         loop {
             interval.tick().await;
             let mut client_clone = client.clone();
@@ -159,8 +142,23 @@ impl LibFuzzerStatCollector {
                     error!("Failed to submit a fuzz stat: {}", e);
                 }
             }
-
         }
+    }
+
+    pub async fn start(self, mut kill_switch: broadcast::Receiver<u8>) -> Result<(), Box<dyn Error>> {
+        debug!("Spawning lib fuzzer stat collector");
+
+
+        tokio::select! {
+            result = self.main_loop() => {
+                if let Err(e) = result {
+                    error!("Libfuzzer stat collection exited with error: {}", e);
+                }
+            },
+            _ = kill_switch.recv() => {},
+        }
+
+        Ok(())
     }
 
     fn get_stat_from_log(&self, relative_path: &Path) -> Result<NewFuzzStat, Box<dyn Error>> {

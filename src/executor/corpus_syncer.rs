@@ -3,8 +3,8 @@ use std::time::{UNIX_EPOCH, SystemTime, Duration};
 
 use regex::Regex;
 use log::{info, error, debug};
-use tokio::task;
 use tonic::transport::channel::Channel;
+use tokio::sync::broadcast;
 
 use crate::xpc::orchestrator_client::OrchestratorClient;
 use crate::utils::fs::InotifyFileWatcher;
@@ -37,10 +37,11 @@ impl CorpusSyncer {
 
     pub async fn sync_corpus(
             &self,
+            mut kill_switch: broadcast::Receiver<u8>
         ) -> Result<(), Box<dyn Error>> {
 
         debug!("Will try to keep corpus in sync at: {:?}", self.config.path);
-        let mut client = get_orchestrator_client().await?;
+        let client = get_orchestrator_client().await?;
         let worker_task_id = self.worker_task_id;
 
         // Create a local set
@@ -48,37 +49,28 @@ impl CorpusSyncer {
 
         // Create necessary clones and pass along for upload sync if upload enabled
         let client_clone = client.clone();
-        let corpus_config = self.config.clone();
-        let upload_handle = task::spawn(async move {
-            if let Err(e) = upload(corpus_config, worker_task_id, client_clone).await {
-                error!("Upload sync job failed: {}", e);
-            }
-        });
+        let corpus_config_upload = self.config.clone();
 
         // Create necessary clones and pass along for download sync
-        let mut last_updated = SystemTime::now();
+        let last_updated = SystemTime::now();
         let corpus_config = self.config.clone();
         let refresh_interval = self.config.refresh_interval;
-        let download_handle = task::spawn(async move {
-            let mut interval = tokio::time::interval(Duration::from_secs(refresh_interval));
-            loop {
-                interval.tick().await;
-                let result = download_corpus_to_disk(corpus_config.label.clone(),
-                                                     worker_task_id,
-                                                     last_updated,
-                                                     &corpus_config.path,
-                                                     &mut client).await;
-                // If successful update, set last_updated
-                if let Err(e) = result {
-                    error!("Download sync job failed: {}", e);
-                } else {
-                    last_updated = SystemTime::now();
-                }
-            }
-        });
+
+        tokio::select! {
+            _ = download(corpus_config, worker_task_id, last_updated, refresh_interval, client) => {
+                error!("Downloading corpus exited first, whaaatt!");
+            },
+            // Doing this should be very necessary
+            _ = upload(corpus_config_upload, worker_task_id, client_clone), if self.config.upload => {
+                error!("Uploading corpus exited first, whaaatt!");
+            },
+            _ = kill_switch.recv() => {
+                debug!("Kill receieved for corpus sync at {:?}", self.config);
+            },
+        }
 
         // Error handled at spawn level
-        let (_, _) = tokio::join!(upload_handle, download_handle);
+        // let (_, _) = tokio::join!(upload_handle, download_handle);
 
         // local_set.await;
 
@@ -111,4 +103,27 @@ async fn upload(
         debug!("Returning early as corpus upload seems to have been disabled for {:?}", worker_task_id);
     }
     Ok(())
+}
+
+async fn download(
+        corpus_config: CorpusConfig,
+        worker_task_id: Option<i32>,
+        mut last_updated: SystemTime,
+        refresh_interval: u64,
+        mut client: OrchestratorClient<Channel>) -> Result<(), Box<dyn Error>> {
+    let mut interval = tokio::time::interval(Duration::from_secs(refresh_interval));
+    loop {
+        interval.tick().await;
+        let result = download_corpus_to_disk(corpus_config.label.clone(),
+                                             worker_task_id,
+                                             last_updated,
+                                             &corpus_config.path,
+                                             &mut client).await;
+        // If successful update, set last_updated
+        if let Err(e) = result {
+            error!("Download sync job failed: {}", e);
+        } else {
+            last_updated = SystemTime::now();
+        }
+    }
 }

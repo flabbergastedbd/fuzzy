@@ -1,4 +1,4 @@
-use std::process::{Stdio, Output};
+use std::process::Stdio;
 use std::error::Error;
 use std::path::PathBuf;
 use std::io::{self, ErrorKind};
@@ -7,6 +7,7 @@ use log::{error, debug};
 use tokio::{
     process::{Command, Child, ChildStdout, ChildStderr},
     io::{BufReader, AsyncBufReadExt, Lines},
+    sync::broadcast,
 };
 
 use super::{CrashConfig, ExecutorConfig};
@@ -35,9 +36,20 @@ impl super::Executor for NativeExecutor {
         Ok(())
     }
 
-    async fn wait(self: Box<Self>) -> Result<Output, Box<dyn Error>> {
-        if let Some(out) = self.child {
-            Ok(out.wait_with_output().await?)
+    async fn wait(&self, mut kill_switch: broadcast::Receiver<u8>) -> Result<(), Box<dyn Error>> {
+        if self.child.is_some() {
+            let pid = self.child.as_ref().map(|c| c.id());
+            if let Some(pid) = pid {
+                tokio::select! {
+                    _ = pid_exists(pid) => {
+                        error!("Process with pid {} exited first", pid);
+                    },
+                    _ = kill_switch.recv() => {
+                        debug!("Kill received for native executor, hope the command dies");
+                    },
+                };
+            }
+            Ok(())
         } else {
             Err(Box::new(io::Error::new(ErrorKind::InvalidData,
                              "wait() called on executor")))
@@ -94,11 +106,8 @@ impl super::Executor for NativeExecutor {
         self.config.cwd.clone().to_path_buf()
     }
 
-    async fn close(self: Box<Self>) -> Result<(), Box<dyn Error>> {
-        debug!("Closing out executor");
-        if let Some(mut child) = self.child {
-            child.kill()?;
-        }
+    async fn close(mut self: Box<Self>) -> Result<(), Box<dyn Error>> {
+        self.child.as_mut().map(|c| c.kill());
         Ok(())
     }
 }
@@ -110,4 +119,22 @@ impl NativeExecutor {
             config, child: None, worker_task_id
         }
     }
+}
+
+// This check should be very liberal
+async fn pid_exists(pid: u32) -> Result<(), Box<dyn Error>> {
+    let mut interval = tokio::time::interval(crate::common::intervals::WORKER_PROCESS_CHECK_INTERVAL);
+    let mut fail_count = 0;
+    loop {
+        interval.tick().await;
+        if heim::process::pid_exists(pid as i32).await? == false {
+            if fail_count > 10 {
+                break
+            } else {
+                fail_count = fail_count + 1;
+            }
+        }
+    }
+    Ok(())
+
 }

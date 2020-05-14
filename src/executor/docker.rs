@@ -1,14 +1,14 @@
-use std::process::{Stdio, Output};
+use std::process::Stdio;
 use std::error::Error;
 use std::path::PathBuf;
 use std::os::unix::fs::MetadataExt;
-use std::io::{self, ErrorKind};
 
 use log::{info, warn, error, debug};
 use tokio::{
     fs,
     process::{Command, Child, ChildStdout, ChildStderr},
     io::{BufReader, AsyncBufReadExt, Lines},
+    sync::broadcast,
 };
 
 use super::{CrashConfig, ExecutorConfig};
@@ -50,13 +50,17 @@ impl super::Executor for DockerExecutor {
         Ok(())
     }
 
-    async fn wait(self: Box<Self>) -> Result<Output, Box<dyn Error>> {
-        if let Some(out) = self.child {
-            Ok(out.wait_with_output().await?)
-        } else {
-            Err(Box::new(io::Error::new(ErrorKind::InvalidData,
-                             "wait() called on executor")))
-        }
+    async fn wait(&self, mut kill_switch: broadcast::Receiver<u8>) -> Result<(), Box<dyn Error>> {
+        let identifier = self.identifier.clone();
+        tokio::select! {
+            result = check_if_container_alive(identifier) => {
+                result?;
+            },
+            _ = kill_switch.recv() => {
+                debug!("Kill received for docker executor, hope the command dies");
+            },
+        };
+        Ok(())
     }
 
     async fn spawn(&mut self) -> Result<(), Box<dyn Error>> {
@@ -150,23 +154,22 @@ impl super::Executor for DockerExecutor {
         self.mapped_cwd.clone()
     }
 
-    async fn close(self: Box<Self>) -> Result<(), Box<dyn Error>> {
-        debug!("Closing out executor");
-        if let Some(mut child) = self.child {
-            let mut cmd = Command::new("docker");
-            cmd
-                .arg("stop")
-                .arg(self.identifier.clone())
-                .kill_on_drop(true);
 
-            let output = cmd.output().await?;
-            if output.status.success() == false {
-                error!("Unable to stop container: {}", self.identifier);
-                info!("Stdout: {:?}", String::from_utf8(output.stdout));
-                warn!("Stderr: {:?}", String::from_utf8(output.stderr));
-            }
-            child.kill()?;
+    async fn close(mut self: Box<Self>) -> Result<(), Box<dyn Error>> {
+        // We are here means we need to stop now
+        let mut cmd = Command::new("docker");
+        cmd
+            .arg("stop")
+            .arg(self.identifier.clone())
+            .kill_on_drop(true);
+
+        let output = cmd.output().await?;
+        if output.status.success() == false {
+            error!("Unable to stop container: {}", self.identifier);
+            info!("Stdout: {:?}", String::from_utf8(output.stdout));
+            warn!("Stderr: {:?}", String::from_utf8(output.stderr));
         }
+
         Ok(())
     }
 }
@@ -198,4 +201,31 @@ impl DockerExecutor {
             host_cwd,
         }
     }
+
+}
+
+// This check should be very liberal
+async fn check_if_container_alive(identitifer: String) -> Result<(), Box<dyn Error>> {
+    let mut interval = tokio::time::interval(crate::common::intervals::WORKER_PROCESS_CHECK_INTERVAL);
+    let name_filter = format!("name={}", identitifer);
+    let mut fail_count = 0;
+    loop {
+        interval.tick().await;
+        let mut cmd = Command::new("docker");
+        cmd
+            .arg("ps")
+            .arg("-f")
+            .arg(name_filter.as_str())
+            .arg("--format={{.ID}}")
+            .kill_on_drop(true);
+        let output = cmd.output().await?;
+        if output.stdout.len() == 0 {
+            if fail_count > 10 {
+                break
+            } else {
+                fail_count = fail_count + 1;
+            }
+        }
+    }
+    Ok(())
 }

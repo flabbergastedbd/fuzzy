@@ -1,6 +1,5 @@
 use std::path::{Path, PathBuf};
 use std::error::Error;
-use std::process::Output;
 use std::collections::HashMap;
 
 use regex::Regex;
@@ -10,6 +9,7 @@ use serde::{Serialize, Deserialize};
 use tokio::{
     process::{ChildStdout, ChildStderr},
     io::{BufReader, Lines},
+    sync::broadcast,
 };
 
 use corpus_syncer::CorpusSyncer;
@@ -89,10 +89,10 @@ pub trait Executor: std::marker::Send {
     // Get absolute path for relative to cwd
     fn get_cwd_path(&self) -> PathBuf;
 
-    async fn wait(self: Box<Self>) -> Result<Output, Box<dyn Error>>;
+    async fn wait(&self, mut kill_switch: broadcast::Receiver<u8>) -> Result<(), Box<dyn Error>>;
 
     // Clean up all spawned children
-    async fn close(self: Box<Self>) -> Result<(), Box<dyn Error>>;
+    async fn close(mut self: Box<Self>) -> Result<(), Box<dyn Error>>;
 }
 
 pub fn new(config: ExecutorConfig, worker_task_id: Option<i32>) -> Box<dyn Executor> {

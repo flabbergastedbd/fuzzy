@@ -2,6 +2,7 @@ use std::error::Error;
 
 use log::{info, error, debug};
 use tonic::transport::channel::Channel;
+use tokio::sync::broadcast;
 
 use crate::xpc::orchestrator_client::OrchestratorClient;
 use crate::utils::fs::InotifyFileWatcher;
@@ -22,6 +23,7 @@ impl CrashSyncer {
 
     pub async fn upload_crashes(
             &self,
+            mut kill_switch: broadcast::Receiver<u8>
         ) -> Result<(), Box<dyn Error>> {
 
         debug!("Will try to keep crashes in sync at: {:?}", self.config.path);
@@ -30,13 +32,14 @@ impl CrashSyncer {
 
         // Create necessary clones and pass along for upload sync if upload enabled
         let config = self.config.clone();
-        let crash_sync_handle = tokio::spawn(async move {
-            if let Err(e) = upload(config, worker_task_id, client).await {
-                error!("Crash upload sync job failed: {}", e);
-            }
-        });
+        tokio::select! {
+            result = upload(config, worker_task_id, client) => {
+                error!("Crash upload sync job failed: {:?}", result);
+            },
+            _ = kill_switch.recv() => {}
+        }
 
-        crash_sync_handle.await?;
+        // crash_sync_handle.await?;
 
         Ok(())
     }

@@ -5,7 +5,7 @@ use log::{error, debug};
 use tonic::{Request, Response, Status, Code};
 
 use crate::db::DbBroker;
-use crate::schema::{workers, tasks, corpora, crashes, worker_tasks, fuzz_stats};
+use crate::schema::{workers, tasks, corpora, crashes, worker_tasks, fuzz_stats, sys_stats};
 use crate::models::{Task, NewTask, Corpus, NewCorpus, NewCrash, NewFuzzStat};
 use crate::xpc;
 use crate::xpc::orchestrator_server::Orchestrator;
@@ -218,6 +218,24 @@ impl Orchestrator for OrchestratorService {
 
         let rows_inserted = diesel::insert_into(fuzz_stats::table)
             .values(&new_fuzz_stat)
+            .execute(&conn);
+
+        if let Err(e) = rows_inserted {
+            error!("Unable to add crash : {}", e);
+            Err(Status::new(Code::InvalidArgument, format!("{}", e)))
+        } else {
+            Ok(Response::new({}))
+        }
+    }
+
+    // Fuzz stat related calls
+    async fn submit_sys_stat(&self, request: Request<xpc::NewSysStat>) -> Result<Response<()>, Status> {
+        let new_sys_stat = request.into_inner();
+
+        let conn = self.db_broker.get_conn();
+
+        let rows_inserted = diesel::insert_into(sys_stats::table)
+            .values(&new_sys_stat)
             .execute(&conn);
 
         if let Err(e) = rows_inserted {

@@ -51,9 +51,14 @@ CREATE TABLE fuzz_stats (
 
 CREATE TABLE sys_stats (
 	id SERIAL PRIMARY KEY,
-	cpu INTEGER NOT NULL,
-	memory INTEGER NOT NULL,
-	worker INTEGER REFERENCES workers(id) ON DELETE CASCADE,
+	cpu_user_time FLOAT8 NOT NULL,
+	cpu_system_time FLOAT8 NOT NULL,
+	cpu_idle_time FLOAT8 NOT NULL,
+	memory_total INTEGER NOT NULL,
+	memory_used INTEGER NOT NULL,
+	swap_total INTEGER NOT NULL,
+	swap_used INTEGER NOT NULL,
+	worker_id INTEGER REFERENCES workers(id) ON DELETE CASCADE,
 	created_at TIMESTAMP NOT NULL DEFAULT current_timestamp
 );
 

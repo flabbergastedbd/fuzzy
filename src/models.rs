@@ -5,4 +5,5 @@ pub use crate::xpc::{
     NewCrash,
     WorkerTask, PatchWorkerTask,
     NewFuzzStat,
+    NewSysStat,
 };

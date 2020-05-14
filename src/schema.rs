@@ -35,9 +35,14 @@ table! {
 table! {
     sys_stats (id) {
         id -> Int4,
-        cpu -> Int4,
-        memory -> Int4,
-        worker -> Nullable<Int4>,
+        cpu_user_time -> Float8,
+        cpu_system_time -> Float8,
+        cpu_idle_time -> Float8,
+        memory_total -> Int4,
+        memory_used -> Int4,
+        swap_total -> Int4,
+        swap_used -> Int4,
+        worker_id -> Nullable<Int4>,
         created_at -> Timestamp,
     }
 }
@@ -80,7 +85,7 @@ table! {
 joinable!(corpora -> worker_tasks (worker_task_id));
 joinable!(crashes -> worker_tasks (worker_task_id));
 joinable!(fuzz_stats -> worker_tasks (worker_task_id));
-joinable!(sys_stats -> workers (worker));
+joinable!(sys_stats -> workers (worker_id));
 joinable!(worker_tasks -> tasks (task_id));
 joinable!(worker_tasks -> workers (worker_id));
 

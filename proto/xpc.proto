@@ -57,6 +57,9 @@ service Orchestrator {
 
     // Fuzz stats
     rpc SubmitFuzzStat(NewFuzzStat) returns (google.protobuf.Empty);
+
+    // Sys stat
+    rpc SubmitSysStat(NewSysStat) returns (google.protobuf.Empty);
 }
 
 
@@ -154,4 +157,15 @@ message NewFuzzStat {
     required int32 execs = 2;
     optional int32 memory = 3;
     required int32 worker_task_id = 4;
+}
+
+message NewSysStat {
+    required double cpu_user_time   = 1;
+    required double cpu_system_time = 2;
+    required double cpu_idle_time   = 3;
+    required int32 memory_total     = 4;
+    required int32 memory_used      = 5;
+    required int32 swap_total       = 6;
+    required int32 swap_used        = 7;
+    required int32 worker_id        = 8;
 }

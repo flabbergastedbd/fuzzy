@@ -1,3 +1,4 @@
+use std::io::{BufRead, Seek, SeekFrom};
 use std::error::Error;
 use std::path::Path;
 
@@ -9,6 +10,20 @@ use tokio::{
     stream::StreamExt,
     io::AsyncReadExt,
 };
+
+pub fn tail_n(file_path: &Path, bytes: u64) -> Result<Vec<String>, Box<dyn Error>> {
+    let mut file = std::fs::File::open(file_path)?;
+    let length = file.metadata()?.len();
+
+    // Always seek from start
+    // debug!("File {:?} length found to be {}", file_path.as_path(), length);
+    file.seek(SeekFrom::Start(length - bytes))?;
+
+    let reader = std::io::BufReader::new(file);
+    let lines: Vec<String> = reader.lines().map(|line| { line.unwrap() }).collect();
+
+    Ok(lines)
+}
 
 pub async fn mkdir_p(path: &Path) -> std::io::Result<()> {
     debug!("Creating directory tree {:?}", path);

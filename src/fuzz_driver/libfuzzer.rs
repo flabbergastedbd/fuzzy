@@ -12,6 +12,7 @@ use crate::executor::{self, CrashConfig};
 use crate::common::worker_tasks::{mark_worker_task_active, mark_worker_task_inactive};
 use crate::models::NewFuzzStat;
 use crate::common::xpc::get_orchestrator_client;
+use crate::utils::fs::tail_n;
 
 pub struct LibFuzzerDriver {
     config: FuzzConfig,
@@ -30,6 +31,7 @@ impl super::FuzzDriver for LibFuzzerDriver {
     /// 2. Start corpus sync
     /// 3. Collect metrics from log files
     async fn start(&mut self, kill_switch: oneshot::Receiver<u8>) -> Result<(), Box<dyn Error>> {
+        self.fix_args();
         info!("Starting libfuzzer driver for {:#?}", self.worker_task_id);
 
         let mut runner = executor::new(self.config.execution.clone(), self.worker_task_id);
@@ -170,20 +172,12 @@ impl LibFuzzerStatCollector {
 
     fn get_stat_from_log(&self, relative_path: &Path) -> Result<NewFuzzStat, Box<dyn Error>> {
         let file_path = self.path.join(relative_path); // Add path to directory path in config
-        let mut file = std::fs::File::open(file_path.as_path())?;
-        let length = file.metadata()?.len();
-
-        // Always seek from start
-        // debug!("File {:?} length found to be {}", file_path.as_path(), length);
-        file.seek(SeekFrom::Start(length - 300))?;
-
-        let reader = std::io::BufReader::new(file);
-        let mut lines: Vec<String> = reader.lines().map(|line| { line.unwrap() }).collect();
+        let mut lines: Vec<String> = tail_n(file_path.as_path(), 300)?;
 
         trace!("Collected lines from log file {:?}: {:?}", file_path.as_path(), lines);
         let line = lines.pop();
         if let Some(line) = line {
-            let new_stat = self.get_stat(line.as_str())?;
+            let new_stat = self.parse_stat(line.as_str())?;
             Ok(new_stat)
         } else {
             Err(Box::new(std::io::Error::new(
@@ -222,7 +216,7 @@ impl LibFuzzerStatCollector {
         }
     }
 
-    pub fn get_stat(&self, line: &str) -> Result<NewFuzzStat, Box<dyn Error>> {
+    pub fn parse_stat(&self, line: &str) -> Result<NewFuzzStat, Box<dyn Error>> {
         trace!("Trying to extract stat from libFuzzer line: {}", line);
         if let Some(captures) = self.stat_filter.captures(line) {
             let coverage = captures.name("coverage");
@@ -258,7 +252,7 @@ mod tests {
 
         let stats_collector = LibFuzzerStatCollector::new(0, Some(0), PathBuf::new()).unwrap();
         for line in stats.lines().into_iter() {
-            println!("{:?}", stats_collector.get_stat(line).unwrap());
+            println!("{:?}", stats_collector.parse_stat(line).unwrap());
         }
     }
 }

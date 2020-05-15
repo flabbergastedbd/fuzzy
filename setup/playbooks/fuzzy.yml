@@ -1,0 +1,48 @@
+---
+# This playbook helps in deploying fuzzy master & worker
+- name: Apply common configurations
+  hosts: all
+  tasks:
+    - name: Install docker, cargo, rustfmt
+      package:
+        name:
+          - docker
+          - cargo
+          - rustfmt
+          - protobuf
+          - protobuf-devel
+        state: present
+      become: yes
+      become_user: root
+      become_method: sudo
+    - name: Copy source
+      copy:
+        src: .
+        dest: {{ fuzzy_path }}
+
+- name: Apply master configurations
+  hosts: master
+  tasks:
+    - name: Install libpq
+      package:
+        name: libpqxx-devel
+        state: present
+      become: yes
+      become_user: root
+      become_method: sudo
+    - name: Install diesel cli
+      command: cargo install diesel_cli --no-default-features --features "postgres"
+      args:
+        creates: ~/.cargo/bin/diesel
+    - name: Spin up postgres db & grafana server
+      docker_compose:
+        project_src: {{ fuzzy_path }}/setup
+        state: present
+
+- name: Apply worker configurations
+  hosts: workers
+  tasks:
+    - name: Set cpu frequency governer
+      command: cpupower frequency-set -g performance
+      become_user: root
+      become_method: sudo

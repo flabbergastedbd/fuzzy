@@ -7,7 +7,7 @@ use tokio::{sync::RwLock, sync::oneshot, task::JoinHandle};
 
 use crate::xpc;
 use crate::worker::NewWorker;
-use crate::fuzz_driver::{self, FuzzConfig, FuzzDriver};
+use crate::fuzz_driver::{self, FuzzConfig};
 use crate::xpc::orchestrator_client::OrchestratorClient;
 use crate::common::intervals::WORKER_TASK_REFRESH_INTERVAL;
 

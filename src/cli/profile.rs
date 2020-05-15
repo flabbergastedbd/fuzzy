@@ -6,7 +6,7 @@ use clap::ArgMatches;
 use tokio::{sync::oneshot, sync::broadcast, signal::unix::{signal, SignalKind}, task::LocalSet};
 
 use crate::executor::{self, ExecutorConfig};
-use crate::fuzz_driver::{self, FuzzDriver, FuzzConfig};
+use crate::fuzz_driver::{self, FuzzConfig};
 use crate::utils::fs::read_file;
 use crate::common::cli::parse_volume_map_settings;
 

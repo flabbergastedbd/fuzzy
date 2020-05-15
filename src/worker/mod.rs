@@ -62,7 +62,7 @@ impl NewWorker {
 }
 
 impl fmt::Display for NewWorker {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         // This ugly thing has to done for proper string formatting
         writeln!(f, "Worker Info")?;
         writeln!(f, "UUID  : {}", self.uuid)?;

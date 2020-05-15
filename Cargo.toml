@@ -12,7 +12,9 @@ async-trait = "0.1.30"
 clap = { git = "https://github.com/clap-rs/clap/", features = ["yaml"] }
 chrono = "0.4"
 log = { version = "0.4", features = ["std", "serde"] }
-heim = { version = "0.1.0-alpha.1", features = ["cpu", "disk", "memory", "process", "runtime-tokio"] }
+# TODO: Need this for desktops: https://github.com/heim-rs/heim/commit/2629efda7cf2844b00fb66814e5341a0ec0f20b2
+# heim = { version = "0.1.0-alpha.1", features = ["cpu", "disk", "memory", "process", "runtime-tokio"] }
+heim = { git = "https://github.com/heim-rs/heim", features = ["cpu", "disk", "memory", "process", "runtime-tokio"] }
 pretty_env_logger = "0.4"
 tokio = { version = "0.2", features = ["full"] }
 tonic = { version = "0.2", features = ["prost", "tls"] }

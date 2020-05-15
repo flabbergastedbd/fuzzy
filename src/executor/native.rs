@@ -107,7 +107,11 @@ impl super::Executor for NativeExecutor {
     }
 
     async fn close(mut self: Box<Self>) -> Result<(), Box<dyn Error>> {
-        self.child.as_mut().map(|c| c.kill());
+        if let Some(mut c) = self.child {
+            c.kill()?;
+            let output = c.wait_with_output().await?;
+            debug!("Driver exited with status: {}", output.status);
+        }
         Ok(())
     }
 }

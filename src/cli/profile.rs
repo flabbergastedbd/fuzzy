@@ -102,7 +102,7 @@ pub async fn cli(args: &ArgMatches) -> Result<(), Box<dyn Error>> {
             // Convert to json
             let config: FuzzConfig = serde_json::from_str(content_str.unwrap().as_str())?;
 
-            let driver = fuzz_driver::new(config, None);
+            let mut driver = fuzz_driver::new(config, None);
 
             // Fake tx, will not be used
             let (tx, rx) = oneshot::channel::<u8>();

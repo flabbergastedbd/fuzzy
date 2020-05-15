@@ -4,7 +4,7 @@
 		"executor": "Native",
 		"cpus": 2,
 		"executable": "/home/tunnelshade/workspace/firefox-75.0/obj-fuzz-build/dist/bin/firefox-bin",
-		"args": ["-workers=2", "-jobs=2", "-reload=600", "-close_fd_mask=3", "./corpus"],
+		"args": ["-jobs=2", "-close_fd_mask=3", "./corpus"],
 		"cwd": "/home/tunnelshade/Temp",
 		"envs": {
 			"FUZZER": "ContentParentIPC"

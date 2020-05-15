@@ -154,7 +154,7 @@ message PatchWorkerTask {
 
 message NewFuzzStat {
     required int32 coverage = 1;
-    required int32 execs = 2;
+    optional int32 execs = 2;
     optional int32 memory = 3;
     required int32 worker_task_id = 4;
 }

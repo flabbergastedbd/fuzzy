@@ -3,7 +3,7 @@
 	"image": "podman:test",
 	"cpus": 2,
 	"executable": "/workspace/snappy/build/snappy_uncompress_fuzzer",
-	"args": ["-workers=2", "-close_fd_mask=3", "-reload=600", "-close_fd_mask=3", "corpus/"],
+	"args": ["-workers=2", "-close_fd_mask=3", "-reload=1", "-close_fd_mask=3", "corpus/"],
 	"envs": {
 		"HELLO": "WORLD"
 	},

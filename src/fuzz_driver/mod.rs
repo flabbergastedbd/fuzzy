@@ -7,12 +7,11 @@ use tokio::sync::oneshot;
 use super::executor::ExecutorConfig;
 
 mod libfuzzer;
+mod honggfuzz;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum FuzzDriverEnum {
-    Aflpp,
     Honggfuzz,
-    Fuzzilli,
     Libfuzzer,
 }
 
@@ -23,18 +22,21 @@ pub struct FuzzConfig {
 }
 
 #[tonic::async_trait]
-pub trait FuzzDriver {
+pub trait FuzzDriver: std::marker::Send {
     fn new(config: FuzzConfig, worker_task_id: Option<i32>) -> Self where Self: Sized;
 
-    async fn start(&self, kill_switch: oneshot::Receiver<u8>) -> Result<(), Box<dyn Error>>;
+    async fn start(&mut self, kill_switch: oneshot::Receiver<u8>) -> Result<(), Box<dyn Error>>;
 }
 
-pub fn new(config: FuzzConfig, worker_task_id: Option<i32>) -> impl FuzzDriver {
-    // let executor = executor::new(config.execution.clone(), worker_task_id);
+pub fn new(config: FuzzConfig, worker_task_id: Option<i32>) -> Box<dyn FuzzDriver> {
     match config.driver {
-        _ => {
+        FuzzDriverEnum::Libfuzzer => {
             debug!("Creating libFuzzer driver");
-            libfuzzer::LibFuzzerDriver::new(config, worker_task_id)
-        }
+            Box::new(libfuzzer::LibFuzzerDriver::new(config, worker_task_id))
+        },
+        FuzzDriverEnum::Honggfuzz => {
+            debug!("Creating honggfuzz driver");
+            Box::new(honggfuzz::HonggfuzzDriver::new(config, worker_task_id))
+        },
     }
 }

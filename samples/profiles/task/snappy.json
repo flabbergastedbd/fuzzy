@@ -1,15 +1,14 @@
 {
-	"driver": "Libfuzzer",
+	"driver": "Honggfuzz",
 	"execution": {
-		"executor": "Docker",
-		"image": "podman:test",
+		"executor": "Native",
 		"cpus": 2,
-		"executable": "/workspace/snappy/build/snappy_uncompress_fuzzer",
-		"args": ["-workers=2", "-jobs=10", "-close_fd_mask=3", "-reload=600", "-close_fd_mask=3", "corpus/"],
+		"executable": "honggfuzz",
+		"args": ["-P", "-i", "corpus/", "--", "/home/tunnelshade/workspace/snappy/snappy/build/snappy_uncompress_fuzzer"],
 		"envs": {
 			"HELLO": "WORLD"
 		},
-		"cwd": "/workspace/fuzzing",
+		"cwd": "/home/tunnelshade/Temp",
 		"corpus": {
 			"path": "corpus",
 			"label": "snappy_uncompress",

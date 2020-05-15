@@ -29,7 +29,7 @@ impl super::FuzzDriver for LibFuzzerDriver {
     /// 1. Setup corpus
     /// 2. Start corpus sync
     /// 3. Collect metrics from log files
-    async fn start(&self, kill_switch: oneshot::Receiver<u8>) -> Result<(), Box<dyn Error>> {
+    async fn start(&mut self, kill_switch: oneshot::Receiver<u8>) -> Result<(), Box<dyn Error>> {
         info!("Starting libfuzzer driver for {:#?}", self.worker_task_id);
 
         let mut runner = executor::new(self.config.execution.clone(), self.worker_task_id);
@@ -94,6 +94,13 @@ impl super::FuzzDriver for LibFuzzerDriver {
         // runner.close().await?;
 
         Ok(())
+    }
+}
+
+impl LibFuzzerDriver {
+    fn fix_args(&mut self) {
+        self.config.execution.args.insert(0, "-reload=1".to_owned());
+        self.config.execution.args.insert(0, format!("-workers={}", self.config.execution.cpus));
     }
 }
 
@@ -226,7 +233,7 @@ impl LibFuzzerStatCollector {
 
                 let new_fuzz_stat = NewFuzzStat {
                     coverage,
-                    execs,
+                    execs: Some(execs),
                     memory: Some(memory),
                     worker_task_id: self.worker_task_id,
                 };

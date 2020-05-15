@@ -40,7 +40,7 @@ impl TaskManager {
         debug!("Adding worker task: {:?}", wtask);
         let profile: FuzzConfig = serde_json::from_str(wtask.task.profile.as_str())?;
         let (tx, rx) = oneshot::channel::<u8>();
-        let driver = fuzz_driver::new(profile, Some(wtask.id));
+        let mut driver = fuzz_driver::new(profile, Some(wtask.id));
 
         // self.drivers.insert(wtask.id,Box::new(driver));
         self.kill_switches.insert(wtask.id, tx);

@@ -6,14 +6,14 @@
   when: ansible_facts['os_family'] == "RedHat"
 
 - name: Copy worker identity
-  copy:
+  synchronize:
     src: "certs/{{ inventory_hostname }}.pem"
     dest: "{{ fuzzy_workspace }}/worker.pem"
   tags:
     - "copy-worker-certs"
 
 - name: Copy ca crt
-  copy:
+  synchronize:
     src: "certs/ca.crt"
     dest: "{{ fuzzy_workspace }}/ca.crt"
   tags:

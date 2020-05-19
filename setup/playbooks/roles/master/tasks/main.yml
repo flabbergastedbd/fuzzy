@@ -13,14 +13,14 @@
     creates: ~/.cargo/bin/diesel
 
 - name: Copy ca crt
-  copy:
+  synchronize:
     src: "certs/ca.crt"
     dest: "{{ fuzzy_workspace }}/ca.crt"
   tags:
     - "sync-master-setup"
 
 - name: Copy master identity
-  copy:
+  synchronize:
     src: "certs/{{ inventory_hostname }}.pem"
     dest: "{{ fuzzy_workspace }}/server.pem"
   tags:
@@ -28,14 +28,14 @@
 
 # Infra related
 - name: Copy docker-compose.yml
-  copy:
+  synchronize:
     src: docker-compose.yml
     dest: "{{ fuzzy_workspace }}/docker-compose.yml"
   tags:
     - "sync-master-setup"
 
 - name: Copy grafana volume
-  copy:
+  synchronize:
     src: grafana
     dest: "{{ fuzzy_workspace }}"
   tags:
@@ -58,7 +58,7 @@
   tags:
     - "sync-master-setup"
 - name: Copy registry certs
-  copy:
+  synchronize:
     src: "certs/{{ inventory_hostname }}.pem"
     dest: "{{ fuzzy_workspace }}/registry/certs/registry.pem"
   tags:
@@ -69,17 +69,12 @@
   tags:
     - "sync-master-setup"
 
-- name: Tear down existing services
-  docker_compose:
-    project_src: "{{ fuzzy_workspace }}"
-    state: absent
-  tags:
-    - "master-services-down"
-
-- name: Create and start services
+- name: Ensure services are running
   docker_compose:
     project_src: "{{ fuzzy_workspace }}"
   register: output
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
   tags:
     - "master-services-up"
 

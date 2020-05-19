@@ -1,0 +1,13 @@
+---
+- name: Install libpq
+  package:
+    name: libpqxx-devel
+    state: present
+  become_user: root
+  become_method: sudo
+  when: ansible_facts['os_family'] == "RedHat"
+
+- name: Install diesel cli
+  command: cargo install diesel_cli --no-default-features --features "postgres"
+  args:
+    creates: ~/.cargo/bin/diesel

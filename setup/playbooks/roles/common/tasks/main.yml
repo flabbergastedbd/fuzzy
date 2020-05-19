@@ -1,0 +1,18 @@
+---
+- name: Install docker, cargo, rustfmt
+  package:
+    name:
+      - cargo
+      - rustfmt
+      - protobuf
+      - protobuf-devel
+    state: present
+  become: yes
+  become_user: root
+  become_method: sudo
+  when: ansible_facts['os_family'] == "RedHat"
+
+- name: Copy source over
+  copy:
+    src: ../../../../../
+    dest: "{{ fuzzy_src }}"

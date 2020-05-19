@@ -18,9 +18,25 @@ services:
       GF_SECURITY_ADMIN_USER: "fuzzy"
       GF_SECURITY_ADMIN_PASSWORD: "fuzzy"
     ports:
-      - "127.0.0.1:3000:3000"
+      - "0.0.0.0:3000:3000"
     volumes:
       - ./grafana:/etc/grafana/provisioning
+    networks:
+      - internal
+  registry:
+    image: registry:2
+    hostname: registry
+    environment:
+      REGISTRY_AUTH: "htpasswd"
+      REGISTRY_AUTH_HTPASSWD_REALM: "Fuzzy Registry Realm"
+      REGISTRY_AUTH_HTPASSWD_PATH: "/auth/htpasswd"
+      REGISTRY_HTTP_TLS_CERTIFICATE: "/certs/registry.pem"
+      REGISTRY_HTTP_TLS_KEY: "/certs/registry.pem"
+    ports:
+      - "0.0.0.0:5000:5000"
+    volumes:
+      - ./registry/auth:/auth
+      - ./registry/certs:/certs
     networks:
       - internal
 networks:

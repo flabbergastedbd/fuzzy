@@ -11,3 +11,59 @@
   command: cargo install diesel_cli --no-default-features --features "postgres"
   args:
     creates: ~/.cargo/bin/diesel
+
+- name: Copy docker-compose.yml
+  copy:
+    src: docker-compose.yml
+    dest: "{{ fuzzy_workspace }}/docker-compose.yml"
+  tags:
+    - "sync-master-setup"
+
+- name: Copy grafana volume
+  copy:
+    src: grafana
+    dest: "{{ fuzzy_workspace }}"
+  tags:
+    - "sync-master-setup"
+
+- name: Create registry certs
+  file:
+    path: "{{ fuzzy_workspace }}/registry/certs"
+    state: directory
+    recurse: yes
+  tags:
+    - "sync-master-setup"
+
+- name: Create registry auth dir
+  file:
+    path: "{{ fuzzy_workspace }}/registry/auth"
+    state: directory
+    recurse: yes
+  tags:
+    - "sync-master-setup"
+
+- name: Copy certs
+  copy:
+    src: ../../../certs/master.pem
+    dest: "{{ fuzzy_workspace }}/registry/certs/registry.pem"
+  tags:
+    - "sync-master-setup"
+
+- name: Generate auth for registry
+  shell: htpasswd -Bbn {{ registry_username }} {{ registry_password }} > {{ fuzzy_workspace }}/registry/auth/htpasswd
+  tags:
+    - "sync-master-setup"
+
+- name: Tear down existing services
+  docker_compose:
+    project_src: "{{ fuzzy_workspace }}"
+    state: absent
+  tags:
+    - "master-services-down"
+
+- name: Create and start services
+  docker_compose:
+    project_src: "{{ fuzzy_workspace }}"
+  register: output
+  tags:
+    - "master-services-up"

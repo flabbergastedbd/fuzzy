@@ -1,3 +1,8 @@
+ansible_python_interpreter: /usr/bin/python3
+
 fuzzy_src: ~/workspace/fuzzy-src
 fuzzy_workspace: ~/workspace/fuzzy
 certs_dir: certs
+
+registry_username: "fuzzy"
+registry_password: "fuzzy"

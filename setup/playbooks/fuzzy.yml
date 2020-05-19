@@ -1,5 +1,31 @@
 ---
 # This playbook helps in deploying fuzzy master & worker
+- name: Generate certs for local use
+  hosts: 127.0.0.1
+  connection: local
+  gather_facts: no
+
+  tasks:
+    - name: Create master pem
+      shell:
+        cmd: mkcert -cert-file "{{ item }}.crt" -key-file "{{ item }}.key" "{{ item }}" ; cat "{{ item }}.crt" "{{ item }}.key" > "{{ item }}.pem"; rm "{{ item }}.crt" "{{ item }}.key"
+        chdir: ./files/certs/
+        creates: "{{ item }}.pem"
+      with_items:
+        - "{{ groups['master'] }}"
+      tags:
+        - "cert-generate"
+
+    - name: Create worker pems
+      shell:
+        cmd: mkcert -client -cert-file "{{ item }}.crt" -key-file "{{ item }}.key" "{{ item }}" ; cat "{{ item }}.crt" "{{ item }}.key" > "{{ item }}.pem"; rm "{{ item }}.crt" "{{ item }}.key"
+        chdir: ./files/certs/
+        creates: "{{ item }}.pem"
+      with_items:
+        - "{{ groups['workers'] }}"
+      tags:
+        - "cert-generate"
+
 - name: Apply master configurations
   hosts: master
   roles:

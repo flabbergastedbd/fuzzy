@@ -12,6 +12,21 @@
   args:
     creates: ~/.cargo/bin/diesel
 
+- name: Copy ca crt
+  copy:
+    src: "certs/ca.crt"
+    dest: "{{ fuzzy_workspace }}/ca.crt"
+  tags:
+    - "sync-master-setup"
+
+- name: Copy master identity
+  copy:
+    src: "certs/{{ inventory_hostname }}.pem"
+    dest: "{{ fuzzy_workspace }}/server.pem"
+  tags:
+    - "copy-worker-certs"
+
+# Infra related
 - name: Copy docker-compose.yml
   copy:
     src: docker-compose.yml
@@ -26,6 +41,7 @@
   tags:
     - "sync-master-setup"
 
+# Registry related tasks
 - name: Create registry certs
   file:
     path: "{{ fuzzy_workspace }}/registry/certs"
@@ -41,10 +57,9 @@
     recurse: yes
   tags:
     - "sync-master-setup"
-
-- name: Copy certs
+- name: Copy registry certs
   copy:
-    src: ../../../certs/master.pem
+    src: "certs/{{ inventory_hostname }}.pem"
     dest: "{{ fuzzy_workspace }}/registry/certs/registry.pem"
   tags:
     - "sync-master-setup"
@@ -67,3 +82,8 @@
   register: output
   tags:
     - "master-services-up"
+
+- name: Run db migrations
+  shell:
+    cmd: ~/.cargo/bin/diesel migration run --database-url postgres://fuzzy:fuzzy@localhost:5432/fuzzy
+    chdir: "{{ fuzzy_src }}"

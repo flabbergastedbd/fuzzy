@@ -26,6 +26,11 @@ args:
       long: server-url
       takes_value: true
       global: true
+  - logfile:
+      help: "Logfile to write logs (Default: fuzzy.log)"
+      long: logfile
+      takes_value: true
+      global: true
 subcommands:
   - master:
       about: Master that can manage workers

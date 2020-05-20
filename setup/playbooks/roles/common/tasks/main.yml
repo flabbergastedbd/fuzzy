@@ -14,7 +14,9 @@
 
 - name: Copy source over
   synchronize:
-    src: ../../../../
+    src: ../../../../../
     dest: "{{ fuzzy_src }}"
+    rsync_opts:
+      - "--exclude=target"
   tags:
     - sync-files

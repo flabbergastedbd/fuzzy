@@ -1,6 +1,7 @@
 executor: Native
 executable: echo
 args: ['hello', 'world']
+cpus: 2
 cwd: /tmp
 envs:
   fuzzy_env_variable: fuzzy_env_value

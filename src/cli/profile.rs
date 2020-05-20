@@ -27,7 +27,7 @@ pub async fn cli(args: &ArgMatches) -> Result<(), Box<dyn Error>> {
             assert!(content_str.is_ok());
 
             // Convert to json
-            let config: ExecutorConfig = serde_json::from_str(content_str.unwrap().as_str())?;
+            let config: ExecutorConfig = serde_yaml::from_str(content_str.unwrap().as_str())?;
 
             // Create Executor
             let mut executor = executor::new(config, None);
@@ -100,7 +100,7 @@ pub async fn cli(args: &ArgMatches) -> Result<(), Box<dyn Error>> {
             assert!(content_str.is_ok());
 
             // Convert to json
-            let config: FuzzConfig = serde_json::from_str(content_str.unwrap().as_str())?;
+            let config: FuzzConfig = serde_yaml::from_str(content_str.unwrap().as_str())?;
 
             let mut driver = fuzz_driver::new(config, None);
 

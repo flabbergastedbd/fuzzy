@@ -1,15 +1,51 @@
-driver: Honggfuzz
+# There are two supported fuzz drivers as of now
+# 1. Libfuzzer
+# 2. Honggfuzz (Supports only coverage gathering as of now)
+driver: Libfuzzer
+
+# Consists of configuration to fine tune execution environment where fuzzer will be run
 execution:
-  executor: Native
+  # There are two kinds of executors
+  # 1. Native
+  # 2. Docker
+  executor: Docker
+
+  # Number of cpus to use for this job
   cpus: 2
-  executable: honggfuzz
-  args: ['-P', '-i', 'corpus/', '--', '/home/tunnelshade/workspace/snappy/snappy/build/snappy_uncompress_fuzzer']
+
+  # Will be only used if executor is docker. Image needs to be uploaded to private registry on master.
+  image: "snappy:fuzz"
+
+  # Path to fuzzer, will be used as entrypoint if Docker executor
+  executable: /workspace/snappy/build/snappy_uncompress_fuzzer
+
+  # No need to provide fork like parameter, it is automatically appended by fuzz drivers
+  # based on the cpus parameter provided above. Like in this case '-workers=2' will be automatically
+  # added to below array
+  args: ['-close_fd_mask=3', '-jobs=10', 'corpus/']
+
+  # Useful to provide environmental variables to fuzzers or programs being fuzzed
   envs:
     HELLO: WORLD
-  cwd: /home/tunnelshade/Temp
+
+  # Directory where fuzzer will be started. Incase of Docker executor, a volume will be mounted inside
+  # container at this location. That way fuzzy will be able to read corpus and statistics from inside
+  # the container
+  cwd: /fuzzing
+
   corpus:
+    # Relative path to cwd, all corpus files from master will be synced here periodically
     path: corpus
+
+    # An identifier as to which kind of corpus files need to be download. Any new corpus discovered will
+    # be uploaded with same label.
     label: snappy_uncompress
+
+    # Interval at which updated corpus should be downloaded from master
     refresh_interval: 600
+
+    # Any newly discovered corpus should be synced to master or not
     upload: false
+
+    # Gives the ability to only select specific file patterns inside the corpus directory
     upload_filter: ".*"

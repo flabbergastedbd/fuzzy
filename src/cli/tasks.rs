@@ -24,7 +24,7 @@ pub async fn cli(args: &ArgMatches) -> Result<(), Box<dyn Error>> {
             let new_task = NewTask {
                 name: sub_matches.value_of("name").unwrap().to_owned(),
                 active: true,
-                profile: serde_json::to_string(&profile)?,
+                profile: serde_yaml::to_string(&profile)?,
             };
 
             // Validate executor & driver as we do crude transforms via enums & strum
@@ -39,7 +39,7 @@ pub async fn cli(args: &ArgMatches) -> Result<(), Box<dyn Error>> {
             let mut profile: Option<String> = None;
             if let Some(profile_path) = profile_path {
                 let config = construct_profile_from_disk(Path::new(profile_path)).await?;
-                profile = Some(serde_json::to_string(&config)?);
+                profile = Some(serde_yaml::to_string(&config)?);
             }
 
             let name = sub_matches.value_of("name").map(|s| s.to_owned());

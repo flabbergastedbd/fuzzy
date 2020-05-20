@@ -328,6 +328,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "dtoa"
+version = "0.4.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4358a9e11b9a09cf52383b451b49a169e8d797b68aa02301ff586d70d9661ea3"
+
+[[package]]
 name = "either"
 version = "1.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -426,6 +432,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7b0a34e53cf6cdcd0178aa573aed466b646eb3db769570841fda0c7ede375a27"
 
 [[package]]
+name = "futures-timer"
+version = "3.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e64b03909df88034c26dc1547e8970b91f98bdb65165d6a4e9110d94263dbb2c"
+
+[[package]]
 name = "futures-util"
 version = "0.3.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -461,8 +473,8 @@ dependencies = [
  "regex",
  "ring",
  "serde",
- "serde_json",
  "serde_regex",
+ "serde_yaml",
  "strum",
  "strum_macros",
  "tokio",
@@ -513,8 +525,7 @@ dependencies = [
 [[package]]
 name = "heim"
 version = "0.1.0-alpha.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ed444c40145d092bef42f3ffb1a9d6b64eca0740fc35549819113270aabb0a28"
+source = "git+https://github.com/heim-rs/heim#2629efda7cf2844b00fb66814e5341a0ec0f20b2"
 dependencies = [
  "heim-common",
  "heim-cpu",
@@ -527,8 +538,7 @@ dependencies = [
 [[package]]
 name = "heim-common"
 version = "0.1.0-alpha.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cf1d4329007c50a9b511b541f277f742cbaeac6ce418be19fc50a31932bc17c6"
+source = "git+https://github.com/heim-rs/heim#2629efda7cf2844b00fb66814e5341a0ec0f20b2"
 dependencies = [
  "cfg-if",
  "core-foundation",
@@ -546,8 +556,7 @@ dependencies = [
 [[package]]
 name = "heim-cpu"
 version = "0.1.0-alpha.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d8cf3b0af84dbedcaf468e5020a64c1626fbb2393dee94231a70188a608c395e"
+source = "git+https://github.com/heim-rs/heim#2629efda7cf2844b00fb66814e5341a0ec0f20b2"
 dependencies = [
  "cfg-if",
  "heim-common",
@@ -555,14 +564,14 @@ dependencies = [
  "lazy_static",
  "libc",
  "mach",
+ "ntapi",
  "winapi 0.3.8",
 ]
 
 [[package]]
 name = "heim-disk"
 version = "0.1.0-alpha.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ac9f7d6561293b6c39546c1ccb05da510f52dae2384e6febe291ed829fb7ba42"
+source = "git+https://github.com/heim-rs/heim#2629efda7cf2844b00fb66814e5341a0ec0f20b2"
 dependencies = [
  "bitflags",
  "cfg-if",
@@ -578,8 +587,7 @@ dependencies = [
 [[package]]
 name = "heim-host"
 version = "0.1.0-alpha.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fd699d4681706ed168255e853d4f83f21c5b580279350998a18312bebbeaa294"
+source = "git+https://github.com/heim-rs/heim#2629efda7cf2844b00fb66814e5341a0ec0f20b2"
 dependencies = [
  "cfg-if",
  "heim-common",
@@ -588,6 +596,7 @@ dependencies = [
  "libc",
  "log",
  "mach",
+ "ntapi",
  "platforms",
  "winapi 0.3.8",
 ]
@@ -595,8 +604,7 @@ dependencies = [
 [[package]]
 name = "heim-memory"
 version = "0.1.0-alpha.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b2e7f6cf78f3b555084f8d964e0b1f47c5354f7c226f4d6def1ba87cab7ac63f"
+source = "git+https://github.com/heim-rs/heim#2629efda7cf2844b00fb66814e5341a0ec0f20b2"
 dependencies = [
  "cfg-if",
  "heim-common",
@@ -610,14 +618,12 @@ dependencies = [
 [[package]]
 name = "heim-net"
 version = "0.1.0-alpha.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f30847d5c272204cd9ce76007d057adcc2e067deefaeb413f6dbaa88d703573a"
+source = "git+https://github.com/heim-rs/heim#2629efda7cf2844b00fb66814e5341a0ec0f20b2"
 dependencies = [
  "bitflags",
  "cfg-if",
  "heim-common",
  "heim-runtime",
- "hex",
  "libc",
  "macaddr",
  "nix",
@@ -626,8 +632,7 @@ dependencies = [
 [[package]]
 name = "heim-process"
 version = "0.1.1-alpha.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9e71ae7979b171be1803457d178ba3532f18c524e5ad8f76fbb66e470fe98349"
+source = "git+https://github.com/heim-rs/heim#2629efda7cf2844b00fb66814e5341a0ec0f20b2"
 dependencies = [
  "async-trait",
  "cfg-if",
@@ -649,12 +654,12 @@ dependencies = [
 [[package]]
 name = "heim-runtime"
 version = "0.1.0-alpha.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8a78970726efb01b9c1cfb24d51a9febb81556c4b69b55ef7e50463b2d50e404"
+source = "git+https://github.com/heim-rs/heim#2629efda7cf2844b00fb66814e5341a0ec0f20b2"
 dependencies = [
  "cfg-if",
  "futures-channel",
  "futures-core",
+ "futures-timer",
  "futures-util",
  "tokio",
 ]
@@ -667,12 +672,6 @@ checksum = "61565ff7aaace3525556587bd2dc31d4a07071957be715e63ce7b1eccf51a8f4"
 dependencies = [
  "libc",
 ]
-
-[[package]]
-name = "hex"
-version = "0.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "023b39be39e3a2da62a94feb433e91e8bcd37676fbc8bea371daf52b7a769a3e"
 
 [[package]]
 name = "http"
@@ -1505,17 +1504,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "serde_json"
-version = "1.0.52"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a7894c8ed05b7a3a279aeb79025fdec1d3158080b75b98a08faf2806bb799edd"
-dependencies = [
- "itoa",
- "ryu",
- "serde",
-]
-
-[[package]]
 name = "serde_regex"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1523,6 +1511,18 @@ checksum = "f6df1bd02973c8c85e333287f6ac6c6a5fbed414e4be450fd6f52280b7c7b209"
 dependencies = [
  "regex",
  "serde",
+]
+
+[[package]]
+name = "serde_yaml"
+version = "0.8.12"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "16c7a592a1ec97c9c1c68d75b6e537dcbf60c7618e038e7841e00af1d9ccf0c4"
+dependencies = [
+ "dtoa",
+ "linked-hash-map",
+ "serde",
+ "yaml-rust",
 ]
 
 [[package]]

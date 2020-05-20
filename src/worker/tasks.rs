@@ -38,7 +38,7 @@ impl TaskManager {
 
     async fn add_worker_task(&mut self, wtask: xpc::WorkerTaskFull) -> Result<(), Box<dyn Error>> {
         debug!("Adding worker task: {:?}", wtask);
-        let profile: FuzzConfig = serde_json::from_str(wtask.task.profile.as_str())?;
+        let profile: FuzzConfig = serde_yaml::from_str(wtask.task.profile.as_str())?;
         let (tx, rx) = oneshot::channel::<u8>();
         let mut driver = fuzz_driver::new(profile, Some(wtask.id));
 

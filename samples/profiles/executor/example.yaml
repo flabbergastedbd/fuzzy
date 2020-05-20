@@ -1,0 +1,12 @@
+executor: Native
+executable: echo
+args: ['hello', 'world']
+cwd: /tmp
+envs:
+  fuzzy_env_variable: fuzzy_env_value
+corpus:
+  path: /tmp/corpus
+  label: ipc
+  refresh_interval: 600
+  upload: false
+  upload_filter: '.*'

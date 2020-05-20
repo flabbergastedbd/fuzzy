@@ -1,12 +1,4 @@
 ---
-- name: Install libpq
-  package:
-    name: libpqxx-devel
-    state: present
-  become_user: root
-  become_method: sudo
-  when: ansible_facts['os_family'] == "RedHat"
-
 - name: Install diesel cli
   command: cargo install diesel_cli --no-default-features --features "postgres"
   args:
@@ -40,6 +32,7 @@
     dest: "{{ fuzzy_workspace }}"
   tags:
     - "sync-master-setup"
+    - "update-grafana"
 
 # Registry related tasks
 - name: Create registry certs
@@ -72,13 +65,18 @@
 - name: Ensure services are running
   docker_compose:
     project_src: "{{ fuzzy_workspace }}"
+    state: present
+    restarted: yes
   register: output
   vars:
     ansible_python_interpreter: /usr/bin/python3
   tags:
     - "master-services-up"
+    - "update-grafana"
 
 - name: Run db migrations
   shell:
     cmd: ~/.cargo/bin/diesel migration run --database-url postgres://fuzzy:fuzzy@localhost:5432/fuzzy
     chdir: "{{ fuzzy_src }}"
+
+- name: cargo run -- master start --db postgres://fuzzy:fuzzy@localhost:5432/fuzzy -v --listen-addr 0.0.0.0:12700

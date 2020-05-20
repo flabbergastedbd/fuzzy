@@ -17,11 +17,11 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "iteration": 1589535515834,
+  "iteration": 1589993154324,
   "links": [],
   "panels": [
     {
-      "collapsed": true,
+      "collapsed": false,
       "datasource": null,
       "gridPos": {
         "h": 1,
@@ -30,334 +30,650 @@
         "y": 0
       },
       "id": 16,
-      "panels": [
-        {
-          "aliasColors": {},
-          "bars": false,
-          "dashLength": 10,
-          "dashes": false,
-          "datasource": null,
-          "fill": 1,
-          "fillGradient": 2,
-          "gridPos": {
-            "h": 8,
-            "w": 19,
-            "x": 0,
-            "y": 1
-          },
-          "hiddenSeries": false,
-          "id": 14,
-          "legend": {
-            "alignAsTable": false,
-            "avg": false,
-            "current": false,
-            "max": false,
-            "min": false,
-            "rightSide": false,
-            "show": false,
-            "total": false,
-            "values": false
-          },
-          "lines": true,
-          "linewidth": 2,
-          "nullPointMode": "null",
-          "options": {
-            "dataLinks": []
-          },
-          "percentage": false,
-          "pointradius": 2,
-          "points": false,
-          "renderer": "flot",
-          "repeat": "worker",
-          "repeatDirection": "v",
-          "scopedVars": {
-            "worker": {
-              "selected": true,
-              "text": "kpuri-ld1",
-              "value": "kpuri-ld1"
-            }
-          },
-          "seriesOverrides": [
-            {
-              "$$hashKey": "object:658",
-              "alias": "memory_total",
-              "color": "#E02F44",
-              "fill": 0
-            },
-            {
-              "$$hashKey": "object:676",
-              "alias": "swap_total",
-              "color": "#FFA6B0",
-              "fill": 0,
-              "linewidth": 1
-            },
-            {
-              "$$hashKey": "object:1028",
-              "alias": "memory_used",
-              "color": "#56A64B"
-            }
-          ],
-          "spaceLength": 10,
-          "stack": false,
-          "steppedLine": false,
-          "targets": [
-            {
-              "format": "time_series",
-              "group": [],
-              "metricColumn": "none",
-              "rawQuery": true,
-              "rawSql": "SELECT\n  created_at AS \"time\",\n  memory_total,\n  memory_used,\n  swap_total,\n  swap_used\nFROM sys_stats\nWHERE\n  $__timeFilter(created_at)\nORDER BY 1",
-              "refId": "A",
-              "select": [
-                [
-                  {
-                    "params": [
-                      "memory_total"
-                    ],
-                    "type": "column"
-                  }
-                ],
-                [
-                  {
-                    "params": [
-                      "memory_used"
-                    ],
-                    "type": "column"
-                  }
-                ],
-                [
-                  {
-                    "params": [
-                      "swap_total"
-                    ],
-                    "type": "column"
-                  }
-                ],
-                [
-                  {
-                    "params": [
-                      "swap_used"
-                    ],
-                    "type": "column"
-                  }
-                ],
-                [
-                  {
-                    "params": [
-                      "swap_used"
-                    ],
-                    "type": "column"
-                  }
-                ]
-              ],
-              "table": "sys_stats",
-              "timeColumn": "created_at",
-              "timeColumnType": "timestamp",
-              "where": [
-                {
-                  "name": "$__timeFilter",
-                  "params": [],
-                  "type": "macro"
-                }
-              ]
-            }
-          ],
-          "thresholds": [],
-          "timeFrom": null,
-          "timeRegions": [],
-          "timeShift": null,
-          "title": "$worker - Memory",
-          "tooltip": {
-            "shared": true,
-            "sort": 0,
-            "value_type": "individual"
-          },
-          "transparent": true,
-          "type": "graph",
-          "xaxis": {
-            "buckets": null,
-            "mode": "time",
-            "name": null,
-            "show": true,
-            "values": []
-          },
-          "yaxes": [
-            {
-              "$$hashKey": "object:117",
-              "format": "mbytes",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            },
-            {
-              "$$hashKey": "object:118",
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": false
-            }
-          ],
-          "yaxis": {
-            "align": false,
-            "alignLevel": null
-          }
-        },
-        {
-          "aliasColors": {},
-          "bars": false,
-          "cacheTimeout": null,
-          "dashLength": 10,
-          "dashes": false,
-          "datasource": null,
-          "fill": 1,
-          "fillGradient": 1,
-          "gridPos": {
-            "h": 8,
-            "w": 5,
-            "x": 19,
-            "y": 1
-          },
-          "hiddenSeries": false,
-          "id": 18,
-          "legend": {
-            "avg": false,
-            "current": false,
-            "max": false,
-            "min": false,
-            "show": true,
-            "total": false,
-            "values": false
-          },
-          "lines": true,
-          "linewidth": 1,
-          "links": [],
-          "nullPointMode": "null",
-          "options": {
-            "dataLinks": []
-          },
-          "percentage": false,
-          "pluginVersion": "6.7.3",
-          "pointradius": 2,
-          "points": false,
-          "renderer": "flot",
-          "repeat": "worker",
-          "repeatDirection": "v",
-          "scopedVars": {
-            "worker": {
-              "selected": true,
-              "text": "kpuri-ld1",
-              "value": "kpuri-ld1"
-            }
-          },
-          "seriesOverrides": [],
-          "spaceLength": 10,
-          "stack": false,
-          "steppedLine": false,
-          "targets": [
-            {
-              "format": "time_series",
-              "group": [],
-              "metricColumn": "none",
-              "rawQuery": false,
-              "rawSql": "SELECT\n  created_at AS \"time\",\n  cpu_user_time,\n  cpu_system_time,\n  cpu_idle_time\nFROM sys_stats\nWHERE\n  $__timeFilter(created_at)\nORDER BY 1",
-              "refId": "A",
-              "select": [
-                [
-                  {
-                    "params": [
-                      "cpu_user_time"
-                    ],
-                    "type": "column"
-                  }
-                ],
-                [
-                  {
-                    "params": [
-                      "cpu_system_time"
-                    ],
-                    "type": "column"
-                  }
-                ],
-                [
-                  {
-                    "params": [
-                      "cpu_idle_time"
-                    ],
-                    "type": "column"
-                  }
-                ]
-              ],
-              "table": "sys_stats",
-              "timeColumn": "created_at",
-              "timeColumnType": "timestamp",
-              "where": [
-                {
-                  "name": "$__timeFilter",
-                  "params": [],
-                  "type": "macro"
-                }
-              ]
-            }
-          ],
-          "thresholds": [],
-          "timeFrom": null,
-          "timeRegions": [],
-          "timeShift": null,
-          "title": "$worker - CPU",
-          "tooltip": {
-            "shared": true,
-            "sort": 0,
-            "value_type": "individual"
-          },
-          "transparent": true,
-          "type": "graph",
-          "xaxis": {
-            "buckets": null,
-            "mode": "time",
-            "name": null,
-            "show": true,
-            "values": []
-          },
-          "yaxes": [
-            {
-              "$$hashKey": "object:251",
-              "format": "ms",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            },
-            {
-              "$$hashKey": "object:252",
-              "format": "ms",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": false
-            }
-          ],
-          "yaxis": {
-            "align": false,
-            "alignLevel": null
-          }
-        }
-      ],
+      "panels": [],
+      "repeat": null,
+      "title": "Worker",
+      "type": "row"
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": null,
+      "fill": 1,
+      "fillGradient": 2,
+      "gridPos": {
+        "h": 8,
+        "w": 19,
+        "x": 0,
+        "y": 1
+      },
+      "hiddenSeries": false,
+      "id": 14,
+      "legend": {
+        "alignAsTable": false,
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "rightSide": false,
+        "show": false,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 2,
+      "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
+      "percentage": false,
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
       "repeat": "worker",
+      "repeatDirection": "v",
       "scopedVars": {
         "worker": {
-          "selected": true,
+          "$$hashKey": "object:476",
+          "selected": false,
+          "text": "atandon-ld1",
+          "value": "atandon-ld1"
+        }
+      },
+      "seriesOverrides": [
+        {
+          "$$hashKey": "object:658",
+          "alias": "memory_total",
+          "color": "#E02F44",
+          "fill": 0
+        },
+        {
+          "$$hashKey": "object:676",
+          "alias": "swap_total",
+          "color": "#FFA6B0",
+          "fill": 0,
+          "linewidth": 1
+        },
+        {
+          "$$hashKey": "object:1028",
+          "alias": "memory_used",
+          "color": "#56A64B"
+        }
+      ],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "format": "time_series",
+          "group": [],
+          "metricColumn": "none",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  created_at AS \"time\",\n  memory_total,\n  memory_used,\n  swap_total,\n  swap_used\nFROM sys_stats\nWHERE\n  worker_id = (SELECT id FROM workers WHERE name = $worker) AND\n  $__timeFilter(created_at)\nORDER BY 1",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "memory_total"
+                ],
+                "type": "column"
+              }
+            ],
+            [
+              {
+                "params": [
+                  "memory_used"
+                ],
+                "type": "column"
+              }
+            ],
+            [
+              {
+                "params": [
+                  "swap_total"
+                ],
+                "type": "column"
+              }
+            ],
+            [
+              {
+                "params": [
+                  "swap_used"
+                ],
+                "type": "column"
+              }
+            ],
+            [
+              {
+                "params": [
+                  "swap_used"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "table": "sys_stats",
+          "timeColumn": "created_at",
+          "timeColumnType": "timestamp",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "$worker - Memory",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "transparent": true,
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "$$hashKey": "object:117",
+          "format": "mbytes",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "$$hashKey": "object:118",
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": false
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "cacheTimeout": null,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": null,
+      "fill": 1,
+      "fillGradient": 1,
+      "gridPos": {
+        "h": 8,
+        "w": 5,
+        "x": 19,
+        "y": 1
+      },
+      "hiddenSeries": false,
+      "id": 18,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
+      "percentage": false,
+      "pluginVersion": "6.7.3",
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "repeat": "worker",
+      "repeatDirection": "v",
+      "scopedVars": {
+        "worker": {
+          "$$hashKey": "object:476",
+          "selected": false,
+          "text": "atandon-ld1",
+          "value": "atandon-ld1"
+        }
+      },
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "format": "time_series",
+          "group": [],
+          "metricColumn": "none",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  created_at AS \"time\",\n  cpu_user_time,\n  cpu_system_time,\n  cpu_idle_time\nFROM sys_stats\nWHERE\n  worker_id = (SELECT id FROM workers WHERE name = $worker) AND\n  $__timeFilter(created_at)\nORDER BY 1",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "cpu_user_time"
+                ],
+                "type": "column"
+              }
+            ],
+            [
+              {
+                "params": [
+                  "cpu_system_time"
+                ],
+                "type": "column"
+              }
+            ],
+            [
+              {
+                "params": [
+                  "cpu_idle_time"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "table": "sys_stats",
+          "timeColumn": "created_at",
+          "timeColumnType": "timestamp",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "$worker - CPU",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "transparent": true,
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "$$hashKey": "object:251",
+          "format": "ms",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "$$hashKey": "object:252",
+          "format": "ms",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": false
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": null,
+      "fill": 1,
+      "fillGradient": 2,
+      "gridPos": {
+        "h": 8,
+        "w": 19,
+        "x": 0,
+        "y": 9
+      },
+      "hiddenSeries": false,
+      "id": 19,
+      "legend": {
+        "alignAsTable": false,
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "rightSide": false,
+        "show": false,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 2,
+      "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
+      "percentage": false,
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "repeat": null,
+      "repeatDirection": "v",
+      "repeatIteration": 1589993154324,
+      "repeatPanelId": 14,
+      "scopedVars": {
+        "worker": {
+          "$$hashKey": "object:477",
+          "selected": false,
           "text": "kpuri-ld1",
           "value": "kpuri-ld1"
         }
       },
-      "title": "Worker",
-      "type": "row"
+      "seriesOverrides": [
+        {
+          "$$hashKey": "object:658",
+          "alias": "memory_total",
+          "color": "#E02F44",
+          "fill": 0
+        },
+        {
+          "$$hashKey": "object:676",
+          "alias": "swap_total",
+          "color": "#FFA6B0",
+          "fill": 0,
+          "linewidth": 1
+        },
+        {
+          "$$hashKey": "object:1028",
+          "alias": "memory_used",
+          "color": "#56A64B"
+        }
+      ],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "format": "time_series",
+          "group": [],
+          "metricColumn": "none",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  created_at AS \"time\",\n  memory_total,\n  memory_used,\n  swap_total,\n  swap_used\nFROM sys_stats\nWHERE\n  worker_id = (SELECT id FROM workers WHERE name = $worker) AND\n  $__timeFilter(created_at)\nORDER BY 1",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "memory_total"
+                ],
+                "type": "column"
+              }
+            ],
+            [
+              {
+                "params": [
+                  "memory_used"
+                ],
+                "type": "column"
+              }
+            ],
+            [
+              {
+                "params": [
+                  "swap_total"
+                ],
+                "type": "column"
+              }
+            ],
+            [
+              {
+                "params": [
+                  "swap_used"
+                ],
+                "type": "column"
+              }
+            ],
+            [
+              {
+                "params": [
+                  "swap_used"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "table": "sys_stats",
+          "timeColumn": "created_at",
+          "timeColumnType": "timestamp",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "$worker - Memory",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "transparent": true,
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "$$hashKey": "object:117",
+          "format": "mbytes",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "$$hashKey": "object:118",
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": false
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "cacheTimeout": null,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": null,
+      "fill": 1,
+      "fillGradient": 1,
+      "gridPos": {
+        "h": 8,
+        "w": 5,
+        "x": 19,
+        "y": 9
+      },
+      "hiddenSeries": false,
+      "id": 20,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
+      "percentage": false,
+      "pluginVersion": "6.7.3",
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "repeat": null,
+      "repeatDirection": "v",
+      "repeatIteration": 1589993154324,
+      "repeatPanelId": 18,
+      "scopedVars": {
+        "worker": {
+          "$$hashKey": "object:477",
+          "selected": false,
+          "text": "kpuri-ld1",
+          "value": "kpuri-ld1"
+        }
+      },
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "format": "time_series",
+          "group": [],
+          "metricColumn": "none",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  created_at AS \"time\",\n  cpu_user_time,\n  cpu_system_time,\n  cpu_idle_time\nFROM sys_stats\nWHERE\n  worker_id = (SELECT id FROM workers WHERE name = $worker) AND\n  $__timeFilter(created_at)\nORDER BY 1",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "cpu_user_time"
+                ],
+                "type": "column"
+              }
+            ],
+            [
+              {
+                "params": [
+                  "cpu_system_time"
+                ],
+                "type": "column"
+              }
+            ],
+            [
+              {
+                "params": [
+                  "cpu_idle_time"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "table": "sys_stats",
+          "timeColumn": "created_at",
+          "timeColumnType": "timestamp",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "$worker - CPU",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "transparent": true,
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "$$hashKey": "object:251",
+          "format": "ms",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "$$hashKey": "object:252",
+          "format": "ms",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": false
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     },
     {
       "collapsed": true,
@@ -366,7 +682,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 1
+        "y": 17
       },
       "id": 2,
       "panels": [
@@ -376,7 +692,7 @@
             "h": 4,
             "w": 3,
             "x": 0,
-            "y": 2
+            "y": 18
           },
           "id": 8,
           "options": {
@@ -458,7 +774,7 @@
             "h": 4,
             "w": 12,
             "x": 3,
-            "y": 2
+            "y": 18
           },
           "id": 10,
           "pageSize": null,
@@ -542,7 +858,7 @@
             "h": 4,
             "w": 4,
             "x": 15,
-            "y": 2
+            "y": 18
           },
           "id": 12,
           "links": [],
@@ -640,7 +956,7 @@
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 6
+            "y": 22
           },
           "hiddenSeries": false,
           "id": 4,
@@ -762,7 +1078,7 @@
             "h": 8,
             "w": 11,
             "x": 12,
-            "y": 6
+            "y": 22
           },
           "hiddenSeries": false,
           "id": 6,
@@ -871,19 +1187,11 @@
         }
       ],
       "repeat": "task",
-      "scopedVars": {
-        "task": {
-          "isNone": true,
-          "selected": true,
-          "text": "None",
-          "value": ""
-        }
-      },
       "title": "Task - $task",
       "type": "row"
     }
   ],
-  "refresh": "1m",
+  "refresh": "5s",
   "schemaVersion": 22,
   "style": "dark",
   "tags": [],
@@ -892,18 +1200,17 @@
       {
         "allValue": null,
         "current": {
-          "isNone": true,
           "selected": false,
-          "text": "None",
-          "value": ""
+          "text": "All",
+          "value": "$__all"
         },
         "datasource": "postgres",
         "definition": "select name from tasks;",
         "hide": 0,
-        "includeAll": false,
+        "includeAll": true,
         "index": -1,
         "label": "",
-        "multi": false,
+        "multi": true,
         "name": "task",
         "options": [],
         "query": "select name from tasks;",
@@ -920,16 +1227,18 @@
       {
         "allValue": null,
         "current": {
-          "text": "kpuri-ld1",
-          "value": "kpuri-ld1"
+          "text": "All",
+          "value": [
+            "$__all"
+          ]
         },
         "datasource": "postgres",
         "definition": "select name from workers;",
         "hide": 0,
-        "includeAll": false,
+        "includeAll": true,
         "index": -1,
         "label": "",
-        "multi": false,
+        "multi": true,
         "name": "worker",
         "options": [],
         "query": "select name from workers;",

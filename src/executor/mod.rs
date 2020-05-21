@@ -21,10 +21,12 @@ pub mod crash_syncer;
 mod native;
 mod docker;
 
-#[derive(Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct CrashConfig {
     pub path: Box<Path>,
     pub label: String,
+
+    #[serde(with = "serde_regex")]
     pub filter: Regex,
 }
 
@@ -58,13 +60,14 @@ pub struct ExecutorConfig {
     pub args: Vec<String>,
     pub cwd: Box<Path>,
     pub corpus: CorpusConfig,
+    pub crash: CrashConfig,
     pub envs: HashMap<String, String>,
 }
 
 
 // Only fear was tokio::process::Child which seems to obey Send so we do too
 #[tonic::async_trait]
-pub trait Executor: std::marker::Send {
+pub trait Executor: Send + Sync {
     // Create a new executor with this configuration
     // fn new(config: ExecutorConfig, worker_task_id: Option<i32>) -> Self;
 
@@ -84,7 +87,7 @@ pub trait Executor: std::marker::Send {
     // TODO: Switch to generic trait based returns so we can swap file monitors
     // fn get_file_watcher(&self, path: Path) -> Box<dyn file_watcher::FileWatcher>;
     fn get_corpus_syncer(&self) -> Result<CorpusSyncer, Box<dyn Error>>;
-    fn get_crash_syncer(&self, config: CrashConfig) -> Result<CrashSyncer, Box<dyn Error>>;
+    fn get_crash_syncer(&self) -> Result<CrashSyncer, Box<dyn Error>>;
 
     // Get absolute path for relative to cwd
     fn get_cwd_path(&self) -> PathBuf;

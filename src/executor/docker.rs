@@ -11,11 +11,12 @@ use tokio::{
     sync::broadcast,
 };
 
-use super::{CrashConfig, ExecutorConfig};
+use super::ExecutorConfig;
 use super::corpus_syncer::CorpusSyncer;
 use super::crash_syncer::CrashSyncer;
 use crate::common::executors::{extract_contraint_volume_map, get_container_volume_map};
 use crate::utils::fs::mkdir_p;
+use crate::utils::checksum;
 
 /// config.cwd is used only to mount a volume at that path & run command
 /// from there when starting docker container
@@ -46,6 +47,9 @@ impl super::Executor for DockerExecutor {
 
         let mapped_corpus_path = self.mapped_cwd.join(&self.config.corpus.path);
         mkdir_p(mapped_corpus_path.as_path()).await?;
+
+        let mapped_crashes_path = self.mapped_cwd.join(&self.config.crash.path);
+        mkdir_p(mapped_crashes_path.as_path()).await?;
 
         Ok(())
     }
@@ -143,7 +147,9 @@ impl super::Executor for DockerExecutor {
         )?)
     }
 
-    fn get_crash_syncer(&self, config: CrashConfig) -> Result<CrashSyncer, Box<dyn Error>> {
+    fn get_crash_syncer(&self) -> Result<CrashSyncer, Box<dyn Error>> {
+        let mut config = self.config.crash.clone();
+        config.path = self.mapped_cwd.join(config.path).into_boxed_path();
         Ok(CrashSyncer::new(
                 config,
                 self.worker_task_id
@@ -170,6 +176,19 @@ impl super::Executor for DockerExecutor {
             warn!("Stderr: {:?}", String::from_utf8(output.stderr));
         }
 
+        let mut cmd = Command::new("docker");
+        cmd
+            .arg("rm")
+            .arg(self.identifier.clone())
+            .kill_on_drop(true);
+
+        let output = cmd.output().await?;
+        if output.status.success() == false {
+            error!("Unable to remove container: {}", self.identifier);
+            info!("Stdout: {:?}", String::from_utf8(output.stdout));
+            warn!("Stderr: {:?}", String::from_utf8(output.stderr));
+        }
+
         Ok(())
     }
 }
@@ -183,9 +202,7 @@ impl DockerExecutor {
         }
         let (host_path, mapped_path) = extract_contraint_volume_map(volume_path.unwrap().as_ref());
 
-        let mut identifier = uuid::Uuid::new_v4().to_string();
-        identifier.push_str("-");
-        identifier.push_str(worker_task_id.as_ref().unwrap_or(&0).to_string().as_ref());
+        let identifier = checksum(&worker_task_id.as_ref().unwrap_or(&0).to_string().into_bytes());
         debug!("Created new identifier for docker executor: {}", identifier);
         // Append a folder to both host & mapped path so that we don't collide different docker
         // executor instances

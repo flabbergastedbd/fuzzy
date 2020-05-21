@@ -1,8 +1,9 @@
 use std::io::{BufRead, Seek, SeekFrom};
 use std::error::Error;
-use std::path::Path;
+use std::path::{Path, PathBuf};
+use std::time::SystemTime;
 
-use log::{error, debug};
+use log::{trace, error, debug};
 use regex::Regex;
 use inotify::{Inotify, WatchMask, EventStream};
 use tokio::{
@@ -10,6 +11,8 @@ use tokio::{
     stream::StreamExt,
     io::AsyncReadExt,
 };
+
+use crate::utils::get_human_dt;
 
 pub fn tail_n(file_path: &Path, bytes: u64) -> Result<Vec<String>, Box<dyn Error>> {
     let mut file = std::fs::File::open(file_path)?;
@@ -76,5 +79,54 @@ impl InotifyFileWatcher {
             }
         };
         result
+    }
+}
+
+pub struct FileWatcher {
+    path: PathBuf,
+    last_sync: SystemTime,
+    blacklist_filter: Option<Regex>,
+    whitelist_filter: Option<Regex>,
+}
+
+impl FileWatcher {
+    pub fn new(path: &Path, blacklist_filter: Option<Regex>, whitelist_filter: Option<Regex>, last_sync: SystemTime) -> Result<Self, Box<dyn Error>> {
+        debug!("Creating new file watcher at {:?}", path);
+        Ok(Self {
+            path: path.to_path_buf(),
+            last_sync,
+            blacklist_filter,
+            whitelist_filter,
+        })
+    }
+
+    // TODO: This does lot of syscalls, fix this
+    pub fn get_new_files(&mut self) -> Result<Vec<PathBuf>, Box<dyn Error>> {
+        debug!("Trying to get new files at {:?} since {:?}", self.path, get_human_dt(self.last_sync));
+        let mut new_files = vec![];
+        // Dedup is handled on master anyways, this is to not miss anything
+        let entries = std::fs::read_dir(self.path.as_path())?;
+        for entry in entries {
+            let entry = entry?;
+            if let Some(file_name) = entry.file_name().to_str() {
+                let blacklist_match = self.blacklist_filter.as_ref().map(|r| r.is_match(&file_name)).unwrap_or(true);
+                let whitelist_match = self.whitelist_filter.as_ref().map(|r| r.is_match(&file_name)).unwrap_or(true);
+                if !blacklist_match && whitelist_match {
+                    // This enables us to sync all files if filesystem doesnt support timestamps
+                    let timestamp = entry.metadata()?.created().unwrap_or(std::time::UNIX_EPOCH);
+                    if  self.last_sync <= timestamp {
+                        new_files.push(entry.path());
+                    } else {
+                        trace!("Old timestamp detected should have been synced: {:?}", get_human_dt(timestamp));
+                    }
+                } else {
+                    trace!("Skipping {} (Blacklist Match: {:?} - Whitelist Match: {:?}", file_name, blacklist_match, whitelist_match);
+                }
+            }
+        }
+
+        // Always update sync at end
+        self.last_sync = std::time::SystemTime::now() - std::time::Duration::from_secs(1);
+        Ok(new_files)
     }
 }

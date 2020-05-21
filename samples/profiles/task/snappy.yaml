@@ -49,3 +49,16 @@ execution:
 
     # Gives the ability to only select specific file patterns inside the corpus directory
     upload_filter: ".*"
+
+  crash:
+    # Relative path to cwd, all crashes will be uploaded from here. Need to provide this as right argument
+    # to fuzzer in args above
+    path: crashes
+
+    # An identifier as to which kind of corpus files need to be download. Any new corpus discovered will
+    # be uploaded with same label.
+    label: snappy_libfuzzer
+
+    # To filter files, as generally logfiles etc. are present too
+    # For honggfuzz this filter will be ".*fuzz"
+    filter: "crash-.*"

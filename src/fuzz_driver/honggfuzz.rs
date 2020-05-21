@@ -1,4 +1,4 @@
-use std::path::{PathBuf};
+use std::path::PathBuf;
 use std::error::Error;
 
 use log::{trace, error, info, debug, warn};
@@ -7,7 +7,7 @@ use tokio::{sync::oneshot, sync::broadcast};
 use tonic::Request;
 
 use super::FuzzConfig;
-use crate::executor::{self, CrashConfig};
+use crate::executor;
 use crate::common::worker_tasks::{mark_worker_task_active, mark_worker_task_inactive};
 use crate::models::NewFuzzStat;
 use crate::common::xpc::get_orchestrator_client;
@@ -32,20 +32,16 @@ impl super::FuzzDriver for HonggfuzzDriver {
         info!("Starting libfuzzer driver for {:#?}", self.worker_task_id);
 
         let mut runner = executor::new(self.config.execution.clone(), self.worker_task_id);
+        runner.setup().await?;
 
         // let local = task::LocalSet::new();
 
         // Spawn off corpus sync
-        let corpus_syncer = runner.get_corpus_syncer()?;
+        let mut corpus_syncer = runner.get_corpus_syncer()?;
         corpus_syncer.setup_corpus().await?;
 
         // Spawn off crash sync
-        let crash_config = CrashConfig {
-            label: self.config.execution.corpus.label.clone(),
-            path: runner.get_cwd_path().into_boxed_path(),
-            filter: Regex::new(r".*\.fuzz")?,
-        };
-        let crash_syncer = runner.get_crash_syncer(crash_config)?;
+        let crash_syncer = runner.get_crash_syncer()?;
 
         // Stat collector
         let log_path = runner.get_cwd_path().join(HONGGFUZZ_LOG);
@@ -77,6 +73,7 @@ impl super::FuzzDriver for HonggfuzzDriver {
                 error!("Error in executor: {:?}", result);
             },
         }
+        let close_time = std::time::SystemTime::now();
         // If we are here it means select wrapped up from above
         // Close the fuzz process
         if let Err(e) = longshot.send(0) {
@@ -84,6 +81,7 @@ impl super::FuzzDriver for HonggfuzzDriver {
         }
         info!("Sending kill signal for execturo {:?} as select! ended", self.worker_task_id);
         runner.close().await?;
+        corpus_syncer.close(close_time).await?;
 
         mark_worker_task_inactive(self.worker_task_id).await?;
 

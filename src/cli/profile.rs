@@ -38,7 +38,7 @@ pub async fn cli(args: &ArgMatches) -> Result<(), Box<dyn Error>> {
             let local_set = LocalSet::new();
 
             // Spawn off corpus sync
-            let corpus_syncer = executor.get_corpus_syncer()?;
+            let mut corpus_syncer = executor.get_corpus_syncer()?;
             corpus_syncer.setup_corpus().await?;
             let corpus_sync_handle = local_set.spawn_local(async move {
                 if let Err(e) = corpus_syncer.sync_corpus(longshot_recv).await {
@@ -82,7 +82,6 @@ pub async fn cli(args: &ArgMatches) -> Result<(), Box<dyn Error>> {
             if let Err(e) = longshot.send(0) {
                 error!("Error sending longshot: {:?}", e);
             }
-
             executor.close().await?;
         },
         ("task", Some(sub_matches)) => {

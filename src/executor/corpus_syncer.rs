@@ -7,7 +7,7 @@ use tonic::transport::channel::Channel;
 use tokio::sync::broadcast;
 
 use crate::xpc::orchestrator_client::OrchestratorClient;
-use crate::utils::fs::InotifyFileWatcher;
+use crate::utils::fs::FileWatcher;
 use super::CorpusConfig;
 use crate::common::corpora::{upload_corpus_from_disk, download_corpus_to_disk, CORPUS_FILE_EXT};
 use crate::common::xpc::get_orchestrator_client;
@@ -16,14 +16,19 @@ use crate::common::xpc::get_orchestrator_client;
 pub struct CorpusSyncer {
     config: CorpusConfig,
     worker_task_id: Option<i32>,
+    last_download: SystemTime,
 }
 
 impl CorpusSyncer {
     pub fn new(config: CorpusConfig, worker_task_id: Option<i32>) -> Result<Self, Box<dyn Error>> {
-        Ok(Self { config, worker_task_id })
+        Ok(Self {
+            config,
+            worker_task_id,
+            last_download: UNIX_EPOCH,
+        })
     }
 
-    pub async fn setup_corpus(&self) -> Result<(), Box<dyn Error>> {
+    pub async fn setup_corpus(&mut self) -> Result<(), Box<dyn Error>> {
         debug!("Syncing initial corpus");
         let mut client = get_orchestrator_client().await?;
         download_corpus_to_disk(
@@ -32,6 +37,7 @@ impl CorpusSyncer {
             UNIX_EPOCH,
             &self.config.path,
             &mut client).await?;
+        self.last_download = SystemTime::now();
         Ok(())
     }
 
@@ -42,88 +48,76 @@ impl CorpusSyncer {
 
         debug!("Will try to keep corpus in sync at: {:?}", self.config.path);
         let client = get_orchestrator_client().await?;
-        let worker_task_id = self.worker_task_id;
-
-        // Create a local set
-        // let local_set = task::LocalSet::new();
-
-        // Create necessary clones and pass along for upload sync if upload enabled
-        let client_clone = client.clone();
-        let corpus_config_upload = self.config.clone();
-
-        // Create necessary clones and pass along for download sync
-        let last_updated = SystemTime::now();
-        let corpus_config = self.config.clone();
-        let refresh_interval = self.config.refresh_interval;
 
         tokio::select! {
-            _ = download(corpus_config, worker_task_id, last_updated, refresh_interval, client) => {
+            _ = self.download(client.clone()) => {
                 error!("Downloading corpus exited first, whaaatt!");
             },
             // Doing this should be very necessary
-            _ = upload(corpus_config_upload, worker_task_id, client_clone), if self.config.upload => {
+            _ = self.upload(UNIX_EPOCH, client.clone(), true), if self.config.upload => {
                 error!("Uploading corpus exited first, whaaatt!");
             },
             _ = kill_switch.recv() => {
                 debug!("Kill receieved for corpus sync at {:?}", self.config);
             },
         }
-
-        // Error handled at spawn level
-        // let (_, _) = tokio::join!(upload_handle, download_handle);
-
-        // local_set.await;
-
         Ok(())
     }
-}
 
-async fn upload(
-        corpus: CorpusConfig,
-        worker_task_id: Option<i32>,
-        client: OrchestratorClient<Channel>) -> Result<(), Box<dyn Error>> {
-    if corpus.upload == true {
-        let mut client = client;
+    async fn upload(&self, last_upload: SystemTime, mut client: OrchestratorClient<Channel>, infinite_loop: bool) -> Result<(), Box<dyn Error>> {
+        let mut interval = tokio::time::interval(Duration::from_secs(self.config.refresh_interval));
+        // let mut client = client;
         info!("Creating corpus upload sync");
         let ext_regex = Regex::new(format!(".*\\.{}$", CORPUS_FILE_EXT).as_str()).unwrap();
-        let mut watcher = InotifyFileWatcher::new(&corpus.path, Some(corpus.upload_filter))?;
+        let mut watcher = FileWatcher::new(&self.config.path, Some(ext_regex), Some(self.config.upload_filter.clone()), last_upload)?;
 
-        while let Some(file) = watcher.get_new_file().await {
+        loop {
             // Match user provided match pattern
-            if ext_regex.is_match(file.as_str()) == false {
-                let file_path = corpus.path.clone();
-                let file_path = file_path.join(file);
+            let files = watcher.get_new_files()?;
+            info!("Uploading {} new corpus to master", files.len());
+            for file_path in files {
                 info!("Uploading new corpus: {:?}", file_path);
-                upload_corpus_from_disk(file_path.as_path(), corpus.label.clone(), worker_task_id, &mut client).await?
+                if let Err(e) = upload_corpus_from_disk(
+                    file_path.as_path(),
+                    self.config.label.clone(),
+                    self.worker_task_id,
+                    &mut client
+                ).await {
+                    error!("Failed to upload {:?} as corpus: {}", file_path.as_path(), e);
+                }
+            }
+
+            if infinite_loop {
+                interval.tick().await;
             } else {
-                debug!("Skipping upload of a user unmatched pattern: {:?}", file);
+                break;
             }
         }
-    } else {
-        debug!("Returning early as corpus upload seems to have been disabled for {:?}", worker_task_id);
+        Ok(())
     }
-    Ok(())
-}
 
-async fn download(
-        corpus_config: CorpusConfig,
-        worker_task_id: Option<i32>,
-        mut last_updated: SystemTime,
-        refresh_interval: u64,
-        mut client: OrchestratorClient<Channel>) -> Result<(), Box<dyn Error>> {
-    let mut interval = tokio::time::interval(Duration::from_secs(refresh_interval));
-    loop {
-        interval.tick().await;
-        let result = download_corpus_to_disk(corpus_config.label.clone(),
-                                             worker_task_id,
-                                             last_updated,
-                                             &corpus_config.path,
-                                             &mut client).await;
-        // If successful update, set last_updated
-        if let Err(e) = result {
-            error!("Download sync job failed: {}", e);
-        } else {
-            last_updated = SystemTime::now();
+    async fn download(&self, mut client: OrchestratorClient<Channel>) -> Result<(), Box<dyn Error>> {
+        let mut interval = tokio::time::interval(Duration::from_secs(self.config.refresh_interval));
+        let mut last_download = self.last_download.clone();
+        loop {
+            interval.tick().await;
+            let result = download_corpus_to_disk(self.config.label.clone(),
+                                                 self.worker_task_id,
+                                                 last_download,
+                                                 &self.config.path,
+                                                 &mut client).await;
+            // If successful update, set last_updated
+            if let Err(e) = result {
+                error!("Download sync job failed: {}", e);
+            } else {
+                last_download = SystemTime::now();
+            }
         }
+    }
+
+    pub async fn close(self, last_upload: SystemTime) -> Result<(), Box<dyn Error>> {
+        let client = get_orchestrator_client().await?;
+        self.upload(last_upload, client, false).await?;
+        Ok(())
     }
 }

@@ -10,7 +10,7 @@ use tokio::{
     sync::broadcast,
 };
 
-use super::{CrashConfig, ExecutorConfig};
+use super::ExecutorConfig;
 use super::corpus_syncer::CorpusSyncer;
 use super::crash_syncer::CrashSyncer;
 use crate::utils::fs::mkdir_p;
@@ -32,6 +32,10 @@ impl super::Executor for NativeExecutor {
         // Check if corpus dir exists, if not create it
         let absolute_corpus_path = self.config.cwd.join(&self.config.corpus.path);
         mkdir_p(absolute_corpus_path.as_path()).await?;
+
+        // Check if corpus dir exists, if not create it
+        let absolute_crashes_path = self.config.cwd.join(&self.config.crash.path);
+        mkdir_p(absolute_crashes_path.as_path()).await?;
 
         Ok(())
     }
@@ -95,7 +99,9 @@ impl super::Executor for NativeExecutor {
         )?)
     }
 
-    fn get_crash_syncer(&self, config: CrashConfig) -> Result<CrashSyncer, Box<dyn Error>> {
+    fn get_crash_syncer(&self) -> Result<CrashSyncer, Box<dyn Error>> {
+        let mut config = self.config.crash.clone();
+        config.path = self.config.cwd.join(config.path).into_boxed_path();
         Ok(CrashSyncer::new(
                 config,
                 self.worker_task_id

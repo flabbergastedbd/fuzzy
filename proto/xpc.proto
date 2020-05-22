@@ -145,6 +145,7 @@ message WorkerTasks {
 
 message FilterWorkerTask {
     required string worker_uuid = 1;
+    repeated int32 worker_task_ids = 2;
 }
 
 message PatchWorkerTask {

@@ -177,10 +177,10 @@ impl Orchestrator for OrchestratorService {
         let tasks = worker_tasks::table.inner_join(tasks::table).inner_join(workers::table)
             .filter(
                 workers::uuid.eq(filter_worker_task.worker_uuid)
-                .and(worker_tasks::worker_id.eq(workers::id))
-                // Not active tasks only, as previous ones need to be stopped
-                // .and(tasks::active.eq(true)) // Active tasks only
-                // .and(worker_tasks::task_id.eq(tasks::id))
+                .and(
+                    worker_tasks::worker_id.eq(workers::id).and(tasks::active.eq(true)) // Active tasks
+                    .or(worker_tasks::id.eq_any(filter_worker_task.worker_task_ids)) // Non active tasks that worker is already running
+                )
             )
             .select((worker_tasks::id, tasks::all_columns, worker_tasks::cpus, worker_tasks::active))
             .load::<xpc::WorkerTaskFull>(&conn);

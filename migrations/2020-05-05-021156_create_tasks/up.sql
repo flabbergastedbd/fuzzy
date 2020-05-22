@@ -35,6 +35,7 @@ CREATE TABLE crashes (
 	checksum VARCHAR(64),
 	label VARCHAR(100) NOT NULL,
 	verified BOOLEAN NOT NULL DEFAULT FALSE,
+	output VARCHAR,
 	worker_task_id INTEGER REFERENCES worker_tasks(id) ON DELETE SET NULL,
 	created_at TIMESTAMP NOT NULL DEFAULT current_timestamp,
 	UNIQUE(checksum, label, worker_task_id)

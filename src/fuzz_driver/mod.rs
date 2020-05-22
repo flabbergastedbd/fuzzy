@@ -105,8 +105,11 @@ pub trait FuzzDriver: Send {
             error!("Error in sending death switch: {:?}", e);
         }
         info!("Sending kill signal for execturo {:?} as select! ended", worker_task_id);
-        runner.close().await?;
+
+        // Sync corpus first and then close the executor
+        // Exactly reverse order of how things were created
         corpus_syncer.close(close_time).await?;
+        runner.close().await?;
 
         mark_worker_task_inactive(worker_task_id).await?;
         Ok(())

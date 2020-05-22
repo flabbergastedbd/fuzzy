@@ -16,6 +16,7 @@ table! {
         checksum -> Nullable<Varchar>,
         label -> Varchar,
         verified -> Bool,
+        output -> Nullable<Varchar>,
         worker_task_id -> Nullable<Int4>,
         created_at -> Timestamp,
     }

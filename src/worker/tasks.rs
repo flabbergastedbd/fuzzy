@@ -86,7 +86,7 @@ impl TaskManager {
             let local_worker_task_active = self.driver_handles.contains_key(&worker_task.id);
             let global_task_active = worker_task.task.active;
 
-            debug!("Looping on task: {:?}", worker_task);
+            debug!("Looping on task: {:#?}", worker_task);
             debug!("Is task active already?: {}", local_worker_task_active);
 
             if local_worker_task_active == true && global_task_active == true {
@@ -120,7 +120,8 @@ impl TaskManager {
                 // Create new filter request
                 let worker_clone = worker.clone();
                 let filter_worker_task = xpc::FilterWorkerTask {
-                    worker_uuid: worker_clone.uuid
+                    worker_uuid: worker_clone.uuid,
+                    worker_task_ids: self.driver_handles.keys().cloned().collect(),
                 };
 
                 let response = client.get_worker_task(filter_worker_task).await;

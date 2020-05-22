@@ -105,6 +105,7 @@ impl FileWatcher {
         debug!("Trying to get new files at {:?} since {:?}", self.path, get_human_dt(self.last_sync));
         let mut new_files = vec![];
         // Dedup is handled on master anyways, this is to not miss anything
+        let now = SystemTime::now();
         let entries = std::fs::read_dir(self.path.as_path())?;
         for entry in entries {
             let entry = entry?;
@@ -126,7 +127,7 @@ impl FileWatcher {
         }
 
         // Always update sync at end
-        self.last_sync = std::time::SystemTime::now() - std::time::Duration::from_secs(1);
+        self.last_sync = now;
         Ok(new_files)
     }
 }

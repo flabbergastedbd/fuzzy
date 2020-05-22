@@ -138,7 +138,7 @@ async fn pid_exists(pid: u32) -> Result<(), Box<dyn Error>> {
     loop {
         interval.tick().await;
         if heim::process::pid_exists(pid as i32).await? == false {
-            if fail_count > 10 {
+            if fail_count > 4 {
                 break
             } else {
                 fail_count = fail_count + 1;

@@ -25,7 +25,7 @@ pub struct FuzzConfig {
 pub trait FuzzDriver: std::marker::Send {
     fn new(config: FuzzConfig, worker_task_id: Option<i32>) -> Self where Self: Sized;
 
-    async fn start(&mut self, kill_switch: oneshot::Receiver<u8>) -> Result<(), Box<dyn Error>>;
+    async fn start(&mut self, kill_switch: oneshot::Receiver<u8>, death_switch: oneshot::Sender<u8>) -> Result<(), Box<dyn Error>>;
 }
 
 pub fn new(config: FuzzConfig, worker_task_id: Option<i32>) -> Box<dyn FuzzDriver> {

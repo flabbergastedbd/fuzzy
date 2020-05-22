@@ -237,7 +237,7 @@ async fn check_if_container_alive(identitifer: String) -> Result<(), Box<dyn Err
             .kill_on_drop(true);
         let output = cmd.output().await?;
         if output.stdout.len() == 0 {
-            if fail_count > 10 {
+            if fail_count > 4 {
                 break
             } else {
                 fail_count = fail_count + 1;

@@ -105,10 +105,11 @@ pub async fn cli(args: &ArgMatches) -> Result<(), Box<dyn Error>> {
 
             // Fake tx, will not be used
             let (tx, rx) = oneshot::channel::<u8>();
+            let (death_tx, _) = oneshot::channel::<u8>();
 
             let mut stream = signal(SignalKind::interrupt())?;
             tokio::select! {
-                result = driver.start(rx) => {
+                result = driver.start(rx, death_tx) => {
                     error!("Fuzz driver exited first, something is wrong");
                     if let Err(e) = result {
                         error!("Cause: {}", e);

@@ -27,7 +27,7 @@ impl super::FuzzDriver for HonggfuzzDriver {
         Self { config, worker_task_id }
     }
 
-    async fn start(&mut self, kill_switch: oneshot::Receiver<u8>) -> Result<(), Box<dyn Error>> {
+    async fn start(&mut self, kill_switch: oneshot::Receiver<u8>, death_switch: oneshot::Sender<u8>) -> Result<(), Box<dyn Error>> {
         self.fix_args();
         info!("Starting libfuzzer driver for {:#?}", self.worker_task_id);
 
@@ -78,6 +78,9 @@ impl super::FuzzDriver for HonggfuzzDriver {
         // Close the fuzz process
         if let Err(e) = longshot.send(0) {
             error!("Error in sending longshot: {:?}", e);
+        }
+        if let Err(e) = death_switch.send(0) {
+            error!("Error in sending death switch: {:?}", e);
         }
         info!("Sending kill signal for execturo {:?} as select! ended", self.worker_task_id);
         runner.close().await?;

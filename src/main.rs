@@ -94,7 +94,7 @@ fn main() {
 
     // Enable debug logging as per -vvv
     let verbose_count = arg_matches.occurrences_of("verbose");
-    let logfile_path = arg_matches.value_of("logfile").unwrap_or("fuzzy.{}.log");
+    let logfile_path = arg_matches.value_of("logfile").unwrap_or("fuzzy.log");
     if let Err(e) = setup_logging(verbose_count, logfile_path) {
         panic!("Error while setting up logging: {}", e);
     }

@@ -34,6 +34,12 @@ pub async fn mkdir_p(path: &Path) -> std::io::Result<()> {
     Ok(())
 }
 
+pub async fn rm_r(path: &Path) -> std::io::Result<()> {
+    debug!("Removing directory tree {:?}", path);
+    fs::remove_dir_all(path).await?;
+    Ok(())
+}
+
 pub async fn read_file(file_path: &Path) -> Result<Vec<u8>, Box<dyn Error>> {
     debug!("Reading full file: {:?}", file_path);
     let mut content = vec![];

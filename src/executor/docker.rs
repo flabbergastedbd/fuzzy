@@ -15,7 +15,7 @@ use super::ExecutorConfig;
 use super::corpus_syncer::CorpusSyncer;
 use super::crash_syncer::CrashSyncer;
 use crate::common::executors::{extract_contraint_volume_map, get_container_volume_map};
-use crate::utils::fs::mkdir_p;
+use crate::utils::fs::{rm_r, mkdir_p};
 use crate::utils::checksum;
 
 /// config.cwd is used only to mount a volume at that path & run command
@@ -176,6 +176,7 @@ impl super::Executor for DockerExecutor {
             warn!("Stderr: {:?}", String::from_utf8(output.stderr));
         }
 
+        // Remove the container
         let mut cmd = Command::new("docker");
         cmd
             .arg("rm")
@@ -188,6 +189,11 @@ impl super::Executor for DockerExecutor {
             info!("Stdout: {:?}", String::from_utf8(output.stdout));
             warn!("Stderr: {:?}", String::from_utf8(output.stderr));
         }
+
+        // Delete corpus directory as we anyways upload at end
+        let mapped_corpus_path = self.mapped_cwd.join(&self.config.corpus.path);
+        rm_r(mapped_corpus_path.as_path()).await?;
+        // Let us not do with crashes as of now
 
         Ok(())
     }

@@ -37,15 +37,6 @@ pub async fn cli(args: &ArgMatches) -> Result<(), Box<dyn Error>> {
 
             let local_set = LocalSet::new();
 
-            // Spawn off corpus sync
-            let mut corpus_syncer = executor.get_corpus_syncer()?;
-            corpus_syncer.setup_corpus().await?;
-            let corpus_sync_handle = local_set.spawn_local(async move {
-                if let Err(e) = corpus_syncer.sync_corpus(longshot_recv).await {
-                    error!("Unable to sync corpus: {}", e);
-                }
-            });
-
             executor.spawn().await?;
 
             // Spawn off stdout output
@@ -65,18 +56,14 @@ pub async fn cli(args: &ArgMatches) -> Result<(), Box<dyn Error>> {
             });
 
             let mut stream = signal(SignalKind::interrupt())?;
-            let executor_longshot_recv = longshot.subscribe();
             tokio::select! {
-                _ = corpus_sync_handle => {
-                    warn!("Corpus sync exited first, something is wrong");
-                },
                 _ = local_set => {
                     warn!("Executor exited first, something is wrong");
                 },
                 _ = stream.recv() => {
                     info!("Received Ctrl-c for task set")
                 },
-                _ = executor.wait(executor_longshot_recv) => {},
+                _ = executor.wait(longshot_recv) => {},
             }
             debug!("select! has ended, firing longshot");
             if let Err(e) = longshot.send(0) {

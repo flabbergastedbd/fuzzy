@@ -33,32 +33,32 @@ execution:
   # the container
   cwd: /fuzzing
 
-  corpus:
-    # Relative path to cwd, all corpus files from master will be synced here periodically
-    path: corpus
+corpus:
+  # Relative path to cwd, all corpus files from master will be synced here periodically
+  path: corpus
 
-    # An identifier as to which kind of corpus files need to be download. Any new corpus discovered will
-    # be uploaded with same label.
-    label: snappy_uncompress
+  # An identifier as to which kind of corpus files need to be download. Any new corpus discovered will
+  # be uploaded with same label.
+  label: snappy_uncompress
 
-    # Interval at which updated corpus should be downloaded from master
-    refresh_interval: 600
+  # Interval at which updated corpus should be downloaded from master
+  refresh_interval: 600
 
-    # Any newly discovered corpus should be synced to master or not
-    upload: false
+  # Any newly discovered corpus should be synced to master or not
+  upload: false
 
-    # Gives the ability to only select specific file patterns inside the corpus directory
-    upload_filter: ".*"
+  # Gives the ability to only select specific file patterns inside the corpus directory
+  upload_filter: ".*"
 
-  crash:
-    # Relative path to cwd, all crashes will be uploaded from here. Need to provide this as right argument
-    # to fuzzer in args above.
-    path: "."
+crash:
+  # Relative path to cwd, all crashes will be uploaded from here. Need to provide this as right argument
+  # to fuzzer in args above.
+  path: "."
 
-    # An identifier as to which kind of corpus files need to be download. Any new corpus discovered will
-    # be uploaded with same label.
-    label: snappy_libfuzzer
+  # An identifier as to which kind of corpus files need to be download. Any new corpus discovered will
+  # be uploaded with same label.
+  label: snappy_libfuzzer
 
-    # To filter files, as generally logfiles etc. are present too
-    # For honggfuzz this filter will be ".*fuzz"
-    filter: "crash-.*"
+  # To filter files, as generally logfiles etc. are present too
+  # For honggfuzz this filter will be ".*fuzz"
+  filter: "crash-.*"

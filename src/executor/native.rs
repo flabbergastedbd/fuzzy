@@ -1,6 +1,6 @@
 use std::process::Stdio;
 use std::error::Error;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::io::{self, ErrorKind};
 
 use log::{error, debug};
@@ -11,9 +11,10 @@ use tokio::{
 };
 
 use super::ExecutorConfig;
+use crate::fuzz_driver::{CrashConfig, CorpusConfig};
 use super::corpus_syncer::CorpusSyncer;
 use super::crash_syncer::CrashSyncer;
-use crate::utils::fs::mkdir_p;
+use crate::utils::fs::{rm_r, mkdir_p};
 
 pub struct NativeExecutor {
     config: ExecutorConfig,
@@ -28,15 +29,18 @@ impl super::Executor for NativeExecutor {
 
         // Check if cwd exists, if not create
         mkdir_p(&self.config.cwd).await?;
+        Ok(())
+    }
 
-        // Check if corpus dir exists, if not create it
-        let absolute_corpus_path = self.config.cwd.join(&self.config.corpus.path);
-        mkdir_p(absolute_corpus_path.as_path()).await?;
+    async fn create_relative_dirp(&self, path: &Path) -> Result<(), Box<dyn Error>> {
+        let mapped_path = self.config.cwd.join(path);
+        mkdir_p(mapped_path.as_path()).await?;
+        Ok(())
+    }
 
-        // Check if corpus dir exists, if not create it
-        let absolute_crashes_path = self.config.cwd.join(&self.config.crash.path);
-        mkdir_p(absolute_crashes_path.as_path()).await?;
-
+    async fn rm_relative_dirp(&self, path: &Path) -> Result<(), Box<dyn Error>> {
+        let mapped_path = self.config.cwd.join(path);
+        rm_r(mapped_path.as_path()).await?;
         Ok(())
     }
 
@@ -62,20 +66,15 @@ impl super::Executor for NativeExecutor {
 
     async fn spawn(&mut self) -> Result<(), Box<dyn Error>> {
         debug!("Launching child process");
-        let mut cmd = Command::new(self.config.executable.clone());
-        cmd
-            .args(self.config.args.clone())
-            .envs(self.config.envs.clone())
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
-            .current_dir(self.config.cwd.clone())
-            .kill_on_drop(true);
-        debug!("Command: {:#?}", cmd);
-
+        let mut cmd = self.create_cmd();
         let child = cmd.spawn()?;
         self.child = Some(child);
-
         Ok(())
+    }
+
+    async fn spawn_blocking(&mut self) -> Result<std::process::Output, Box<dyn Error>> {
+        let mut cmd = self.create_cmd();
+        Ok(cmd.spawn()?.wait_with_output().await?)
     }
 
     fn get_stdout_reader(&mut self) -> Option<Lines<BufReader<ChildStdout>>> {
@@ -90,17 +89,15 @@ impl super::Executor for NativeExecutor {
         Some(reader)
     }
 
-    fn get_corpus_syncer(&self) -> Result<CorpusSyncer, Box<dyn Error>> {
-        let mut corpus_config = self.config.corpus.clone();
-        corpus_config.path = self.config.cwd.join(corpus_config.path).into_boxed_path();
+    fn get_corpus_syncer(&self, mut config: CorpusConfig) -> Result<CorpusSyncer, Box<dyn Error>> {
+        config.path = self.config.cwd.join(config.path).into_boxed_path();
         Ok(CorpusSyncer::new(
-                corpus_config,
+                config,
                 self.worker_task_id
         )?)
     }
 
-    fn get_crash_syncer(&self) -> Result<CrashSyncer, Box<dyn Error>> {
-        let mut config = self.config.crash.clone();
+    fn get_crash_syncer(&self, mut config: CrashConfig) -> Result<CrashSyncer, Box<dyn Error>> {
         config.path = self.config.cwd.join(config.path).into_boxed_path();
         Ok(CrashSyncer::new(
                 config,
@@ -128,6 +125,19 @@ impl NativeExecutor {
         Self {
             config, child: None, worker_task_id
         }
+    }
+
+    fn create_cmd(&self) -> Command {
+        let mut cmd = Command::new(self.config.executable.clone());
+        cmd
+            .args(self.config.args.clone())
+            .envs(self.config.envs.clone())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .current_dir(self.config.cwd.clone())
+            .kill_on_drop(true);
+        debug!("Command: {:#?}", cmd);
+        cmd
     }
 }
 

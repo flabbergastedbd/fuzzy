@@ -98,8 +98,10 @@ message NewCorpus {
 
 message FilterCorpus {
     required string label = 1;
-    optional int32 worker_task_id = 2;
-    required google.protobuf.Timestamp created_after = 3;
+    optional int32 not_worker_task_id = 2;
+    optional int32 for_worker_task_id = 3;
+    optional int64 limit = 4;
+    required google.protobuf.Timestamp created_after = 5;
 }
 
 message Corpus {

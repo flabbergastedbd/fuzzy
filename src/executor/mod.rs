@@ -2,7 +2,6 @@ use std::path::{Path, PathBuf};
 use std::error::Error;
 use std::collections::HashMap;
 
-use regex::Regex;
 use log::debug;
 use serde::{Serialize, Deserialize};
 // use serde_regex::{Serialize, Deserialize};
@@ -12,6 +11,7 @@ use tokio::{
     sync::broadcast,
 };
 
+use crate::fuzz_driver::{CrashConfig, CorpusConfig};
 use corpus_syncer::CorpusSyncer;
 use crash_syncer::CrashSyncer;
 
@@ -22,29 +22,9 @@ mod native;
 mod docker;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct CrashConfig {
-    pub path: Box<Path>,
-    pub label: String,
-
-    #[serde(with = "serde_regex")]
-    pub filter: Regex,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum ExecutorEnum {
     Native,
     Docker,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct CorpusConfig {
-    pub path: Box<Path>,
-    pub label: String,
-    pub refresh_interval: u64,
-    pub upload: bool,
-
-    #[serde(with = "serde_regex")]
-    pub upload_filter: Regex,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -59,8 +39,6 @@ pub struct ExecutorConfig {
     pub executable: String,
     pub args: Vec<String>,
     pub cwd: Box<Path>,
-    pub corpus: CorpusConfig,
-    pub crash: CrashConfig,
     pub envs: HashMap<String, String>,
 }
 
@@ -70,13 +48,15 @@ pub struct ExecutorConfig {
 pub trait Executor: Send + Sync {
     // Create a new executor with this configuration
     // fn new(config: ExecutorConfig, worker_task_id: Option<i32>) -> Self;
+    async fn create_relative_dirp(&self, path: &Path) -> Result<(), Box<dyn Error>>;
+    async fn rm_relative_dirp(&self, path: &Path) -> Result<(), Box<dyn Error>>;
 
-    /// Setup stage often involves preparing things like download
-    /// corpus, make it ready for launch
+    /// Setup stage often involves preparing things like cwd
     async fn setup(&self) -> Result<(), Box<dyn Error>>;
 
     /// Actually responsible for launching of the process
     async fn spawn(&mut self) -> Result<(), Box<dyn Error>>;
+    async fn spawn_blocking(&mut self) -> Result<std::process::Output, Box<dyn Error>>;
 
     // TODO: Improve these ChildStdout signatures to support other executors
     /// Get stdout reader
@@ -86,8 +66,8 @@ pub trait Executor: Send + Sync {
 
     // TODO: Switch to generic trait based returns so we can swap file monitors
     // fn get_file_watcher(&self, path: Path) -> Box<dyn file_watcher::FileWatcher>;
-    fn get_corpus_syncer(&self) -> Result<CorpusSyncer, Box<dyn Error>>;
-    fn get_crash_syncer(&self) -> Result<CrashSyncer, Box<dyn Error>>;
+    fn get_corpus_syncer(&self, config: CorpusConfig) -> Result<CorpusSyncer, Box<dyn Error>>;
+    fn get_crash_syncer(&self, config: CrashConfig) -> Result<CrashSyncer, Box<dyn Error>>;
 
     // Get absolute path for relative to cwd
     fn get_cwd_path(&self) -> PathBuf;

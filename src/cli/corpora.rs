@@ -38,6 +38,8 @@ pub async fn cli(args: &ArgMatches) -> Result<(), Box<dyn Error>> {
             let corpora = download_corpus(
                 sub_matches.value_of("label").unwrap().to_owned(),
                 None,
+                None,
+                None,
                 SystemTime::UNIX_EPOCH,
                 &mut client
             ).await?;

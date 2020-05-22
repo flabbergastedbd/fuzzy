@@ -6,7 +6,7 @@ use tokio::sync::broadcast;
 
 use crate::xpc::orchestrator_client::OrchestratorClient;
 use crate::utils::fs::InotifyFileWatcher;
-use super::CrashConfig;
+use crate::fuzz_driver::CrashConfig;
 use crate::common::crashes::upload_crash_from_disk;
 use crate::common::xpc::get_orchestrator_client;
 

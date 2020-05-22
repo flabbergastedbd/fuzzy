@@ -121,7 +121,7 @@ impl Orchestrator for OrchestratorService {
     async fn get_corpus(&self, request: Request<xpc::FilterCorpus>) -> Result<Response<xpc::Corpora>, Status> {
 
         let filter_corpus = request.into_inner();
-        debug!("Filtering and sending corpus for worker task {:?}", filter_corpus.worker_task_id);
+        debug!("Filtering and sending corpus for worker task {:?}", filter_corpus.not_worker_task_id);
 
         let conn = self.db_broker.get_conn();
         let created_after = UNIX_EPOCH + Duration::from_secs(filter_corpus.created_after.seconds as u64);
@@ -132,9 +132,18 @@ impl Orchestrator for OrchestratorService {
                 corpora::created_at.gt(created_after))
             ).into_boxed();
 
+        // Only one of for_worker_task_id or not_worker_task_id is used. not_ variant is
+        // prioritized.
         // If worker is asking for corpus, don't return the same corpus already found by it
-        if let Some(worker_task_id) = filter_corpus.worker_task_id {
+        if let Some(worker_task_id) = filter_corpus.not_worker_task_id {
             query = query.filter(corpora::worker_task_id.ne(worker_task_id));
+        } else if let Some(worker_task_id) = filter_corpus.for_worker_task_id {
+            query = query.filter(corpora::worker_task_id.eq(worker_task_id));
+        }
+
+        // If limit is present, sort by latest
+        if let Some(limit) = filter_corpus.limit {
+            query = query.order(corpora::created_at.desc()).limit(limit);
         }
 
         let corpus_list = query.load::<Corpus>(&conn);

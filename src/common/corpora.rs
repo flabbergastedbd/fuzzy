@@ -38,28 +38,34 @@ pub async fn upload_corpus_from_disk(file_path: &Path,
 }
 
 pub async fn download_corpus(label: String,
-                             worker_task_id: Option<i32>,
+                             not_worker_task_id: Option<i32>,
+                             for_worker_task_id: Option<i32>,
+                             limit: Option<i64>,
                              created_after: SystemTime,
                              client: &mut OrchestratorClient<Channel>) -> Result<Vec<Corpus>, Box<dyn Error>> {
     debug!("Downloading corpus with label {} updated after {:?} for worker_task_id {:?}", label,
-            created_after, worker_task_id);
+            created_after, not_worker_task_id);
 
     let filter_corpus = xpc::FilterCorpus {
         label,
         created_after: prost_types::Timestamp::from(created_after),
-        worker_task_id,
+        not_worker_task_id,
+        for_worker_task_id,
+        limit,
     };
     let response = client.get_corpus(Request::new(filter_corpus)).await?;
     Ok(response.into_inner().data)
 }
 
 pub async fn download_corpus_to_disk(label: String,
-                                     worker_task_id: Option<i32>,
+                                     not_worker_task_id: Option<i32>,
+                                     for_worker_task_id: Option<i32>,
+                                     limit: Option<i64>,
                                      created_after: SystemTime,
                                      dir: &Path,
-                                     client: &mut OrchestratorClient<Channel>) -> Result<(), Box<dyn Error>> {
+                                     client: &mut OrchestratorClient<Channel>) -> Result<usize, Box<dyn Error>> {
 
-    let corpora = download_corpus(label, worker_task_id, created_after, client).await?;
+    let corpora = download_corpus(label, not_worker_task_id, for_worker_task_id, limit, created_after, client).await?;
 
     // Check if exists, if not create. If exists and not a directory, Err
     if dir.exists() == false {
@@ -78,5 +84,5 @@ pub async fn download_corpus_to_disk(label: String,
 
     debug!("Written {} corpus files to {:?}", corpora.len(), dir);
 
-    Ok(())
+    Ok(corpora.len())
 }

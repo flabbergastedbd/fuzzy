@@ -8,7 +8,7 @@ use tokio::sync::broadcast;
 
 use crate::xpc::orchestrator_client::OrchestratorClient;
 use crate::utils::fs::FileWatcher;
-use super::CorpusConfig;
+use crate::fuzz_driver::CorpusConfig;
 use crate::common::corpora::{upload_corpus_from_disk, download_corpus_to_disk, CORPUS_FILE_EXT};
 use crate::common::xpc::get_orchestrator_client;
 
@@ -34,6 +34,8 @@ impl CorpusSyncer {
         download_corpus_to_disk(
             self.config.label.clone(),
             self.worker_task_id,
+            None,
+            None,
             UNIX_EPOCH,
             &self.config.path,
             &mut client).await?;
@@ -103,6 +105,8 @@ impl CorpusSyncer {
             interval.tick().await;
             let result = download_corpus_to_disk(self.config.label.clone(),
                                                  self.worker_task_id,
+                                                 None,
+                                                 None,
                                                  last_download,
                                                  &self.config.path,
                                                  &mut client).await;

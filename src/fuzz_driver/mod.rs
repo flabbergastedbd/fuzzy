@@ -1,18 +1,18 @@
+use std::path::Path;
 use std::error::Error;
 
+use regex::Regex;
 use log::{info, warn, error, debug};
 use serde::{Serialize, Deserialize};
 use tokio::sync::{oneshot, broadcast};
-use tonic::Request;
 
 use super::executor::{self, Executor, ExecutorConfig};
 use crate::common::worker_tasks::{mark_worker_task_active, mark_worker_task_inactive};
-use crate::models::NewFuzzStat;
-use crate::common::xpc::get_orchestrator_client;
-use crate::common::intervals::WORKER_FUZZDRIVER_STAT_UPLOAD_INTERVAL;
+use stats::{FuzzStatConfig, FuzzStatCollector};
 
 mod libfuzzer;
 mod honggfuzz;
+mod stats;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum FuzzDriverEnum {
@@ -24,6 +24,29 @@ pub enum FuzzDriverEnum {
 pub struct FuzzConfig {
     pub driver: FuzzDriverEnum,
     pub execution: ExecutorConfig,
+    pub corpus: CorpusConfig,
+    pub crash: CrashConfig,
+    pub fuzz_stat: Option<FuzzStatConfig>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct CrashConfig {
+    pub path: Box<Path>,
+    pub label: String,
+
+    #[serde(with = "serde_regex")]
+    pub filter: Regex,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct CorpusConfig {
+    pub path: Box<Path>,
+    pub label: String,
+    pub refresh_interval: u64,
+    pub upload: bool,
+
+    #[serde(with = "serde_regex")]
+    pub upload_filter: Regex,
 }
 
 #[tonic::async_trait]
@@ -40,13 +63,26 @@ pub trait FuzzDriver: Send {
 
     fn fix_args(&mut self);
 
-    fn setup(&mut self) {
-        self.fix_args();
+    // Create corpus and crash dir
+    async fn setup(&mut self, executor: &Box<dyn Executor>) -> Result<(), Box<dyn Error>> {
+        let config = self.get_fuzz_config();
+        executor.create_relative_dirp(&config.corpus.path).await?;
+        executor.create_relative_dirp(&config.crash.path).await?;
+        Ok(())
+    }
+
+    // Create corpus and crash dir
+    async fn teardown(&mut self, executor: &Box<dyn Executor>) -> Result<(), Box<dyn Error>> {
+        let config = self.get_fuzz_config();
+        executor.rm_relative_dirp(&config.corpus.path).await?;
+        // TODO: Donot delete crashes dir as of now
+        // executor.create_relative_dirp(&config.crash.path);
+        Ok(())
     }
 
     async fn start(&mut self, kill_switch: oneshot::Receiver<u8>, death_switch: oneshot::Sender<u8>) -> Result<(), Box<dyn Error>> {
-        // Before anything call setup
-        self.setup();
+        // Before anything call fix args, so that drivers can do changes
+        self.fix_args();
 
         // Get a copy of these & ensure all mutations are done prior
         let worker_task_id = self.get_worker_task_id();
@@ -57,13 +93,14 @@ pub trait FuzzDriver: Send {
         // Setup runner, corpus syncer, crash syncer, stat collector
         let mut runner = executor::new(config.execution.clone(), worker_task_id);
         runner.setup().await?;
+        self.setup(&runner).await?;
 
         // Spawn off corpus sync
-        let mut corpus_syncer = runner.get_corpus_syncer()?;
+        let mut corpus_syncer = runner.get_corpus_syncer(config.corpus.clone())?;
         corpus_syncer.setup_corpus().await?;
 
         // Spawn off crash sync
-        let crash_syncer = runner.get_crash_syncer()?;
+        let crash_syncer = runner.get_crash_syncer(config.crash.clone())?;
 
         // Stat collector
         let stats_collector = Box::new(self.get_stat_collector(&runner)?);
@@ -109,56 +146,12 @@ pub trait FuzzDriver: Send {
         // Sync corpus first and then close the executor
         // Exactly reverse order of how things were created
         corpus_syncer.close(close_time).await?;
+        self.teardown(&runner).await?;
         runner.close().await?;
 
         mark_worker_task_inactive(worker_task_id).await?;
         Ok(())
     }
-}
-
-#[tonic::async_trait]
-pub trait FuzzStatCollector: Send + Sync {
-    async fn start(self: Box<Self>, mut _kill_switch: broadcast::Receiver<u8>) -> Result<(), Box<dyn Error>> {
-        self.main_loop().await?;
-        /* TODO: Stat collection kill switch disabled as we don't spawn as of now. Should be fine
-         * https://users.rust-lang.org/t/explanation-on-fn-self-box-self-for-trait-objects/34024/3
-        tokio::select! {
-            result = self.main_loop() => {
-                if let Err(e) = result {
-                    error!("Stat collection exited with error: {}", e);
-                }
-            },
-            _ = kill_switch.recv() => {},
-        }
-        */
-
-        Ok(())
-    }
-
-    async fn main_loop(self: Box<Self>) -> Result<(), Box<dyn Error>> {
-        let mut interval = tokio::time::interval(WORKER_FUZZDRIVER_STAT_UPLOAD_INTERVAL);
-        let client = &get_orchestrator_client().await?;
-        loop {
-            interval.tick().await;
-            let mut client = client.clone();
-            // Iterate over logs and get stats
-            let stat: Option<NewFuzzStat> = match self.get_stat().await {
-                Ok(stat) => stat,
-                Err(e) => {
-                    error!("Failed to collect stat: {}", e);
-                    None
-                },
-            };
-
-            if let Some(stat) = stat {
-                if let Err(e) = client.submit_fuzz_stat(Request::new(stat)).await {
-                    error!("Failed to submit a fuzz stat: {}", e);
-                }
-            }
-        }
-    }
-
-    async fn get_stat(&self) -> Result<Option<NewFuzzStat>, Box<dyn Error>>;
 }
 
 pub fn new(config: FuzzConfig, worker_task_id: Option<i32>) -> Box<dyn FuzzDriver> {

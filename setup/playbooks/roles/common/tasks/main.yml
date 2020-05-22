@@ -31,3 +31,42 @@
       - "--exclude=target"
   tags:
     - sync-files
+
+- name: Copy ca crt
+  synchronize:
+    src: "certs/ca.crt"
+    dest: "{{ fuzzy_workspace }}/ca.crt"
+  tags:
+    - "copy-certs"
+    - "setup-docker-registry"
+
+- name: Create cert storage location in /etc/docker
+  file:
+    path: "/etc/docker/certs.d/{{ groups['master'][0] }}:5000"
+    state: directory
+  become: true
+  become_user: root
+  tags:
+    - "setup-docker-registry"
+
+- name: Trust ca.crt in docker
+  copy:
+    src: "certs/ca.crt"
+    dest: "/etc/docker/certs.d/{{ groups['master'][0] }}:5000/ca.crt"
+  become: true
+  become_user: root
+  tags:
+    - "setup-docker-registry"
+
+- name: Docker login to private registry
+  docker_login:
+    username: "{{ registry_username }}"
+    password: "{{ registry_password }}"
+    registry_url: "https://{{ groups['master'][0] }}:5000/"
+    ca_cert: "{{ fuzzy_workspace }}/ca.crt"
+    validate_certs: no
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+  tags:
+    - "docker-login"
+    - "setup-docker-registry"

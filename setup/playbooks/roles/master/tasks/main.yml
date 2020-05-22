@@ -4,13 +4,6 @@
   args:
     creates: ~/.cargo/bin/diesel
 
-- name: Copy ca crt
-  synchronize:
-    src: "certs/ca.crt"
-    dest: "{{ fuzzy_workspace }}/ca.crt"
-  tags:
-    - "sync-master-setup"
-
 - name: Copy master identity
   synchronize:
     src: "certs/{{ inventory_hostname }}.pem"

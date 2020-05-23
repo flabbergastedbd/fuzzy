@@ -17,7 +17,7 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "iteration": 1590061470034,
+  "iteration": 1590240306572,
   "links": [],
   "panels": [
     {
@@ -366,8 +366,8 @@
       "scopedVars": {
         "task": {
           "selected": false,
-          "text": "ats",
-          "value": "ats"
+          "text": "snappy",
+          "value": "snappy"
         }
       },
       "title": "Task - $task",
@@ -415,8 +415,8 @@
       "scopedVars": {
         "task": {
           "selected": false,
-          "text": "ats",
-          "value": "ats"
+          "text": "snappy",
+          "value": "snappy"
         }
       },
       "targets": [
@@ -467,8 +467,8 @@
       "scopedVars": {
         "task": {
           "selected": false,
-          "text": "ats",
-          "value": "ats"
+          "text": "snappy",
+          "value": "snappy"
         }
       },
       "showHeader": true,
@@ -611,8 +611,8 @@
       "scopedVars": {
         "task": {
           "selected": false,
-          "text": "ats",
-          "value": "ats"
+          "text": "snappy",
+          "value": "snappy"
         }
       },
       "targets": [
@@ -686,8 +686,8 @@
       "scopedVars": {
         "task": {
           "selected": false,
-          "text": "ats",
-          "value": "ats"
+          "text": "snappy",
+          "value": "snappy"
         }
       },
       "seriesOverrides": [],
@@ -701,7 +701,7 @@
           "hide": false,
           "metricColumn": "none",
           "rawQuery": true,
-          "rawSql": "SELECT\n  created_at AS \"time\",\n  coverage\nFROM fuzz_stats\nWHERE\n  worker_task_id = ANY(SELECT worker_tasks.id FROM worker_tasks, tasks WHERE tasks.name = $task AND worker_tasks.task_id = tasks.id) AND\n  $__timeFilter(created_at)\nORDER BY 1",
+          "rawSql": "SELECT\n  created_at AS \"time\",\n  branch_coverage,\n  line_coverage,\n  function_coverage\nFROM fuzz_stats\nWHERE\n  worker_task_id = ANY(SELECT worker_tasks.id FROM worker_tasks, tasks WHERE tasks.name = $task AND worker_tasks.task_id = tasks.id) AND\n  $__timeFilter(created_at)\nORDER BY 1",
           "refId": "A",
           "select": [
             [
@@ -807,8 +807,8 @@
       "scopedVars": {
         "task": {
           "selected": false,
-          "text": "ats",
-          "value": "ats"
+          "text": "snappy",
+          "value": "snappy"
         }
       },
       "seriesOverrides": [],
@@ -953,7 +953,7 @@
     ]
   },
   "time": {
-    "from": "now-30m",
+    "from": "now-5m",
     "to": "now"
   },
   "timepicker": {
@@ -976,5 +976,5 @@
   "variables": {
     "list": []
   },
-  "version": 5
+  "version": 6
 }

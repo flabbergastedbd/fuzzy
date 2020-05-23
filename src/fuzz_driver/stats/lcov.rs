@@ -1,18 +1,20 @@
-use std::time::SystemTime;
-use std::path::PathBuf;
+use std::time::{UNIX_EPOCH, Duration, SystemTime};
+use std::path::{Path, PathBuf};
 use std::error::Error;
 
 use log::{debug, error};
 use tokio::fs::read_dir;
 use tokio::stream::StreamExt;
-use lcov_parser::FromFile;
+use lcov_parser::{LCOVRecord, FromFile};
 
 use crate::executor;
 use crate::models::NewFuzzStat;
+use crate::fuzz_driver::FuzzConfig;
 use super::{FuzzStatCollector, FuzzStatConfig};
 use crate::common::xpc::get_orchestrator_client;
 use crate::common::corpora::download_corpus_to_disk;
 use crate::utils::err_output;
+use crate::utils::fs::rm_r;
 
 #[derive(Clone)]
 pub struct LCovCollector {
@@ -20,21 +22,27 @@ pub struct LCovCollector {
     worker_task_id: Option<i32>,
     corpus_label: String,
     last_sync: SystemTime,
+    refresh_interval: Duration,
 }
 
 impl LCovCollector {
-    fn new(config: FuzzStatConfig, corpus_label: String, worker_task_id: Option<i32>) -> Self {
+    pub fn new(config: FuzzStatConfig, full_config: FuzzConfig, worker_task_id: Option<i32>) -> Self {
         Self {
             config,
             worker_task_id,
-            corpus_label,
-            last_sync: SystemTime::now(),
+            corpus_label: full_config.corpus.label,
+            last_sync: UNIX_EPOCH,
+            refresh_interval: Duration::from_secs(full_config.corpus.refresh_interval),
         }
     }
 }
 
 #[tonic::async_trait]
 impl FuzzStatCollector for LCovCollector {
+    fn get_refresh_duration(&self) -> std::time::Duration {
+        self.refresh_interval
+    }
+
     async fn get_stat(&self) -> Result<Option<NewFuzzStat>, Box<dyn Error>> {
         debug!("Getting new stat using lcov collector");
         let mut client = get_orchestrator_client().await?;
@@ -51,37 +59,92 @@ impl FuzzStatCollector for LCovCollector {
             self.corpus_label.clone(),
             None,
             self.worker_task_id,
-            Some(10),
+            Some(10), // Get 10 latest samples
             self.last_sync,
             cwd.as_path(),
             &mut client,
         ).await?;
-        debug!("{} corpus downloaded for stat collection", num_files);
 
-        let output = executor.spawn_blocking().await?;
-        if output.status.success() == false {
-            error!("Stat collection execution failed");
-            err_output(output);
-        }
+        let mut new_fuzz_stat: Option<NewFuzzStat> = None;
+        if num_files > 0 {
+            debug!("{} corpus downloaded for stat collection", num_files);
 
-        // We look for .lcov files anyway
-        let entries = read_dir(cwd.as_path()).await?;
-        let lcov_files = entries.filter_map(|f| {
-            if let Ok(file) = f {
-                let path = file.path();
-                let extension = path.extension();
-                if extension.is_some() && extension.unwrap() == "lcov" {
-                    return Some(path)
-                }
+            let output = executor.spawn_blocking().await?;
+            if output.status.success() == false {
+                error!("Stat collection execution failed");
+                err_output(output);
             }
-            None
-        });
-        let lcov_paths: Vec<PathBuf> = lcov_files.collect::<Vec<PathBuf>>().await;
+            // Clear off the executor here, otherwise merging and parsing fails and we never get to
+            // close it
+            executor.close().await?;
 
-        for lcov in lcov_paths {
-            let mut parser = lcov_parser::LCOVParser::from_file(lcov)?;
-            let records = parser.parse()?;
+            // We look for a .lcov file anyway
+            let entries = read_dir(cwd.as_path()).await?;
+            let lcov_files = entries.filter_map(|f| {
+                if let Ok(file) = f {
+                    let path = file.path();
+                    let extension = path.extension();
+                    if extension.is_some() && extension.unwrap() == "lcov" {
+                        return Some(path)
+                    }
+                }
+                None
+            });
+            let mut lcov_paths: Vec<PathBuf> = lcov_files.collect::<Vec<PathBuf>>().await;
+
+            // TODO: Ugliest piece of code I ever wrote, fix this
+            if let Some(lcov_path) = lcov_paths.pop() {
+                let result = self.parse_lcov(&lcov_path);
+                if let Ok(stat) = result {
+                    new_fuzz_stat = Some(stat);
+                } else {
+                    error!("Failed to parse merged lcov: {:?}", result);
+                }
+            } else {
+                error!("No .lcov file found, so exiting");
+            }
+        } else {
+            debug!("No corpus could be downloaded, doing nothing");
         }
-        Ok(None)
+
+        rm_r(&cwd).await?;
+        Ok(new_fuzz_stat)
+    }
+}
+
+impl LCovCollector {
+    fn parse_lcov(&self, path: &Path) -> Result<NewFuzzStat, Box<dyn Error>> {
+        // https://docs.rs/lcov-parser/3.2.2/src/lcov_parser/record.rs.html#18
+        // As of now we only deal with aggregates LinesHit, LinesFound, BranchesHit, BranchesFound
+        debug!("Parsing lcov info file at {:?}", path);
+        let mut parser = lcov_parser::LCOVParser::from_file(path)?;
+        let records = parser.parse()?;
+
+        let mut branches_hit = 0;
+        let mut lines_hit = 0;
+        let mut functions_hit = 0;
+
+        for record in records.iter() {
+            match record {
+                LCOVRecord::LinesHit(n) => { lines_hit += n },
+                LCOVRecord::BranchesHit(n) => { branches_hit += n },
+                LCOVRecord::FunctionsHit(n) => { functions_hit += n },
+                _ => { continue }
+            }
+        }
+
+        if branches_hit == 0 && lines_hit == 0 && functions_hit == 0 {
+            Err(Box::new(std::io::Error::new(std::io::ErrorKind::InvalidData,
+                                           format!("Unable to get parse lcov info from {:?}", path))))
+        } else {
+            Ok(NewFuzzStat {
+                branch_coverage: Some(branches_hit as i32),
+                line_coverage: Some(lines_hit as i32),
+                function_coverage: Some(functions_hit as i32),
+                execs: None,
+                memory: None,
+                worker_task_id: self.worker_task_id.unwrap_or(0),
+            })
+        }
     }
 }

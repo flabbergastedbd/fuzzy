@@ -59,7 +59,19 @@ pub trait FuzzDriver: Send {
     fn set_fuzz_config(&mut self, config: FuzzConfig);
 
     // Custom stat collector if need be
-    fn get_stat_collector(&self, executor: &Box<dyn Executor>) -> Result<Box<dyn FuzzStatCollector>, Box<dyn Error>>;
+    fn get_custom_stat_collector(&self, executor: &Box<dyn Executor>) -> Result<Box<dyn FuzzStatCollector>, Box<dyn Error>>;
+    fn get_stat_collector(&self, executor: &Box<dyn Executor>) -> Result<Box<dyn FuzzStatCollector>, Box<dyn Error>> {
+        let full_config = self.get_fuzz_config();
+        if let Some(stat_config) = full_config.clone().fuzz_stat {
+            Ok(stats::new(
+                    stat_config,
+                    full_config,
+                    self.get_worker_task_id(),
+            ))
+        } else {
+            Ok(self.get_custom_stat_collector(executor)?)
+        }
+    }
 
     fn fix_args(&mut self);
 
@@ -103,7 +115,7 @@ pub trait FuzzDriver: Send {
         let crash_syncer = runner.get_crash_syncer(config.crash.clone())?;
 
         // Stat collector
-        let stats_collector = Box::new(self.get_stat_collector(&runner)?);
+        let stats_collector = self.get_stat_collector(&runner)?;
 
         // Start the actual process
         runner.spawn().await?;

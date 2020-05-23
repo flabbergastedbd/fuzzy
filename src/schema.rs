@@ -25,7 +25,9 @@ table! {
 table! {
     fuzz_stats (id) {
         id -> Int4,
-        coverage -> Int4,
+        branch_coverage -> Nullable<Int4>,
+        line_coverage -> Nullable<Int4>,
+        function_coverage -> Nullable<Int4>,
         execs -> Nullable<Int4>,
         memory -> Nullable<Int4>,
         worker_task_id -> Nullable<Int4>,

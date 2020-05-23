@@ -30,6 +30,8 @@ pub enum ExecutorEnum {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ExecutorConfig {
     pub executor: ExecutorEnum,
+
+    #[serde(default)]
     pub cpus: i32,
 
     // Only used if executor is docker

@@ -156,10 +156,12 @@ message PatchWorkerTask {
 }
 
 message NewFuzzStat {
-    required int32 coverage = 1;
-    optional int32 execs = 2;
-    optional int32 memory = 3;
-    required int32 worker_task_id = 4;
+    optional int32 branch_coverage = 1;
+    optional int32 line_coverage = 2;
+    optional int32 function_coverage = 3;
+    optional int32 execs = 4;
+    optional int32 memory = 5;
+    required int32 worker_task_id = 6;
 }
 
 message NewSysStat {

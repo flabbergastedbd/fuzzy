@@ -2,7 +2,7 @@ use std::sync::Arc;
 use std::error::Error;
 use std::collections::HashMap;
 
-use log::{warn, debug, error, info};
+use log::{warn, trace, debug, error, info};
 use tokio::{sync::RwLock, sync::oneshot::{self, error::TryRecvError}, task::JoinHandle};
 
 use crate::xpc;
@@ -81,13 +81,13 @@ impl TaskManager {
     }
 
     async fn handle_tasks_update(&mut self, worker_tasks: Vec<xpc::WorkerTaskFull>) -> Result<(), Box<dyn Error>> {
-        debug!("Handling task updates, iterating over {} tasks", worker_tasks.len());
+        trace!("Handling task updates, iterating over {} tasks", worker_tasks.len());
         for worker_task in worker_tasks.into_iter() {
             let local_worker_task_active = self.driver_handles.contains_key(&worker_task.id);
             let global_task_active = worker_task.task.active;
 
             debug!("Looping on task: {:#?}", worker_task);
-            debug!("Is task active already?: {}", local_worker_task_active);
+            trace!("Is task active already?: {}", local_worker_task_active);
 
             if local_worker_task_active == true && global_task_active == true {
                 // Check if we are still running it
@@ -109,7 +109,7 @@ impl TaskManager {
     pub async fn spawn(&mut self, worker_lock: Arc<RwLock<NewWorker>>) -> Result<(), Box<dyn std::error::Error>> {
         let mut interval = tokio::time::interval(WORKER_TASK_REFRESH_INTERVAL);
         loop {
-            debug!("Trying to get tasks and update");
+            trace!("Trying to get tasks and update");
             // TODO: Fix this later, unable to send future error
             let endpoint = crate::common::xpc::get_server_endpoint().await?;
             if let Ok(channel) = endpoint.connect().await {

@@ -4,7 +4,7 @@
 driver: Libfuzzer
 
 # Consists of configuration to fine tune execution environment where fuzzer will be run
-execution:
+execution: &execution
   # There are two kinds of executors
   # 1. Native
   # 2. Docker
@@ -14,7 +14,7 @@ execution:
   cpus: 2
 
   # Will be only used if executor is docker. Image needs to be uploaded to private registry on master.
-  image: "snappy:fuzz"
+  image: "snappy:fuzzy"
 
   # Path to fuzzer, will be used as entrypoint if Docker executor
   executable: /workspace/snappy/build/snappy_uncompress_fuzzer
@@ -42,7 +42,7 @@ corpus:
   label: snappy_uncompress
 
   # Interval at which updated corpus should be downloaded from master
-  refresh_interval: 600
+  refresh_interval: 10
 
   # Any newly discovered corpus should be synced to master or not
   upload: false
@@ -62,3 +62,17 @@ crash:
   # To filter files, as generally logfiles etc. are present too
   # For honggfuzz this filter will be ".*fuzz"
   filter: "crash-.*"
+
+# A null fuzz stat will fall back to stat collection by fuzz drivers if implemented. This will
+# be stdout parsing, log parsing etc.. Will not work if corpus is not uploaded
+# Refreshed at same rate as corpus
+fuzz_stat:
+  collector: LCov
+  execution:
+    executor: Docker
+    image: "snappy:fuzzy"
+    envs: {}
+    executable: /bin/generate_lcov
+    args: []
+    cwd: /profiling
+

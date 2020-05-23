@@ -41,7 +41,7 @@ pub async fn rm_r(path: &Path) -> std::io::Result<()> {
 }
 
 pub async fn read_file(file_path: &Path) -> Result<Vec<u8>, Box<dyn Error>> {
-    debug!("Reading full file: {:?}", file_path);
+    trace!("Reading full file: {:?}", file_path);
     let mut content = vec![];
     let mut file = File::open(file_path).await?;
     file.read_to_end(&mut content).await?;

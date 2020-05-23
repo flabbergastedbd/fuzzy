@@ -43,7 +43,9 @@ CREATE TABLE crashes (
 
 CREATE TABLE fuzz_stats (
 	id SERIAL PRIMARY KEY,
-	coverage INTEGER NOT NULL,
+	branch_coverage INTEGER,
+	line_coverage INTEGER,
+	function_coverage INTEGER,
 	execs INTEGER,
 	memory INTEGER,
 	worker_task_id INTEGER REFERENCES worker_tasks(id) ON DELETE CASCADE,

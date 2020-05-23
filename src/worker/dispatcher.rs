@@ -1,7 +1,7 @@
 use std::error::Error;
 use std::sync::Arc;
 
-use log::{warn, debug, error, info};
+use log::{warn, trace, error};
 use tokio::sync::RwLock;
 use heim::{
     memory::{self, os::linux::MemoryExt},
@@ -25,14 +25,14 @@ pub async fn heartbeat(worker_lock: Arc<RwLock<NewWorker>>) -> Result<(), Box<dy
             // Send heartbeat
             let mut client = CollectorClient::new(channel);
 
-            debug!("Trying to send heartbeat to given address");
+            trace!("Trying to send heartbeat to given address");
             // Aquire read lock
             let worker = worker_lock.read().await;
             // Create new request
             let request = tonic::Request::new(worker.clone());
             let response = client.heartbeat(request).await;
             if let Ok(response) = response {
-                info!("Heartbeat sending was successful!");
+                trace!("Heartbeat sending was successful!");
                 // Send stats
                 let worker = response.into_inner();
                 if let Err(e) = send_sys_stats(worker.id).await {
@@ -50,7 +50,7 @@ pub async fn heartbeat(worker_lock: Arc<RwLock<NewWorker>>) -> Result<(), Box<dy
 
 // TODO: Shittiest collection, fix this
 pub async fn send_sys_stats(worker_id: i32) -> Result<(), Box<dyn Error>> {
-    debug!("Collecting stats");
+    trace!("Collecting stats");
     let memory = memory::memory().await?;
     let swap = memory::swap().await?;
 

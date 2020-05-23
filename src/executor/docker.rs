@@ -3,7 +3,7 @@ use std::error::Error;
 use std::path::{Path, PathBuf};
 use std::os::unix::fs::MetadataExt;
 
-use log::{info, warn, error, debug};
+use log::{error, debug};
 use tokio::{
     fs,
     process::{Command, Child, ChildStdout, ChildStderr},
@@ -193,8 +193,6 @@ impl DockerExecutor {
         let mut cmd = Command::new("docker");
         cmd
             .arg("run")
-            .arg("--attach=STDOUT")
-            .arg("--attach=STDERR")
             /*
             .arg("--net=host")
             .arg("--ipc=host")
@@ -209,6 +207,10 @@ impl DockerExecutor {
 
         if blocking == false {
             cmd.arg("-d");
+        } else {
+            cmd
+                .arg("--attach=STDOUT")
+                .arg("--attach=STDERR");
         }
 
         // Set cwd volume

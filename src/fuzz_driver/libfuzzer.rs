@@ -36,7 +36,7 @@ impl super::FuzzDriver for LibFuzzerDriver {
         self.worker_task_id.clone()
     }
 
-    fn get_stat_collector(&self, executor: &Box<dyn Executor>) -> Result<Box<dyn FuzzStatCollector>, Box<dyn Error>> {
+    fn get_custom_stat_collector(&self, executor: &Box<dyn Executor>) -> Result<Box<dyn FuzzStatCollector>, Box<dyn Error>> {
         let log_path = executor.get_cwd_path();
         let stats_collector = LibFuzzerStatCollector::new(self.config.execution.cpus, self.worker_task_id, log_path)?;
         Ok(Box::new(stats_collector))
@@ -72,21 +72,27 @@ impl super::FuzzStatCollector for LibFuzzerStatCollector {
                 error!("Error during gathering stat from {:?}: {}", log, e);
             } else {
                 let new_fuzz_stat = new_fuzz_stat.unwrap();
-                total_coverage += new_fuzz_stat.coverage;
+                total_coverage += new_fuzz_stat.branch_coverage.unwrap_or(0);
                 total_execs += new_fuzz_stat.execs.unwrap_or(0);
                 total_memory += new_fuzz_stat.memory.unwrap_or(0);
                 total_stats += 1;
             }
         }
 
-        // Submit gathered stats
-        let average_stat = NewFuzzStat {
-            coverage: total_coverage/total_stats,
-            execs: Some(total_execs/total_stats),
-            memory: Some(total_memory/total_stats),
-            worker_task_id: self.worker_task_id,
-        };
-        Ok(Some(average_stat))
+        if total_stats > 0 {
+            // Submit gathered stats
+            let average_stat = NewFuzzStat {
+                branch_coverage: Some(total_coverage/total_stats),
+                function_coverage: None,
+                line_coverage: None,
+                execs: Some(total_execs/total_stats),
+                memory: Some(total_memory/total_stats),
+                worker_task_id: self.worker_task_id,
+            };
+            Ok(Some(average_stat))
+        } else {
+            Ok(None)
+        }
     }
 }
 
@@ -157,7 +163,9 @@ impl LibFuzzerStatCollector {
                 let memory = captures.name("memory").unwrap().as_str().parse::<i32>()?;
 
                 let new_fuzz_stat = NewFuzzStat {
-                    coverage,
+                    branch_coverage: Some(coverage),
+                    line_coverage: None,
+                    function_coverage: None,
                     execs: Some(execs),
                     memory: Some(memory),
                     worker_task_id: self.worker_task_id,

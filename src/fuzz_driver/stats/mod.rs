@@ -6,6 +6,7 @@ use tokio::sync::broadcast;
 use tonic::Request;
 
 use super::executor::ExecutorConfig;
+use crate::fuzz_driver::FuzzConfig;
 use crate::models::NewFuzzStat;
 use crate::common::xpc::get_orchestrator_client;
 use crate::common::intervals::WORKER_FUZZDRIVER_STAT_UPLOAD_INTERVAL;
@@ -14,7 +15,7 @@ mod lcov;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum StatCollectorEnum {
-    LCov
+    LCov,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -43,7 +44,7 @@ pub trait FuzzStatCollector: Send + Sync {
     }
 
     async fn main_loop(self: Box<Self>) -> Result<(), Box<dyn Error>> {
-        let mut interval = tokio::time::interval(WORKER_FUZZDRIVER_STAT_UPLOAD_INTERVAL);
+        let mut interval = tokio::time::interval(self.get_refresh_duration());
         let client = &get_orchestrator_client().await?;
         loop {
             interval.tick().await;
@@ -66,4 +67,17 @@ pub trait FuzzStatCollector: Send + Sync {
     }
 
     async fn get_stat(&self) -> Result<Option<NewFuzzStat>, Box<dyn Error>>;
+
+    // Default implementation
+    fn get_refresh_duration(&self) -> std::time::Duration {
+        WORKER_FUZZDRIVER_STAT_UPLOAD_INTERVAL
+    }
+}
+
+pub fn new(config: FuzzStatConfig, full_config: FuzzConfig, worker_task_id: Option<i32>) -> Box<impl FuzzStatCollector> {
+    match config.collector {
+        StatCollectorEnum::LCov => {
+            Box::new(lcov::LCovCollector::new(config, full_config, worker_task_id))
+        },
+    }
 }

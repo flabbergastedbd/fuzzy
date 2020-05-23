@@ -37,7 +37,7 @@ impl super::FuzzDriver for HonggfuzzDriver {
         self.worker_task_id.clone()
     }
 
-    fn get_stat_collector(&self, executor: &Box<dyn Executor>) -> Result<Box<dyn FuzzStatCollector>, Box<dyn Error>> {
+    fn get_custom_stat_collector(&self, executor: &Box<dyn Executor>) -> Result<Box<dyn FuzzStatCollector>, Box<dyn Error>> {
         let log_path = executor.get_cwd_path().join(HONGGFUZZ_LOG);
         let stats_collector = HonggfuzzStatCollector::new(self.worker_task_id, log_path)?;
         Ok(Box::new(stats_collector))
@@ -90,7 +90,9 @@ impl HonggfuzzStatCollector {
                 if stats.len() == 6 && stats.get(3).is_some() {
                     let coverage = stats.get(3).unwrap().parse::<i32>()?;
                     let new_fuzz_stat = NewFuzzStat {
-                        coverage,
+                        branch_coverage: Some(coverage),
+                        line_coverage: None,
+                        function_coverage: None,
                         worker_task_id: self.worker_task_id,
                         execs: None,
                         memory: None,

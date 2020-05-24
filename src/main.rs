@@ -14,6 +14,7 @@ mod common;
 mod executor;
 mod fuzz_driver;
 
+#[macro_use] extern crate validator_derive;
 // TODO https://github.com/diesel-rs/diesel/issues/2155
 #[macro_use] extern crate diesel;
 pub mod schema;

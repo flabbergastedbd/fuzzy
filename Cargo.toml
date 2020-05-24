@@ -34,6 +34,8 @@ serde_regex = "0.4"
 serde_yaml = "0.8"
 fern = { version = "0.6", features = ["colored"] }
 lcov-parser = "3.2"
+validator = "0.10"
+validator_derive = "0.10"
 
 [build-dependencies]
 tonic-build = { version = "0.2", features = ["prost"] }

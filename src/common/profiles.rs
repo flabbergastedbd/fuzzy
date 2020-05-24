@@ -1,6 +1,8 @@
 use std::path::Path;
 use std::error::Error;
 
+use validator::ValidationError;
+
 use crate::fuzz_driver::FuzzConfig;
 use crate::utils::fs::read_file;
 
@@ -15,4 +17,20 @@ pub async fn construct_profile_from_disk(path: &Path) -> Result<FuzzConfig, Box<
 
     let config: FuzzConfig = construct_profile(content_str.as_str())?;
     Ok(config)
+}
+
+pub fn validate_fuzz_profile(config: &FuzzConfig) -> Result<(), ValidationError> {
+    // Because for lcov collector we redownload corpus as of now
+    if config.fuzz_stat.is_some() && config.corpus.upload == false {
+        return Err(ValidationError::new("Fuzz stat collectors are not supported when corpus upload is disabled."));
+    }
+    Ok(())
+}
+
+pub fn validate_relative_path(path: &Box<Path>) -> Result<(), ValidationError> {
+    if path.is_absolute() {
+        Err(ValidationError::new("Absolute path found instead of relative"))
+    } else {
+        Ok(())
+    }
 }

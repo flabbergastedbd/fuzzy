@@ -5,14 +5,16 @@ use regex::Regex;
 use log::{info, warn, error, debug};
 use serde::{Serialize, Deserialize};
 use tokio::sync::{oneshot, broadcast};
+use validator::Validate;
 
 use super::executor::{self, Executor, ExecutorConfig};
 use crate::common::worker_tasks::{mark_worker_task_active, mark_worker_task_inactive};
 use stats::{FuzzStatConfig, FuzzStatCollector};
+use crate::common::profiles::{validate_fuzz_profile, validate_relative_path};
 
 mod libfuzzer;
 mod honggfuzz;
-mod stats;
+pub mod stats;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum FuzzDriverEnum {
@@ -20,7 +22,8 @@ pub enum FuzzDriverEnum {
     Libfuzzer,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Validate, Debug, Clone)]
+#[validate(schema(function = "validate_fuzz_profile"))]
 pub struct FuzzConfig {
     pub driver: FuzzDriverEnum,
     pub execution: ExecutorConfig,
@@ -29,17 +32,21 @@ pub struct FuzzConfig {
     pub fuzz_stat: Option<FuzzStatConfig>,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Validate, Debug, Clone)]
 pub struct CrashConfig {
+    #[validate(custom = "validate_relative_path")]
     pub path: Box<Path>,
+
+    #[validate(length(min = 1))]
     pub label: String,
 
     #[serde(with = "serde_regex")]
     pub filter: Regex,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Validate, Debug, Clone)]
 pub struct CorpusConfig {
+    #[validate(custom = "validate_relative_path")]
     pub path: Box<Path>,
     pub label: String,
     pub refresh_interval: u64,

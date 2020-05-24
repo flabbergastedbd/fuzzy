@@ -121,26 +121,33 @@ impl LCovCollector {
         let records = parser.parse()?;
 
         let mut branches_hit = 0;
+        let mut branches_found = 0;
         let mut lines_hit = 0;
+        let mut lines_found = 0;
         let mut functions_hit = 0;
+        let mut functions_found = 0;
 
         for record in records.iter() {
             match record {
                 LCOVRecord::LinesHit(n) => { lines_hit += n },
+                LCOVRecord::LinesFound(n) => { lines_found += n },
                 LCOVRecord::BranchesHit(n) => { branches_hit += n },
+                LCOVRecord::BranchesFound(n) => { branches_found += n },
                 LCOVRecord::FunctionsHit(n) => { functions_hit += n },
+                LCOVRecord::FunctionsFound(n) => { functions_found += n },
                 _ => { continue }
             }
         }
 
-        if branches_hit == 0 && lines_hit == 0 && functions_hit == 0 {
+        if branches_found == 0 && lines_found == 0 && functions_found == 0 {
             Err(Box::new(std::io::Error::new(std::io::ErrorKind::InvalidData,
                                            format!("Unable to get parse lcov info from {:?}", path))))
         } else {
+            // We send percentages instead of raw count
             Ok(NewFuzzStat {
-                branch_coverage: Some(branches_hit as i32),
-                line_coverage: Some(lines_hit as i32),
-                function_coverage: Some(functions_hit as i32),
+                branch_coverage: if branches_found >    0 { Some((branches_hit/branches_found) as i32) } else { None },
+                line_coverage: if lines_found >         0 { Some((lines_hit/lines_found) as i32) } else { None },
+                function_coverage: if functions_found > 0 { Some((functions_hit/functions_found) as i32) } else { None },
                 execs: None,
                 memory: None,
                 worker_task_id: self.worker_task_id.unwrap_or(0),

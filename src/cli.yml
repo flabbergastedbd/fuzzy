@@ -124,18 +124,22 @@ subcommands:
                             index: 2
                             multiple: true
                 - delete:
-                    about: Delete a corpus
+                    about: Delete corpus with label
                     args:
-                      - id:
-                          help: Id of task
-                          takes_value: true
+                      - label:
+                          help: Label for corpus
                           index: 1
-                - list:
-                    about: List all corpus
+                          takes_value: true
+                - download:
+                    about: Download corpus
                     args:
                         - label:
                             help: Label for corpus
                             index: 1
+                            takes_value: true
+                        - path:
+                            help: Path to download to
+                            index: 2
                             takes_value: true
         - profile:
             about: Test fuzz profiles

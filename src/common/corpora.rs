@@ -3,7 +3,7 @@ use std::time::SystemTime;
 use std::error::Error;
 use std::io;
 
-use log::debug;
+use log::{warn, debug};
 use tonic::{Request, transport::channel::Channel};
 use tokio::fs;
 
@@ -55,6 +55,26 @@ pub async fn download_corpus(label: String,
     };
     let response = client.get_corpus(Request::new(filter_corpus)).await?;
     Ok(response.into_inner().data)
+}
+
+pub async fn delete_corpus(label: String,
+                             not_worker_task_id: Option<i32>,
+                             for_worker_task_id: Option<i32>,
+                             limit: Option<i64>,
+                             created_after: SystemTime,
+                             client: &mut OrchestratorClient<Channel>) -> Result<(), Box<dyn Error>> {
+    warn!("Deleting corpus with label {} updated after {:?}", label,
+            created_after);
+
+    let filter_corpus = xpc::FilterCorpus {
+        label,
+        created_after: prost_types::Timestamp::from(created_after),
+        not_worker_task_id,
+        for_worker_task_id,
+        limit,
+    };
+    let _ = client.delete_corpus(Request::new(filter_corpus)).await?;
+    Ok(())
 }
 
 pub async fn download_corpus_to_disk(label: String,

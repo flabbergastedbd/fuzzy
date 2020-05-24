@@ -2,11 +2,11 @@ use std::path::Path;
 use std::time::SystemTime;
 use std::error::Error;
 
-use log::debug;
+use log::{info, debug};
 use clap::ArgMatches;
 use tokio::task;
 
-use crate::common::corpora::{upload_corpus_from_disk, download_corpus};
+use crate::common::corpora::{delete_corpus, upload_corpus_from_disk, download_corpus_to_disk};
 use crate::common::xpc::get_orchestrator_client;
 
 pub async fn cli(args: &ArgMatches) -> Result<(), Box<dyn Error>> {
@@ -32,19 +32,33 @@ pub async fn cli(args: &ArgMatches) -> Result<(), Box<dyn Error>> {
             }
             task_set.await;
         },
-        ("list", Some(sub_matches)) => {
-            debug!("Listing corpus");
+        ("download", Some(sub_matches)) => {
+            debug!("Downloading corpus");
+            let path = sub_matches.value_of("path").expect("Path to save corpus not provided");
 
-            let corpora = download_corpus(
-                sub_matches.value_of("label").unwrap().to_owned(),
+            let corpora = download_corpus_to_disk(
+                sub_matches.value_of("label").expect("Label not provided").to_owned(),
+                None,
+                None,
+                None,
+                SystemTime::UNIX_EPOCH,
+                Path::new(path),
+                &mut client
+            ).await?;
+
+            info!("Successfully downloaded {} corpus to {}", corpora, path);
+        },
+        ("delete", Some(sub_matches)) => {
+            let label = sub_matches.value_of("label").expect("Label to delete not provided").to_owned();
+
+            let _ = delete_corpus(
+                label,
                 None,
                 None,
                 None,
                 SystemTime::UNIX_EPOCH,
                 &mut client
             ).await?;
-
-            super::formatter::print_corpora(corpora);
         },
         // Listing all tasks
         _ => {},

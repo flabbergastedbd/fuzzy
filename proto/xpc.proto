@@ -47,6 +47,7 @@ service Orchestrator {
     // Corpus related functions
     rpc GetCorpus(FilterCorpus) returns (Corpora);
     rpc SubmitCorpus(NewCorpus) returns (google.protobuf.Empty);
+    rpc DeleteCorpus(FilterCorpus) returns (google.protobuf.Empty);
 
     // Crash related
     rpc SubmitCrash(NewCrash) returns (google.protobuf.Empty);

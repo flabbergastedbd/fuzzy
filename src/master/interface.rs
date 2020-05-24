@@ -121,7 +121,7 @@ impl Orchestrator for OrchestratorService {
     async fn get_corpus(&self, request: Request<xpc::FilterCorpus>) -> Result<Response<xpc::Corpora>, Status> {
 
         let filter_corpus = request.into_inner();
-        debug!("Filtering and sending corpus for worker task {:?}", filter_corpus.not_worker_task_id);
+        debug!("Filtering and sending corpus {:?}", filter_corpus);
 
         let conn = self.db_broker.get_conn();
         let created_after = UNIX_EPOCH + Duration::from_secs(filter_corpus.created_after.seconds as u64);
@@ -149,10 +149,34 @@ impl Orchestrator for OrchestratorService {
         let corpus_list = query.load::<Corpus>(&conn);
 
         if let Err(e) = corpus_list {
-            error!("Unable to get task: {}", e);
+            error!("Unable to get corpus: {}", e);
             Err(Status::new(Code::NotFound, ""))
         } else {
             Ok(Response::new(xpc::Corpora { data: corpus_list.unwrap() }))
+        }
+    }
+
+    async fn delete_corpus(&self, request: Request<xpc::FilterCorpus>) -> Result<Response<()>, Status> {
+
+        let filter_corpus = request.into_inner();
+        debug!("Filtering and deleting corpus: {:?}", filter_corpus);
+
+        let conn = self.db_broker.get_conn();
+        let created_after = UNIX_EPOCH + Duration::from_secs(filter_corpus.created_after.seconds as u64);
+
+        let query = corpora::table
+            .filter(
+                corpora::label.ilike(filter_corpus.label).and(
+                corpora::created_at.gt(created_after))
+            );
+
+        let result = diesel::delete(query).execute(&conn);
+
+        if let Err(e) = result {
+            error!("Unable to delete corpus: {}", e);
+            Err(Status::new(Code::NotFound, ""))
+        } else {
+            Ok(Response::new({}))
         }
     }
 

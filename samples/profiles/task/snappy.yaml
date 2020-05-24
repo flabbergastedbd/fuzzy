@@ -4,7 +4,7 @@
 driver: Libfuzzer
 
 # Consists of configuration to fine tune execution environment where fuzzer will be run
-execution: &execution
+execution:
   # There are two kinds of executors
   # 1. Native
   # 2. Docker
@@ -45,7 +45,7 @@ corpus:
   refresh_interval: 10
 
   # Any newly discovered corpus should be synced to master or not
-  upload: false
+  upload: true
 
   # Gives the ability to only select specific file patterns inside the corpus directory
   upload_filter: ".*"
@@ -71,8 +71,6 @@ fuzz_stat:
   execution:
     executor: Docker
     image: "snappy:fuzzy"
-    envs: {}
     executable: /bin/generate_lcov
-    args: []
     cwd: /profiling
 

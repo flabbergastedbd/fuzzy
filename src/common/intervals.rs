@@ -9,5 +9,5 @@ pub const WORKER_TASK_REFRESH_INTERVAL: Duration = Duration::from_secs(COMMON);
 pub const WORKER_PROCESS_CHECK_INTERVAL: Duration = Duration::from_secs(COMMON/2);
 
 // Master related
-pub const MASTER_SCHEDULER_INTERVAL: Duration = Duration::from_secs(10);
+pub const MASTER_SCHEDULER_INTERVAL: Duration = Duration::from_secs(COMMON);
 

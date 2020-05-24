@@ -39,8 +39,13 @@ pub struct ExecutorConfig {
     pub image: String,
 
     pub executable: String,
+
+    #[serde(default)]
     pub args: Vec<String>,
+
     pub cwd: Box<Path>,
+
+    #[serde(default)]
     pub envs: HashMap<String, String>,
 }
 

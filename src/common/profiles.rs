@@ -1,13 +1,14 @@
 use std::path::Path;
 use std::error::Error;
 
-use validator::ValidationError;
+use validator::{Validate, ValidationError};
 
 use crate::fuzz_driver::FuzzConfig;
 use crate::utils::fs::read_file;
 
 pub fn construct_profile(yaml_string: &str) -> Result<FuzzConfig, Box<dyn Error>> {
     let profile: FuzzConfig = serde_yaml::from_str(yaml_string)?;
+    profile.validate()?;
     Ok(profile)
 }
 

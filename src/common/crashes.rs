@@ -11,6 +11,8 @@ use crate::utils::{checksum, fs::read_file};
 // Corpus related utilities
 pub async fn upload_crash_from_disk(file_path: &Path,
                            label: String,
+                           verified: bool,
+                           output: Option<String>,
                            worker_task_id: Option<i32>,
                            client: &mut OrchestratorClient<Channel>) -> Result<(), Box<dyn Error>> {
 
@@ -25,9 +27,9 @@ pub async fn upload_crash_from_disk(file_path: &Path,
         content,
         checksum,
         label,
+        verified,
+        output,
         worker_task_id,
-        // Verification happens somewhere else not on worker for now
-        verified: false,
     };
 
     client.submit_crash(Request::new(new_crash)).await?;

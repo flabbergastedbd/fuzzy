@@ -123,7 +123,8 @@ message NewCrash {
     required string checksum = 2;
     required string label = 3;
     required bool verified = 4;
-    optional int32 worker_task_id = 5;
+    optional string output = 5;
+    optional int32 worker_task_id = 6;
 }
 
 message WorkerTask {

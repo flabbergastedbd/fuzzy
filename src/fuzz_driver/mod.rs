@@ -42,6 +42,9 @@ pub struct CrashConfig {
 
     #[serde(with = "serde_regex")]
     pub filter: Regex,
+
+    #[serde(default)]
+    pub validate: Option<ExecutorConfig>,
 }
 
 #[derive(Serialize, Deserialize, Validate, Debug, Clone)]

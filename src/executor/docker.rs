@@ -209,6 +209,7 @@ impl DockerExecutor {
             cmd.arg("-d");
         } else {
             cmd
+                .arg("--rm") // Auto removal of container if blocking
                 .arg("--attach=STDOUT")
                 .arg("--attach=STDERR");
         }

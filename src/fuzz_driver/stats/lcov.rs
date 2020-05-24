@@ -74,8 +74,8 @@ impl FuzzStatCollector for LCovCollector {
                 error!("Stat collection execution failed");
                 err_output(output);
             }
-            // Clear off the executor here, otherwise merging and parsing fails and we never get to
-            // close it
+            // TODO: Not necessary but let us keep it for now so that if we add volume cleanup it
+            // should be done.
             executor.close().await?;
 
             // We look for a .lcov file anyway

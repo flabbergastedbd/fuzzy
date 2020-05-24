@@ -31,7 +31,6 @@ pub enum ExecutorEnum {
 pub struct ExecutorConfig {
     pub executor: ExecutorEnum,
 
-    #[serde(default)]
     pub cpus: i32,
 
     // Only used if executor is docker

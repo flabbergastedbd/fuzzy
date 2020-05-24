@@ -232,6 +232,7 @@ impl Orchestrator for OrchestratorService {
 
         let conn = self.db_broker.get_conn();
         let worker_tasks = diesel::update(worker_tasks::table)
+            .filter(worker_tasks::id.eq(patch_worker_task.id))
             .set(&patch_worker_task)
             .execute(&conn);
 

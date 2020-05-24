@@ -84,7 +84,7 @@ impl Scheduler {
                     .execute(&conn)?;
 
             } else {
-                debug!("Task already seems to be fully allocated: {:#?}", task);
+                debug!("Task already seems to be fully allocated: {:#?}\nRequirement: {}", task, new_requirement);
             }
         }
 

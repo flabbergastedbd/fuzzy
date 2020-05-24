@@ -69,6 +69,7 @@ crash:
 fuzz_stat:
   collector: LCov
   execution:
+    cpus: 1
     executor: Docker
     image: "snappy:fuzzy"
     executable: /bin/generate_lcov

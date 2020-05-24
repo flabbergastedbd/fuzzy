@@ -40,7 +40,7 @@ pub async fn upload_corpus_from_disk(file_path: &Path,
 pub async fn download_corpus(label: String,
                              not_worker_task_id: Option<i32>,
                              for_worker_task_id: Option<i32>,
-                             limit: Option<i64>,
+                             latest: Option<i64>,
                              created_after: SystemTime,
                              client: &mut OrchestratorClient<Channel>) -> Result<Vec<Corpus>, Box<dyn Error>> {
     debug!("Downloading corpus with label {} updated after {:?} for worker_task_id {:?}", label,
@@ -51,7 +51,7 @@ pub async fn download_corpus(label: String,
         created_after: prost_types::Timestamp::from(created_after),
         not_worker_task_id,
         for_worker_task_id,
-        limit,
+        latest,
     };
     let response = client.get_corpus(Request::new(filter_corpus)).await?;
     Ok(response.into_inner().data)
@@ -60,7 +60,7 @@ pub async fn download_corpus(label: String,
 pub async fn delete_corpus(label: String,
                              not_worker_task_id: Option<i32>,
                              for_worker_task_id: Option<i32>,
-                             limit: Option<i64>,
+                             latest: Option<i64>,
                              created_after: SystemTime,
                              client: &mut OrchestratorClient<Channel>) -> Result<(), Box<dyn Error>> {
     warn!("Deleting corpus with label {} updated after {:?}", label,
@@ -71,7 +71,7 @@ pub async fn delete_corpus(label: String,
         created_after: prost_types::Timestamp::from(created_after),
         not_worker_task_id,
         for_worker_task_id,
-        limit,
+        latest,
     };
     let _ = client.delete_corpus(Request::new(filter_corpus)).await?;
     Ok(())

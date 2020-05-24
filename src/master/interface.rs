@@ -142,7 +142,7 @@ impl Orchestrator for OrchestratorService {
         }
 
         // If limit is present, sort by latest
-        if let Some(limit) = filter_corpus.limit {
+        if let Some(limit) = filter_corpus.latest {
             query = query.order(corpora::created_at.desc()).limit(limit);
         }
 

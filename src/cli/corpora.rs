@@ -36,11 +36,16 @@ pub async fn cli(args: &ArgMatches) -> Result<(), Box<dyn Error>> {
             debug!("Downloading corpus");
             let path = sub_matches.value_of("path").expect("Path to save corpus not provided");
 
+            let mut latest = None;
+            if let Some(l) = sub_matches.value_of("latest") {
+                latest = Some(l.parse::<i64>()?);
+            }
+
             let corpora = download_corpus_to_disk(
                 sub_matches.value_of("label").expect("Label not provided").to_owned(),
                 None,
                 None,
-                None,
+                latest,
                 SystemTime::UNIX_EPOCH,
                 Path::new(path),
                 &mut client

@@ -60,16 +60,3 @@ crash:
   # To filter files, as generally logfiles etc. are present too
   # For honggfuzz this filter will be ".*fuzz"
   filter: "crash-.*"
-
-# A null fuzz stat will fall back to stat collection by fuzz drivers if implemented. This will
-# be stdout parsing, log parsing etc.. Will not work if corpus is not uploaded
-# Refreshed at same rate as corpus
-fuzz_stat:
-  collector: LCov
-  execution:
-    cpus: 1
-    executor: Docker
-    image: "snappy:fuzzy"
-    executable: /bin/generate_lcov
-    cwd: /profiling
-

@@ -17,11 +17,11 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "iteration": 1590393182137,
+  "iteration": 1590397228491,
   "links": [],
   "panels": [
     {
-      "collapsed": true,
+      "collapsed": false,
       "datasource": null,
       "gridPos": {
         "h": 1,
@@ -30,624 +30,10 @@
         "y": 0
       },
       "id": 16,
-      "panels": [
-        {
-          "aliasColors": {},
-          "bars": false,
-          "dashLength": 10,
-          "dashes": false,
-          "datasource": null,
-          "fill": 1,
-          "fillGradient": 2,
-          "gridPos": {
-            "h": 8,
-            "w": 19,
-            "x": 0,
-            "y": 1
-          },
-          "hiddenSeries": false,
-          "id": 14,
-          "legend": {
-            "alignAsTable": false,
-            "avg": false,
-            "current": false,
-            "max": false,
-            "min": false,
-            "rightSide": false,
-            "show": false,
-            "total": false,
-            "values": false
-          },
-          "lines": true,
-          "linewidth": 2,
-          "nullPointMode": "null",
-          "options": {
-            "dataLinks": []
-          },
-          "percentage": false,
-          "pointradius": 2,
-          "points": false,
-          "renderer": "flot",
-          "repeat": "worker",
-          "repeatDirection": "v",
-          "scopedVars": {
-            "worker": {
-              "selected": false,
-              "text": "1337_h4x0r",
-              "value": "1337_h4x0r"
-            }
-          },
-          "seriesOverrides": [
-            {
-              "$$hashKey": "object:658",
-              "alias": "memory_total",
-              "color": "#E02F44",
-              "fill": 0
-            },
-            {
-              "$$hashKey": "object:676",
-              "alias": "swap_total",
-              "color": "#FFA6B0",
-              "fill": 0,
-              "linewidth": 1
-            },
-            {
-              "$$hashKey": "object:1028",
-              "alias": "memory_used",
-              "color": "#56A64B"
-            }
-          ],
-          "spaceLength": 10,
-          "stack": false,
-          "steppedLine": false,
-          "targets": [
-            {
-              "format": "time_series",
-              "group": [],
-              "metricColumn": "none",
-              "rawQuery": true,
-              "rawSql": "SELECT\n  created_at AS \"time\",\n  memory_total,\n  memory_used,\n  swap_total,\n  swap_used\nFROM sys_stats\nWHERE\n  worker_id = (SELECT id FROM workers WHERE name = $worker) AND\n  $__timeFilter(created_at)\nORDER BY 1",
-              "refId": "A",
-              "select": [
-                [
-                  {
-                    "params": [
-                      "memory_total"
-                    ],
-                    "type": "column"
-                  }
-                ],
-                [
-                  {
-                    "params": [
-                      "memory_used"
-                    ],
-                    "type": "column"
-                  }
-                ],
-                [
-                  {
-                    "params": [
-                      "swap_total"
-                    ],
-                    "type": "column"
-                  }
-                ],
-                [
-                  {
-                    "params": [
-                      "swap_used"
-                    ],
-                    "type": "column"
-                  }
-                ],
-                [
-                  {
-                    "params": [
-                      "swap_used"
-                    ],
-                    "type": "column"
-                  }
-                ]
-              ],
-              "table": "sys_stats",
-              "timeColumn": "created_at",
-              "timeColumnType": "timestamp",
-              "where": [
-                {
-                  "name": "$__timeFilter",
-                  "params": [],
-                  "type": "macro"
-                }
-              ]
-            }
-          ],
-          "thresholds": [],
-          "timeFrom": null,
-          "timeRegions": [],
-          "timeShift": null,
-          "title": "$worker - Memory",
-          "tooltip": {
-            "shared": true,
-            "sort": 0,
-            "value_type": "individual"
-          },
-          "transparent": true,
-          "type": "graph",
-          "xaxis": {
-            "buckets": null,
-            "mode": "time",
-            "name": null,
-            "show": true,
-            "values": []
-          },
-          "yaxes": [
-            {
-              "$$hashKey": "object:117",
-              "format": "mbytes",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            },
-            {
-              "$$hashKey": "object:118",
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": false
-            }
-          ],
-          "yaxis": {
-            "align": false,
-            "alignLevel": null
-          }
-        },
-        {
-          "aliasColors": {},
-          "bars": false,
-          "cacheTimeout": null,
-          "dashLength": 10,
-          "dashes": false,
-          "datasource": null,
-          "fill": 1,
-          "fillGradient": 1,
-          "gridPos": {
-            "h": 8,
-            "w": 5,
-            "x": 19,
-            "y": 1
-          },
-          "hiddenSeries": false,
-          "id": 18,
-          "legend": {
-            "avg": false,
-            "current": false,
-            "max": false,
-            "min": false,
-            "show": true,
-            "total": false,
-            "values": false
-          },
-          "lines": true,
-          "linewidth": 1,
-          "links": [],
-          "nullPointMode": "null",
-          "options": {
-            "dataLinks": []
-          },
-          "percentage": false,
-          "pluginVersion": "6.7.3",
-          "pointradius": 2,
-          "points": false,
-          "renderer": "flot",
-          "repeat": "worker",
-          "repeatDirection": "v",
-          "scopedVars": {
-            "worker": {
-              "selected": false,
-              "text": "1337_h4x0r",
-              "value": "1337_h4x0r"
-            }
-          },
-          "seriesOverrides": [],
-          "spaceLength": 10,
-          "stack": false,
-          "steppedLine": false,
-          "targets": [
-            {
-              "format": "time_series",
-              "group": [],
-              "metricColumn": "none",
-              "rawQuery": true,
-              "rawSql": "SELECT\n  created_at AS \"time\",\n  cpu_user_time,\n  cpu_system_time,\n  cpu_idle_time\nFROM sys_stats\nWHERE\n  worker_id = (SELECT id FROM workers WHERE name = $worker) AND\n  $__timeFilter(created_at)\nORDER BY 1",
-              "refId": "A",
-              "select": [
-                [
-                  {
-                    "params": [
-                      "cpu_user_time"
-                    ],
-                    "type": "column"
-                  }
-                ],
-                [
-                  {
-                    "params": [
-                      "cpu_system_time"
-                    ],
-                    "type": "column"
-                  }
-                ],
-                [
-                  {
-                    "params": [
-                      "cpu_idle_time"
-                    ],
-                    "type": "column"
-                  }
-                ]
-              ],
-              "table": "sys_stats",
-              "timeColumn": "created_at",
-              "timeColumnType": "timestamp",
-              "where": [
-                {
-                  "name": "$__timeFilter",
-                  "params": [],
-                  "type": "macro"
-                }
-              ]
-            }
-          ],
-          "thresholds": [],
-          "timeFrom": null,
-          "timeRegions": [],
-          "timeShift": null,
-          "title": "$worker - CPU",
-          "tooltip": {
-            "shared": true,
-            "sort": 0,
-            "value_type": "individual"
-          },
-          "transparent": true,
-          "type": "graph",
-          "xaxis": {
-            "buckets": null,
-            "mode": "time",
-            "name": null,
-            "show": true,
-            "values": []
-          },
-          "yaxes": [
-            {
-              "$$hashKey": "object:251",
-              "format": "ms",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            },
-            {
-              "$$hashKey": "object:252",
-              "format": "ms",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": false
-            }
-          ],
-          "yaxis": {
-            "align": false,
-            "alignLevel": null
-          }
-        }
-      ],
+      "panels": [],
       "repeat": null,
       "title": "Worker",
       "type": "row"
-    },
-    {
-      "collapsed": false,
-      "datasource": null,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 1
-      },
-      "id": 2,
-      "panels": [],
-      "repeat": "task",
-      "scopedVars": {
-        "task": {
-          "selected": false,
-          "text": "firefox",
-          "value": "firefox"
-        }
-      },
-      "title": "Task - $task",
-      "type": "row"
-    },
-    {
-      "datasource": null,
-      "gridPos": {
-        "h": 4,
-        "w": 3,
-        "x": 0,
-        "y": 2
-      },
-      "id": 8,
-      "options": {
-        "colorMode": "value",
-        "fieldOptions": {
-          "calcs": [
-            "count"
-          ],
-          "defaults": {
-            "mappings": [],
-            "thresholds": {
-              "mode": "absolute",
-              "steps": [
-                {
-                  "color": "dark-yellow",
-                  "value": null
-                },
-                {
-                  "color": "semi-dark-green",
-                  "value": 1
-                }
-              ]
-            }
-          },
-          "overrides": [],
-          "values": false
-        },
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto"
-      },
-      "pluginVersion": "6.7.3",
-      "scopedVars": {
-        "task": {
-          "selected": false,
-          "text": "firefox",
-          "value": "firefox"
-        }
-      },
-      "targets": [
-        {
-          "format": "time_series",
-          "group": [],
-          "metricColumn": "none",
-          "rawQuery": true,
-          "rawSql": "SELECT\n  created_at AS \"time\",\n  id\nFROM crashes\nWHERE\n  worker_task_id = ANY(SELECT worker_tasks.id FROM worker_tasks, tasks WHERE tasks.name = $task AND worker_tasks.task_id = tasks.id) AND\n  $__timeFilter(created_at)\nORDER BY 1",
-          "refId": "A",
-          "select": [
-            [
-              {
-                "params": [
-                  "value"
-                ],
-                "type": "column"
-              }
-            ]
-          ],
-          "timeColumn": "time",
-          "where": [
-            {
-              "name": "$__timeFilter",
-              "params": [],
-              "type": "macro"
-            }
-          ]
-        }
-      ],
-      "timeFrom": null,
-      "timeShift": null,
-      "title": "Crashes",
-      "type": "stat"
-    },
-    {
-      "columns": [],
-      "datasource": null,
-      "fontSize": "80%",
-      "gridPos": {
-        "h": 4,
-        "w": 12,
-        "x": 3,
-        "y": 2
-      },
-      "id": 10,
-      "pageSize": null,
-      "scopedVars": {
-        "task": {
-          "selected": false,
-          "text": "firefox",
-          "value": "firefox"
-        }
-      },
-      "showHeader": true,
-      "sort": {
-        "col": 0,
-        "desc": true
-      },
-      "styles": [
-        {
-          "$$hashKey": "object:254",
-          "alias": "Time",
-          "align": "auto",
-          "dateFormat": "YYYY-MM-DD HH:mm:ss",
-          "pattern": "Time",
-          "type": "date"
-        },
-        {
-          "$$hashKey": "object:255",
-          "alias": "",
-          "align": "",
-          "colorMode": "cell",
-          "colors": [
-            "rgba(245, 54, 54, 0.9)",
-            "rgba(237, 129, 40, 0.89)",
-            "rgba(50, 172, 45, 0.97)"
-          ],
-          "decimals": 0,
-          "mappingType": 1,
-          "pattern": "active",
-          "preserveFormat": false,
-          "thresholds": [
-            "0.5",
-            "0.6"
-          ],
-          "type": "string",
-          "unit": "percentunit"
-        },
-        {
-          "$$hashKey": "object:1476",
-          "alias": "",
-          "align": "auto",
-          "colorMode": null,
-          "colors": [
-            "rgba(245, 54, 54, 0.9)",
-            "rgba(237, 129, 40, 0.89)",
-            "rgba(50, 172, 45, 0.97)"
-          ],
-          "dateFormat": "YYYY-MM-DD HH:mm:ss",
-          "decimals": 2,
-          "mappingType": 1,
-          "pattern": "memory",
-          "thresholds": [],
-          "type": "number",
-          "unit": "decmbytes"
-        }
-      ],
-      "targets": [
-        {
-          "format": "table",
-          "group": [],
-          "metricColumn": "none",
-          "rawQuery": true,
-          "rawSql": "SELECT\n  workers.name,\n  workers.cpus as \"Total CPUs\",\n  worker_tasks.cpus as \"Allocated for task\",\n  memory,\n  worker_tasks.active\nFROM worker_tasks INNER JOIN tasks ON worker_tasks.task_id = tasks.id AND tasks.name = $task\nINNER JOIN workers ON worker_tasks.worker_id = workers.id\nORDER BY 1",
-          "refId": "A",
-          "select": [
-            [
-              {
-                "params": [
-                  "value"
-                ],
-                "type": "column"
-              }
-            ]
-          ],
-          "timeColumn": "time",
-          "where": [
-            {
-              "name": "$__timeFilter",
-              "params": [],
-              "type": "macro"
-            }
-          ]
-        }
-      ],
-      "timeFrom": null,
-      "timeShift": null,
-      "title": "workers",
-      "transform": "table",
-      "transparent": true,
-      "type": "table"
-    },
-    {
-      "cacheTimeout": null,
-      "datasource": null,
-      "gridPos": {
-        "h": 4,
-        "w": 4,
-        "x": 15,
-        "y": 2
-      },
-      "id": 12,
-      "links": [],
-      "options": {
-        "colorMode": "value",
-        "fieldOptions": {
-          "calcs": [
-            "count"
-          ],
-          "defaults": {
-            "mappings": [
-              {
-                "$$hashKey": "object:1015",
-                "id": 0,
-                "op": "=",
-                "text": "N/A",
-                "type": 1,
-                "value": "null"
-              }
-            ],
-            "nullValueMode": "connected",
-            "thresholds": {
-              "mode": "absolute",
-              "steps": [
-                {
-                  "color": "semi-dark-blue",
-                  "value": null
-                }
-              ]
-            },
-            "unit": "none"
-          },
-          "overrides": [],
-          "values": false
-        },
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "horizontal"
-      },
-      "pluginVersion": "6.7.3",
-      "scopedVars": {
-        "task": {
-          "selected": false,
-          "text": "firefox",
-          "value": "firefox"
-        }
-      },
-      "targets": [
-        {
-          "format": "time_series",
-          "group": [],
-          "metricColumn": "none",
-          "rawQuery": true,
-          "rawSql": "SELECT\n  created_at AS \"time\",\n  id\nFROM corpora\nWHERE\n  worker_task_id = ANY(SELECT worker_tasks.id FROM worker_tasks, tasks WHERE tasks.name = $task AND worker_tasks.task_id = tasks.id) AND\n  $__timeFilter(created_at)",
-          "refId": "A",
-          "select": [
-            [
-              {
-                "params": [
-                  "value"
-                ],
-                "type": "column"
-              }
-            ]
-          ],
-          "timeColumn": "time",
-          "where": [
-            {
-              "name": "$__timeFilter",
-              "params": [],
-              "type": "macro"
-            }
-          ]
-        }
-      ],
-      "timeFrom": null,
-      "timeShift": null,
-      "title": "Corpus Size",
-      "type": "stat"
     },
     {
       "aliasColors": {},
@@ -656,26 +42,28 @@
       "dashes": false,
       "datasource": null,
       "fill": 1,
-      "fillGradient": 0,
+      "fillGradient": 2,
       "gridPos": {
         "h": 8,
-        "w": 12,
+        "w": 19,
         "x": 0,
-        "y": 6
+        "y": 1
       },
       "hiddenSeries": false,
-      "id": 4,
+      "id": 14,
       "legend": {
+        "alignAsTable": false,
         "avg": false,
         "current": false,
         "max": false,
         "min": false,
-        "show": true,
+        "rightSide": false,
+        "show": false,
         "total": false,
         "values": false
       },
       "lines": true,
-      "linewidth": 1,
+      "linewidth": 2,
       "nullPointMode": "null",
       "options": {
         "dataLinks": []
@@ -684,14 +72,35 @@
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
+      "repeat": "worker",
+      "repeatDirection": "v",
       "scopedVars": {
-        "task": {
+        "worker": {
           "selected": false,
-          "text": "firefox",
-          "value": "firefox"
+          "text": "1337_h4x0r",
+          "value": "1337_h4x0r"
         }
       },
-      "seriesOverrides": [],
+      "seriesOverrides": [
+        {
+          "$$hashKey": "object:658",
+          "alias": "memory_total",
+          "color": "#E02F44",
+          "fill": 0
+        },
+        {
+          "$$hashKey": "object:676",
+          "alias": "swap_total",
+          "color": "#FFA6B0",
+          "fill": 0,
+          "linewidth": 1
+        },
+        {
+          "$$hashKey": "object:1028",
+          "alias": "memory_used",
+          "color": "#56A64B"
+        }
+      ],
       "spaceLength": 10,
       "stack": false,
       "steppedLine": false,
@@ -699,22 +108,53 @@
         {
           "format": "time_series",
           "group": [],
-          "hide": false,
           "metricColumn": "none",
           "rawQuery": true,
-          "rawSql": "SELECT\n  created_at AS \"time\",\n  branch_coverage,\n  line_coverage,\n  function_coverage\nFROM fuzz_stats\nWHERE\n  worker_task_id = ANY(SELECT worker_tasks.id FROM worker_tasks, tasks WHERE tasks.name = $task AND worker_tasks.task_id = tasks.id) AND\n  $__timeFilter(created_at)\nORDER BY 1",
+          "rawSql": "SELECT\n  created_at AS \"time\",\n  memory_total,\n  memory_used,\n  swap_total,\n  swap_used\nFROM sys_stats\nWHERE\n  worker_id = (SELECT id FROM workers WHERE name = $worker) AND\n  $__timeFilter(created_at)\nORDER BY 1",
           "refId": "A",
           "select": [
             [
               {
                 "params": [
-                  "coverage"
+                  "memory_total"
+                ],
+                "type": "column"
+              }
+            ],
+            [
+              {
+                "params": [
+                  "memory_used"
+                ],
+                "type": "column"
+              }
+            ],
+            [
+              {
+                "params": [
+                  "swap_total"
+                ],
+                "type": "column"
+              }
+            ],
+            [
+              {
+                "params": [
+                  "swap_used"
+                ],
+                "type": "column"
+              }
+            ],
+            [
+              {
+                "params": [
+                  "swap_used"
                 ],
                 "type": "column"
               }
             ]
           ],
-          "table": "fuzz_stats",
+          "table": "sys_stats",
           "timeColumn": "created_at",
           "timeColumnType": "timestamp",
           "where": [
@@ -730,7 +170,7 @@
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "coverage",
+      "title": "$worker - Memory",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -747,8 +187,8 @@
       },
       "yaxes": [
         {
-          "$$hashKey": "object:1992",
-          "format": "short",
+          "$$hashKey": "object:117",
+          "format": "mbytes",
           "label": null,
           "logBase": 1,
           "max": null,
@@ -756,13 +196,13 @@
           "show": true
         },
         {
-          "$$hashKey": "object:1993",
+          "$$hashKey": "object:118",
           "format": "short",
           "label": null,
           "logBase": 1,
           "max": null,
           "min": null,
-          "show": true
+          "show": false
         }
       ],
       "yaxis": {
@@ -772,201 +212,73 @@
     },
     {
       "aliasColors": {},
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
+      "breakPoint": "50%",
+      "cacheTimeout": null,
+      "combine": {
+        "label": "Others",
+        "threshold": 0
+      },
       "datasource": null,
-      "fill": 1,
-      "fillGradient": 0,
+      "fontSize": "80%",
+      "format": "s",
       "gridPos": {
         "h": 8,
-        "w": 11,
-        "x": 12,
-        "y": 6
+        "w": 5,
+        "x": 19,
+        "y": 1
       },
-      "hiddenSeries": false,
-      "id": 6,
+      "id": 18,
+      "interval": null,
       "legend": {
-        "avg": false,
-        "current": false,
-        "max": false,
-        "min": false,
+        "percentage": true,
         "show": true,
-        "total": false,
         "values": false
       },
-      "lines": true,
-      "linewidth": 1,
-      "nullPointMode": "null",
-      "options": {
-        "dataLinks": []
-      },
-      "percentage": false,
-      "pointradius": 2,
-      "points": false,
-      "renderer": "flot",
+      "legendType": "Right side",
+      "links": [],
+      "maxDataPoints": 1,
+      "nullPointMode": "connected",
+      "pieType": "donut",
+      "pluginVersion": "6.7.3",
+      "repeat": "worker",
+      "repeatDirection": "v",
       "scopedVars": {
-        "task": {
+        "worker": {
           "selected": false,
-          "text": "firefox",
-          "value": "firefox"
+          "text": "1337_h4x0r",
+          "value": "1337_h4x0r"
         }
       },
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
+      "strokeWidth": 1,
       "targets": [
         {
           "format": "time_series",
           "group": [],
           "metricColumn": "none",
           "rawQuery": true,
-          "rawSql": "SELECT\n  created_at AS \"time\",\n  execs\nFROM fuzz_stats\nWHERE\n  worker_task_id = ANY(SELECT worker_tasks.id FROM worker_tasks, tasks WHERE tasks.name = $task AND worker_tasks.task_id = tasks.id) AND\n  $__timeFilter(created_at)\nORDER BY 1",
-          "refId": "A",
-          "select": [
-            [
-              {
-                "params": [
-                  "value"
-                ],
-                "type": "column"
-              }
-            ]
-          ],
-          "timeColumn": "time",
-          "where": [
-            {
-              "name": "$__timeFilter",
-              "params": [],
-              "type": "macro"
-            }
-          ]
-        }
-      ],
-      "thresholds": [],
-      "timeFrom": null,
-      "timeRegions": [],
-      "timeShift": null,
-      "title": "execs",
-      "tooltip": {
-        "shared": true,
-        "sort": 0,
-        "value_type": "individual"
-      },
-      "transparent": true,
-      "type": "graph",
-      "xaxis": {
-        "buckets": null,
-        "mode": "time",
-        "name": null,
-        "show": true,
-        "values": []
-      },
-      "yaxes": [
-        {
-          "$$hashKey": "object:2681",
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        },
-        {
-          "$$hashKey": "object:2682",
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        }
-      ],
-      "yaxis": {
-        "align": false,
-        "alignLevel": null
-      }
-    },
-    {
-      "columns": [],
-      "datasource": null,
-      "fontSize": "80%",
-      "gridPos": {
-        "h": 25,
-        "w": 24,
-        "x": 0,
-        "y": 14
-      },
-      "id": 20,
-      "pageSize": 1,
-      "showHeader": true,
-      "sort": {
-        "col": 0,
-        "desc": true
-      },
-      "styles": [
-        {
-          "$$hashKey": "object:2793",
-          "alias": "Time",
-          "align": "auto",
-          "dateFormat": "YYYY-MM-DD HH:mm:ss",
-          "pattern": "Time",
-          "type": "hidden"
-        },
-        {
-          "$$hashKey": "object:2794",
-          "alias": "",
-          "align": "left",
-          "colorMode": null,
-          "colors": [
-            "rgba(245, 54, 54, 0.9)",
-            "rgba(237, 129, 40, 0.89)",
-            "rgba(50, 172, 45, 0.97)"
-          ],
-          "decimals": 2,
-          "pattern": "output",
-          "preserveFormat": true,
-          "sanitize": false,
-          "thresholds": [],
-          "type": "string",
-          "unit": "short"
-        },
-        {
-          "$$hashKey": "object:2857",
-          "alias": "",
-          "align": "auto",
-          "colorMode": "cell",
-          "colors": [
-            "rgba(245, 54, 54, 0.9)",
-            "rgba(237, 129, 40, 0.89)",
-            "#37872D"
-          ],
-          "dateFormat": "YYYY-MM-DD HH:mm:ss",
-          "decimals": 2,
-          "mappingType": 1,
-          "pattern": "verified",
-          "thresholds": [
-            "0.5",
-            "0.6"
-          ],
-          "type": "string",
-          "unit": "short"
-        }
-      ],
-      "targets": [
-        {
-          "format": "table",
-          "group": [],
-          "metricColumn": "none",
-          "rawQuery": true,
-          "rawSql": "SELECT\n  crashes.created_at AS \"Time\",\n  output,\n  verified,\n  checksum\nFROM crashes INNER JOIN  worker_tasks ON crashes.worker_task_id = worker_tasks.id\nINNER JOIN tasks ON worker_tasks.task_id = tasks.id AND tasks.name = $task\nWHERE\n  $__timeFilter(crashes.created_at)\nORDER BY 1",
+          "rawSql": "SELECT\n  created_at AS \"time\",\n  cpu_user_time,\n  cpu_system_time,\n  cpu_idle_time\nFROM sys_stats\nWHERE\n  worker_id = (SELECT id FROM workers WHERE name = $worker) AND\n  $__timeFilter(created_at)\nORDER BY 1",
           "refId": "A",
           "select": [
             [
               {
                 "params": [
                   "cpu_user_time"
+                ],
+                "type": "column"
+              }
+            ],
+            [
+              {
+                "params": [
+                  "cpu_system_time"
+                ],
+                "type": "column"
+              }
+            ],
+            [
+              {
+                "params": [
+                  "cpu_idle_time"
                 ],
                 "type": "column"
               }
@@ -986,10 +298,657 @@
       ],
       "timeFrom": null,
       "timeShift": null,
-      "title": "Crashes",
-      "transform": "table",
+      "title": "$worker - Aggregate CPU",
       "transparent": true,
-      "type": "table"
+      "type": "grafana-piechart-panel",
+      "valueName": "current"
+    },
+    {
+      "collapsed": true,
+      "datasource": null,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 9
+      },
+      "id": 2,
+      "panels": [
+        {
+          "datasource": null,
+          "gridPos": {
+            "h": 4,
+            "w": 3,
+            "x": 0,
+            "y": 2
+          },
+          "id": 8,
+          "options": {
+            "colorMode": "value",
+            "fieldOptions": {
+              "calcs": [
+                "count"
+              ],
+              "defaults": {
+                "mappings": [],
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "dark-yellow",
+                      "value": null
+                    },
+                    {
+                      "color": "semi-dark-green",
+                      "value": 1
+                    }
+                  ]
+                }
+              },
+              "overrides": [],
+              "values": false
+            },
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto"
+          },
+          "pluginVersion": "6.7.3",
+          "scopedVars": {
+            "task": {
+              "selected": false,
+              "text": "firefox",
+              "value": "firefox"
+            }
+          },
+          "targets": [
+            {
+              "format": "time_series",
+              "group": [],
+              "metricColumn": "none",
+              "rawQuery": true,
+              "rawSql": "SELECT\n  created_at AS \"time\",\n  id\nFROM crashes\nWHERE\n  worker_task_id = ANY(SELECT worker_tasks.id FROM worker_tasks, tasks WHERE tasks.name = $task AND worker_tasks.task_id = tasks.id) AND\n  $__timeFilter(created_at)\nORDER BY 1",
+              "refId": "A",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "column"
+                  }
+                ]
+              ],
+              "timeColumn": "time",
+              "where": [
+                {
+                  "name": "$__timeFilter",
+                  "params": [],
+                  "type": "macro"
+                }
+              ]
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Crashes",
+          "type": "stat"
+        },
+        {
+          "columns": [],
+          "datasource": null,
+          "fontSize": "80%",
+          "gridPos": {
+            "h": 4,
+            "w": 12,
+            "x": 3,
+            "y": 2
+          },
+          "id": 10,
+          "pageSize": null,
+          "scopedVars": {
+            "task": {
+              "selected": false,
+              "text": "firefox",
+              "value": "firefox"
+            }
+          },
+          "showHeader": true,
+          "sort": {
+            "col": 0,
+            "desc": true
+          },
+          "styles": [
+            {
+              "$$hashKey": "object:254",
+              "alias": "Time",
+              "align": "auto",
+              "dateFormat": "YYYY-MM-DD HH:mm:ss",
+              "pattern": "Time",
+              "type": "date"
+            },
+            {
+              "$$hashKey": "object:255",
+              "alias": "",
+              "align": "",
+              "colorMode": "cell",
+              "colors": [
+                "rgba(245, 54, 54, 0.9)",
+                "rgba(237, 129, 40, 0.89)",
+                "rgba(50, 172, 45, 0.97)"
+              ],
+              "decimals": 0,
+              "mappingType": 1,
+              "pattern": "active",
+              "preserveFormat": false,
+              "thresholds": [
+                "0.5",
+                "0.6"
+              ],
+              "type": "string",
+              "unit": "percentunit"
+            },
+            {
+              "$$hashKey": "object:1476",
+              "alias": "",
+              "align": "auto",
+              "colorMode": null,
+              "colors": [
+                "rgba(245, 54, 54, 0.9)",
+                "rgba(237, 129, 40, 0.89)",
+                "rgba(50, 172, 45, 0.97)"
+              ],
+              "dateFormat": "YYYY-MM-DD HH:mm:ss",
+              "decimals": 2,
+              "mappingType": 1,
+              "pattern": "memory",
+              "thresholds": [],
+              "type": "number",
+              "unit": "decmbytes"
+            }
+          ],
+          "targets": [
+            {
+              "format": "table",
+              "group": [],
+              "metricColumn": "none",
+              "rawQuery": true,
+              "rawSql": "SELECT\n  workers.name,\n  workers.cpus as \"Total CPUs\",\n  worker_tasks.cpus as \"Allocated for task\",\n  memory,\n  worker_tasks.active\nFROM worker_tasks INNER JOIN tasks ON worker_tasks.task_id = tasks.id AND tasks.name = $task\nINNER JOIN workers ON worker_tasks.worker_id = workers.id\nORDER BY 1",
+              "refId": "A",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "column"
+                  }
+                ]
+              ],
+              "timeColumn": "time",
+              "where": [
+                {
+                  "name": "$__timeFilter",
+                  "params": [],
+                  "type": "macro"
+                }
+              ]
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "workers",
+          "transform": "table",
+          "transparent": true,
+          "type": "table"
+        },
+        {
+          "cacheTimeout": null,
+          "datasource": null,
+          "gridPos": {
+            "h": 4,
+            "w": 4,
+            "x": 15,
+            "y": 2
+          },
+          "id": 12,
+          "links": [],
+          "options": {
+            "colorMode": "value",
+            "fieldOptions": {
+              "calcs": [
+                "count"
+              ],
+              "defaults": {
+                "mappings": [
+                  {
+                    "$$hashKey": "object:1015",
+                    "id": 0,
+                    "op": "=",
+                    "text": "N/A",
+                    "type": 1,
+                    "value": "null"
+                  }
+                ],
+                "nullValueMode": "connected",
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "semi-dark-blue",
+                      "value": null
+                    }
+                  ]
+                },
+                "unit": "none"
+              },
+              "overrides": [],
+              "values": false
+            },
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "horizontal"
+          },
+          "pluginVersion": "6.7.3",
+          "scopedVars": {
+            "task": {
+              "selected": false,
+              "text": "firefox",
+              "value": "firefox"
+            }
+          },
+          "targets": [
+            {
+              "format": "time_series",
+              "group": [],
+              "metricColumn": "none",
+              "rawQuery": true,
+              "rawSql": "SELECT\n  created_at AS \"time\",\n  id\nFROM corpora\nWHERE\n  worker_task_id = ANY(SELECT worker_tasks.id FROM worker_tasks, tasks WHERE tasks.name = $task AND worker_tasks.task_id = tasks.id) AND\n  $__timeFilter(created_at)",
+              "refId": "A",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "column"
+                  }
+                ]
+              ],
+              "timeColumn": "time",
+              "where": [
+                {
+                  "name": "$__timeFilter",
+                  "params": [],
+                  "type": "macro"
+                }
+              ]
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Corpus Size",
+          "type": "stat"
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": null,
+          "fill": 1,
+          "fillGradient": 0,
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 6
+          },
+          "hiddenSeries": false,
+          "id": 4,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 1,
+          "nullPointMode": "null",
+          "options": {
+            "dataLinks": []
+          },
+          "percentage": false,
+          "pointradius": 2,
+          "points": false,
+          "renderer": "flot",
+          "scopedVars": {
+            "task": {
+              "selected": false,
+              "text": "firefox",
+              "value": "firefox"
+            }
+          },
+          "seriesOverrides": [],
+          "spaceLength": 10,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "format": "time_series",
+              "group": [],
+              "hide": false,
+              "metricColumn": "none",
+              "rawQuery": true,
+              "rawSql": "SELECT\n  created_at AS \"time\",\n  branch_coverage,\n  line_coverage,\n  function_coverage\nFROM fuzz_stats\nWHERE\n  worker_task_id = ANY(SELECT worker_tasks.id FROM worker_tasks, tasks WHERE tasks.name = $task AND worker_tasks.task_id = tasks.id) AND\n  $__timeFilter(created_at)\nORDER BY 1",
+              "refId": "A",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "coverage"
+                    ],
+                    "type": "column"
+                  }
+                ]
+              ],
+              "table": "fuzz_stats",
+              "timeColumn": "created_at",
+              "timeColumnType": "timestamp",
+              "where": [
+                {
+                  "name": "$__timeFilter",
+                  "params": [],
+                  "type": "macro"
+                }
+              ]
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeRegions": [],
+          "timeShift": null,
+          "title": "coverage",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "transparent": true,
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "$$hashKey": "object:1992",
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "$$hashKey": "object:1993",
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ],
+          "yaxis": {
+            "align": false,
+            "alignLevel": null
+          }
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": null,
+          "fill": 1,
+          "fillGradient": 0,
+          "gridPos": {
+            "h": 8,
+            "w": 11,
+            "x": 12,
+            "y": 6
+          },
+          "hiddenSeries": false,
+          "id": 6,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 1,
+          "nullPointMode": "null",
+          "options": {
+            "dataLinks": []
+          },
+          "percentage": false,
+          "pointradius": 2,
+          "points": false,
+          "renderer": "flot",
+          "scopedVars": {
+            "task": {
+              "selected": false,
+              "text": "firefox",
+              "value": "firefox"
+            }
+          },
+          "seriesOverrides": [],
+          "spaceLength": 10,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "format": "time_series",
+              "group": [],
+              "metricColumn": "none",
+              "rawQuery": true,
+              "rawSql": "SELECT\n  created_at AS \"time\",\n  execs\nFROM fuzz_stats\nWHERE\n  worker_task_id = ANY(SELECT worker_tasks.id FROM worker_tasks, tasks WHERE tasks.name = $task AND worker_tasks.task_id = tasks.id) AND\n  $__timeFilter(created_at)\nORDER BY 1",
+              "refId": "A",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "column"
+                  }
+                ]
+              ],
+              "timeColumn": "time",
+              "where": [
+                {
+                  "name": "$__timeFilter",
+                  "params": [],
+                  "type": "macro"
+                }
+              ]
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeRegions": [],
+          "timeShift": null,
+          "title": "execs",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "transparent": true,
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "$$hashKey": "object:2681",
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "$$hashKey": "object:2682",
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ],
+          "yaxis": {
+            "align": false,
+            "alignLevel": null
+          }
+        },
+        {
+          "columns": [],
+          "datasource": null,
+          "fontSize": "80%",
+          "gridPos": {
+            "h": 25,
+            "w": 24,
+            "x": 0,
+            "y": 14
+          },
+          "id": 20,
+          "pageSize": 1,
+          "scopedVars": {
+            "task": {
+              "selected": false,
+              "text": "firefox",
+              "value": "firefox"
+            }
+          },
+          "showHeader": true,
+          "sort": {
+            "col": 0,
+            "desc": true
+          },
+          "styles": [
+            {
+              "$$hashKey": "object:2793",
+              "alias": "Time",
+              "align": "auto",
+              "dateFormat": "YYYY-MM-DD HH:mm:ss",
+              "pattern": "Time",
+              "type": "hidden"
+            },
+            {
+              "$$hashKey": "object:2794",
+              "alias": "",
+              "align": "left",
+              "colorMode": null,
+              "colors": [
+                "rgba(245, 54, 54, 0.9)",
+                "rgba(237, 129, 40, 0.89)",
+                "rgba(50, 172, 45, 0.97)"
+              ],
+              "decimals": 2,
+              "pattern": "output",
+              "preserveFormat": true,
+              "sanitize": false,
+              "thresholds": [],
+              "type": "string",
+              "unit": "short"
+            },
+            {
+              "$$hashKey": "object:2857",
+              "alias": "",
+              "align": "auto",
+              "colorMode": "cell",
+              "colors": [
+                "rgba(245, 54, 54, 0.9)",
+                "rgba(237, 129, 40, 0.89)",
+                "#37872D"
+              ],
+              "dateFormat": "YYYY-MM-DD HH:mm:ss",
+              "decimals": 2,
+              "mappingType": 1,
+              "pattern": "verified",
+              "thresholds": [
+                "0.5",
+                "0.6"
+              ],
+              "type": "string",
+              "unit": "short"
+            }
+          ],
+          "targets": [
+            {
+              "format": "table",
+              "group": [],
+              "metricColumn": "none",
+              "rawQuery": true,
+              "rawSql": "SELECT\n  crashes.created_at AS \"Time\",\n  output,\n  verified,\n  checksum\nFROM crashes INNER JOIN  worker_tasks ON crashes.worker_task_id = worker_tasks.id\nINNER JOIN tasks ON worker_tasks.task_id = tasks.id AND tasks.name = $task\nWHERE\n  $__timeFilter(crashes.created_at)\nORDER BY 1",
+              "refId": "A",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "cpu_user_time"
+                    ],
+                    "type": "column"
+                  }
+                ]
+              ],
+              "table": "sys_stats",
+              "timeColumn": "created_at",
+              "timeColumnType": "timestamp",
+              "where": [
+                {
+                  "name": "$__timeFilter",
+                  "params": [],
+                  "type": "macro"
+                }
+              ]
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Crashes",
+          "transform": "table",
+          "transparent": true,
+          "type": "table"
+        }
+      ],
+      "repeat": "task",
+      "scopedVars": {
+        "task": {
+          "selected": false,
+          "text": "firefox",
+          "value": "firefox"
+        }
+      },
+      "title": "Task - $task",
+      "type": "row"
     }
   ],
   "refresh": false,
@@ -1080,5 +1039,5 @@
   "variables": {
     "list": []
   },
-  "version": 1
+  "version": 3
 }

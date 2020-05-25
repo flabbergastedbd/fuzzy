@@ -11,39 +11,39 @@ use crate::fuzz_driver::{self, FuzzConfig};
 use crate::xpc::orchestrator_client::OrchestratorClient;
 use crate::common::intervals::WORKER_TASK_REFRESH_INTERVAL;
 
+struct TaskManagerTask {
+    task_updated_at: prost_types::Timestamp,
+    driver_handle: JoinHandle<()>,
+    kill_switch: oneshot::Sender<u8>,
+    dead_switch: oneshot::Receiver<u8>,
+}
+
 pub struct TaskManager {
-    driver_handles: HashMap<i32, JoinHandle<()>>,
-    kill_switches: HashMap<i32, oneshot::Sender<u8>>,
-    death_switches: HashMap<i32, oneshot::Receiver<u8>>,
+    tasks: HashMap<i32, TaskManagerTask>,
 }
 
 impl TaskManager {
     pub fn new() -> Self {
         Self {
-            driver_handles: HashMap::new(),
-            kill_switches: HashMap::new(),
-            death_switches: HashMap::new(),
+            tasks: HashMap::new(),
         }
     }
 
     async fn remove_worker_task(&mut self, worker_task_id: &i32) -> Result<(), Box<dyn Error>> {
         debug!("Removing worker task: {:?}", worker_task_id);
-        let driver_handle = self.driver_handles.remove(worker_task_id).unwrap();
-        let kill_switch = self.kill_switches.remove(worker_task_id).unwrap();
-        // Don't unwrap as we can remove this in check_worker_task
-        let _ = self.death_switches.remove(worker_task_id);
+        let wtask = self.tasks.remove(worker_task_id).unwrap();
 
         debug!("Sending kill command");
-        let _ = kill_switch.send(0u8);
+        let _ = wtask.kill_switch.send(0u8);
         debug!("Joining driver task");
-        driver_handle.await?;
+        wtask.driver_handle.await?;
         Ok(())
     }
 
     async fn check_worker_task(&mut self, worker_task_id: &i32) -> Result<(), Box<dyn Error>> {
         debug!("Checking worker task: {:?}", worker_task_id);
-        if let Some(dead_switch) = self.death_switches.get_mut(worker_task_id) {
-            match dead_switch.try_recv() {
+        if let Some(wtask) = self.tasks.get_mut(worker_task_id) {
+            match wtask.dead_switch.try_recv() {
                 Err(TryRecvError::Empty) => {
                     debug!("Doing nothing as worker task seems active");
                 }
@@ -60,47 +60,58 @@ impl TaskManager {
         debug!("Adding worker task: {:?}", wtask);
         let profile: FuzzConfig = serde_yaml::from_str(wtask.task.profile.as_str())?;
         let (tx, rx) = oneshot::channel::<u8>();
-        let (death_tx, death_rx) = oneshot::channel::<u8>();
+        let (dead_tx, dead_rx) = oneshot::channel::<u8>();
         let mut driver = fuzz_driver::new(profile, Some(wtask.id));
-
-        // self.drivers.insert(wtask.id,Box::new(driver));
-        self.kill_switches.insert(wtask.id, tx);
-        self.death_switches.insert(wtask.id, death_rx);
 
         info!("Spawning new task: {:#?}", wtask);
 
         let driver_handle = tokio::spawn(async move {
-            if let Err(e) = driver.start(rx, death_tx).await {
+            if let Err(e) = driver.start(rx, dead_tx).await {
                 error!("Driver exited with error: {}", e);
             }
         });
 
-        self.driver_handles.insert(wtask.id, driver_handle);
+        self.tasks.insert(wtask.id, TaskManagerTask {
+            driver_handle,
+            kill_switch: tx,
+            dead_switch: dead_rx,
+            task_updated_at: wtask.task.updated_at,
+        });
 
         Ok(())
     }
 
+    /// Order has to be kept intact
+    /// 1. Remove if we are running an older version or an inactive task.
+    /// 2. Start an active task if we are not running. (Stale tasks are handled above)
     async fn handle_tasks_update(&mut self, worker_tasks: Vec<xpc::WorkerTaskFull>) -> Result<(), Box<dyn Error>> {
         trace!("Handling task updates, iterating over {} tasks", worker_tasks.len());
         for worker_task in worker_tasks.into_iter() {
-            let local_worker_task_active = self.driver_handles.contains_key(&worker_task.id);
             let global_task_active = worker_task.task.active;
 
             debug!("Looping on task: {:#?}", worker_task);
-            trace!("Is task active already?: {}", local_worker_task_active);
 
-            if local_worker_task_active == true && global_task_active == true {
-                // Check if we are still running it
-                self.check_worker_task(&worker_task.id).await?;
-            } else if local_worker_task_active == false && global_task_active == true {
-                // Start this as we should be running it
-                self.add_worker_task(worker_task).await?;
-            } else if local_worker_task_active == true && global_task_active == false {
+            // Delete any inactive or stale tasks
+            if self.tasks.contains_key(&worker_task.id) == true && global_task_active == false {
                 // Stop this as this shouldn't be active
                 self.remove_worker_task(&worker_task.id).await?;
-            } else {
-                // Global task not active, so are we
-                debug!("Not doing anything for this task as it is in desired state: {}", local_worker_task_active);
+            }
+
+            if self.tasks.contains_key(&worker_task.id) == true && global_task_active == true {
+                if let Some(tm_task) = self.tasks.get(&worker_task.id) {
+                    if tm_task.task_updated_at != worker_task.task.updated_at {
+                        debug!("Older version of task seems to be running, so removing");
+                        self.remove_worker_task(&worker_task.id).await?;
+                    } else {
+                        // Check if we are still running it
+                        self.check_worker_task(&worker_task.id).await?;
+                    }
+                }
+            }
+
+            if self.tasks.contains_key(&worker_task.id) == false && global_task_active == true {
+                // Start this as we should be running it
+                self.add_worker_task(worker_task).await?;
             }
         }
         Ok(())
@@ -121,7 +132,7 @@ impl TaskManager {
                 let worker_clone = worker.clone();
                 let filter_worker_task = xpc::FilterWorkerTask {
                     worker_uuid: worker_clone.uuid,
-                    worker_task_ids: self.driver_handles.keys().cloned().collect(),
+                    worker_task_ids: self.tasks.keys().cloned().collect(),
                 };
 
                 let response = client.get_worker_task(filter_worker_task).await;

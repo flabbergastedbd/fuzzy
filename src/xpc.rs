@@ -1,3 +1,4 @@
+use serde::{Serialize, Deserialize};
 // Need to be here for generated rust code by prost
 use diesel::{Queryable, Identifiable, Insertable, AsChangeset};
 

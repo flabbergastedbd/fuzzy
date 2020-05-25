@@ -5,7 +5,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         // The best magic to tie Protobuf Structs -> Diesel ORM Rust Structs
         // NewWorker (Worker with limited fields)
     config
-        .type_attribute("NewWorker", "#[derive(Queryable, Insertable, AsChangeset, Associations)]")
+        .type_attribute("NewWorker", "#[derive(Queryable, Insertable, AsChangeset, Associations, Serialize, Deserialize)]")
         .type_attribute("NewWorker", "#[table_name = \"workers\"]")
 
         // Worker

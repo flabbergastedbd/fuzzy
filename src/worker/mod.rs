@@ -1,9 +1,11 @@
+use std::path::Path;
 use std::sync::Arc;
 use std::error::Error;
 use std::fmt;
+use std::fs;
 
 use clap::ArgMatches;
-use log::{error, info, debug}; use uuid::Uuid;
+use log::{warn, error, info, debug}; use uuid::Uuid;
 use tokio::{sync::RwLock, signal::unix::{signal, SignalKind}};
 use heim::units::information;
 
@@ -13,17 +15,38 @@ use crate::common::cli::{parse_global_settings, parse_volume_map_settings};
 mod dispatcher;
 mod tasks;
 
+const METADATA_PATH: &str = ".fuzzy_worker.yaml";
+
 impl NewWorker {
     pub fn new() -> Self {
-        debug!("Creating new worker object");
-        let worker = NewWorker {
-            uuid: Uuid::new_v4().to_string(),
-            name: None,
-            cpus: 0,
-            memory: 0,
-            active: true,
-        };
-        worker
+        let worker = NewWorker::load_from_cwd();
+        if let Ok(worker) = worker {
+            worker
+        } else {
+            warn!("Unable to load from cwd, may be due to first run as well: {:?}", worker);
+            debug!("Creating new worker object");
+            let worker = NewWorker {
+                uuid: Uuid::new_v4().to_string(),
+                name: None,
+                cpus: 0,
+                memory: 0,
+                active: true,
+            };
+            worker
+        }
+    }
+
+    pub fn load_from_cwd() -> Result<Self, Box<dyn Error>> {
+        let path = Path::new(METADATA_PATH);
+        let metadata = fs::read_to_string(path)?;
+        let worker: NewWorker = serde_yaml::from_str(&metadata)?;
+        Ok(worker)
+    }
+
+    pub fn save_to_cwd(&self) -> Result<(), Box<dyn Error>> {
+        let worker = serde_yaml::to_string(self)?;
+        fs::write(METADATA_PATH, worker)?;
+        Ok(())
     }
 
     // Assign given name to this worker
@@ -132,6 +155,10 @@ pub fn main(arg_matches: &ArgMatches) {
             let w = NewWorker::new()
                 .with_uuid(sub_matches.value_of("uuid"))
                 .with_name(sub_matches.value_of("name"));
+
+            if let Err(e) = w.save_to_cwd() {
+                error!("Failed to save metadata to cwd: {}", e);
+            }
 
             parse_global_settings(sub_matches);
             parse_volume_map_settings(sub_matches);

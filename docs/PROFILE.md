@@ -49,6 +49,8 @@ Crash handling and verification.
 
 Parameters used to validate crashes, same as [Execution](#execution) above.
 
+> Output to stdout & stderr are saved and a non zero exit code is treated as verified crash.
+
 *Changes*
 
 - `args`: Arguments to pass to validator process. *Path to crash file will be added an last parameter*.

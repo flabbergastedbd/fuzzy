@@ -152,7 +152,7 @@ subcommands:
                     about: Download corpus
                     args:
                         - label:
-                            help: Label for corpus
+                            help: Label for crashes to download
                             index: 1
                             takes_value: true
                         - path:
@@ -160,7 +160,7 @@ subcommands:
                             index: 2
                             takes_value: true
                         - latest:
-                            help: Max number of latest files to download, if not provided all will be downloaded
+                            help: Max number of latest crashes to download, if not provided all will be downloaded
                             takes_value: true
                             long: latest
                         - output:

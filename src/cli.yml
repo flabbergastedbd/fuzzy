@@ -145,6 +145,34 @@ subcommands:
                             help: Max number of latest files to download, if not provided all will be downloaded
                             takes_value: true
                             long: latest
+        - crashes:
+            about: Access crashes
+            subcommands:
+                - download:
+                    about: Download corpus
+                    args:
+                        - label:
+                            help: Label for corpus
+                            index: 1
+                            takes_value: true
+                        - path:
+                            help: Path to download to
+                            index: 2
+                            takes_value: true
+                        - latest:
+                            help: Max number of latest files to download, if not provided all will be downloaded
+                            takes_value: true
+                            long: latest
+                        - output:
+                            help: Filter on output when crash validation happened. Used in ilike statement.
+                            takes_value: true
+                            long: output
+                        - verified:
+                            help: Get only verified crashes.
+                            long: verified
+                        - task_id:
+                            help: Get only crashes for task id.
+                            long: task-id
         - profile:
             about: Test fuzz profiles
             version: "0.1"

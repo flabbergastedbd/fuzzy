@@ -50,6 +50,7 @@ service Orchestrator {
     rpc DeleteCorpus(FilterCorpus) returns (google.protobuf.Empty);
 
     // Crash related
+    rpc GetCrashes(FilterCrash) returns (Crashes);
     rpc SubmitCrash(NewCrash) returns (google.protobuf.Empty);
 
     // Worker tasks
@@ -125,6 +126,30 @@ message NewCrash {
     required bool verified = 4;
     optional string output = 5;
     optional int32 worker_task_id = 6;
+}
+
+message FilterCrash {
+    required string label = 1;
+    optional bool verified = 2;
+    optional string output = 3;
+    optional int32 task_id = 4;
+    optional int64 latest = 7;
+    required google.protobuf.Timestamp created_after = 8;
+}
+
+message Crash {
+    required int32 id = 1;
+    required bytes content = 2;
+    required string checksum = 3;
+    required string label = 4;
+    required bool verified = 5;
+    optional string output = 6;
+    optional int32 worker_task_id = 7;
+    required google.protobuf.Timestamp created_at = 8;
+}
+
+message Crashes {
+    repeated Crash data = 1;
 }
 
 message WorkerTask {

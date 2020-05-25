@@ -28,13 +28,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .type_attribute("NewCorpus", "#[derive(Queryable, Insertable, AsChangeset, Associations)]")
         .type_attribute("NewCorpus", "#[table_name = \"corpora\"]")
 
-        // NewCorpus (Corpus with limited fields)
+        // Corpus
         .type_attribute("Corpus", "#[derive(Queryable, Identifiable, Associations)]")
         .type_attribute("Corpus", "#[table_name = \"corpora\"]")
 
         // NewCrash (Crash with limited fields)
         .type_attribute("NewCrash", "#[derive(Queryable, Insertable, AsChangeset, Associations)]")
         .type_attribute("NewCrash", "#[table_name = \"crashes\"]")
+
+        // Crash
+        .type_attribute("Crash", "#[derive(Queryable, Identifiable, Associations)]")
+        .type_attribute("Crash", "#[table_name = \"crashes\"]")
 
         // WorkerTask (Worker Task)
         .type_attribute("WorkerTask", "#[derive(Queryable, Associations)]")

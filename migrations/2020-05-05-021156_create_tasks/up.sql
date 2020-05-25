@@ -32,7 +32,7 @@ CREATE TABLE corpora (
 CREATE TABLE crashes (
 	id SERIAL PRIMARY KEY,
 	content bytea NOT NULL,
-	checksum VARCHAR(64),
+	checksum VARCHAR(64) NOT NULL,
 	label VARCHAR(100) NOT NULL,
 	verified BOOLEAN NOT NULL DEFAULT FALSE,
 	output VARCHAR,

@@ -6,7 +6,7 @@ use tonic::{Request, Response, Status, Code};
 
 use crate::db::DbBroker;
 use crate::schema::{workers, tasks, corpora, crashes, worker_tasks, fuzz_stats, sys_stats};
-use crate::models::{Task, NewTask, Corpus, NewCorpus, NewCrash, NewFuzzStat};
+use crate::models::{Task, NewTask, Corpus, NewCorpus, Crash, NewCrash, NewFuzzStat};
 use crate::xpc;
 use crate::xpc::orchestrator_server::Orchestrator;
 use crate::common::profiles::construct_profile;
@@ -198,6 +198,53 @@ impl Orchestrator for OrchestratorService {
             Err(Status::new(Code::InvalidArgument, format!("{}", e)))
         } else {
             Ok(Response::new({}))
+        }
+    }
+
+    async fn get_crashes(&self, request: Request<xpc::FilterCrash>) -> Result<Response<xpc::Crashes>, Status> {
+
+        let filter_crash = request.into_inner();
+        debug!("Filtering and sending crashes {:?}", filter_crash);
+
+        let conn = self.db_broker.get_conn();
+        let created_after = UNIX_EPOCH + Duration::from_secs(filter_crash.created_after.seconds as u64);
+
+        let mut query = crashes::table.inner_join(worker_tasks::table)
+            .filter(
+                crashes::label.ilike(filter_crash.label).and(
+                crashes::created_at.gt(created_after))
+            ).into_boxed();
+
+        // Check if verified provided
+        if let Some(verified) = filter_crash.verified {
+            query = query.filter(crashes::verified.eq(verified));
+        }
+
+        // If output filter on it
+        if let Some(output) = filter_crash.output {
+            query = query.filter(crashes::output.ilike(output));
+        }
+
+        // If task id filter on it
+        if let Some(task_id) = filter_crash.task_id {
+            query = query.filter(
+                worker_tasks::task_id.eq(task_id)
+                .and(crashes::worker_task_id.eq(worker_tasks::id.nullable()))
+            );
+        }
+
+        // If limit is present, sort by latest
+        if let Some(limit) = filter_crash.latest {
+            query = query.order(crashes::created_at.desc()).limit(limit);
+        }
+
+        let crash_list = query.select(crashes::all_columns).load::<Crash>(&conn);
+
+        if let Err(e) = crash_list {
+            error!("Unable to get corpus: {}", e);
+            Err(Status::new(Code::NotFound, ""))
+        } else {
+            Ok(Response::new(xpc::Crashes { data: crash_list.unwrap() }))
         }
     }
 

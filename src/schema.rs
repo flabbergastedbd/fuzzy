@@ -13,7 +13,7 @@ table! {
     crashes (id) {
         id -> Int4,
         content -> Bytea,
-        checksum -> Nullable<Varchar>,
+        checksum -> Varchar,
         label -> Varchar,
         verified -> Bool,
         output -> Nullable<Varchar>,

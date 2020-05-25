@@ -9,6 +9,7 @@ use crate::common::cli::parse_global_settings;
 mod formatter;
 mod tasks;
 mod corpora;
+mod crashes;
 mod profile;
 
 fn print_results<T>(headings: Vec<&str>, entries: Vec<Vec<T>>)
@@ -32,15 +33,15 @@ async fn main_loop(arg_matches: &ArgMatches) -> Result<(), Box<dyn Error>> {
     // Start matching
     match arg_matches.subcommand() {
         ("tasks", Some(sub_matches)) => {
-            debug!("Launched tasks subcommand");
             tasks::cli(sub_matches).await?;
         },
         ("corpora", Some(sub_matches)) => {
-            debug!("Launched tasks subcommand");
             corpora::cli(sub_matches).await?;
         },
+        ("crashes", Some(sub_matches)) => {
+            crashes::cli(sub_matches).await?;
+        },
         ("profile", Some(sub_matches)) => {
-            debug!("Launched profile subcommand");
             profile::cli(sub_matches).await?;
         },
         _ => {}

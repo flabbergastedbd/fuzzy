@@ -1,36 +1,8 @@
 ---
-- name: Install docker, cargo, rustfmt
-  package:
-    name:
-      - cargo
-      - rustfmt
-      - protobuf
-      - protobuf-devel
-      - libpqxx-devel
-    state: present
-  become: yes
-  become_user: root
-  become_method: sudo
-  when: ansible_facts['os_family'] == "RedHat"
-
-- name: Create fuzzy source directory
-  file:
-    path: "{{ fuzzy_src }}"
-    state: directory
-
-- name: Create fuzzy workspace directory
+- name: Create fuzzy workspace
   file:
     path: "{{ fuzzy_workspace }}"
     state: directory
-
-- name: Copy source over
-  synchronize:
-    src: ../../../../../
-    dest: "{{ fuzzy_src }}"
-    rsync_opts:
-      - "--exclude=target"
-  tags:
-    - sync-files
 
 - name: Copy ca crt
   synchronize:
@@ -70,3 +42,4 @@
   tags:
     - "docker-login"
     - "setup-docker-registry"
+

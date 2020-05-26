@@ -1,9 +1,4 @@
 ---
-- name: Install diesel cli
-  command: cargo install diesel_cli --no-default-features --features "postgres"
-  args:
-    creates: ~/.cargo/bin/diesel
-
 - name: Copy master identity
   synchronize:
     src: "certs/{{ inventory_hostname }}.pem"
@@ -18,6 +13,7 @@
     dest: "{{ fuzzy_workspace }}/docker-compose.yml"
   tags:
     - "sync-master-setup"
+    - "update-grafana"
 
 - name: Copy grafana volume
   synchronize:
@@ -67,9 +63,32 @@
     - "master-services-up"
     - "update-grafana"
 
-- name: Run db migrations
-  shell:
-    cmd: ~/.cargo/bin/diesel migration run --database-url postgres://fuzzy:fuzzy@localhost:5432/fuzzy
-    chdir: "{{ fuzzy_src }}"
+- name: Get uid
+  getent:
+    database: passwd
+    key: "{{ ansible_user_id }}"
+  tags:
+    - "fuzzy-master-container"
 
-- name: cargo run -- master start --db postgres://fuzzy:fuzzy@localhost:5432/fuzzy -v --listen-addr 0.0.0.0:12700
+- name: Start fuzzy master
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+  docker_container:
+    name: fuzzy
+    image: "{{ groups['master'][0] }}:5000/{{ fuzzy_image }}"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "{{ getent_passwd[ansible_user_id][4] }}/{{ fuzzy_workspace_relative }}:/home/fuzzy"
+    # No namespace other than filesystem
+    detach: yes
+    pid_mode: host
+    ipc_mode: host
+    network_mode: host
+    uts: host
+
+    entrypoint: /bin/fuzzy
+    working_dir: /home/fuzzy
+    user: "{{ getent_passwd[ansible_user_id][1] }}:{{ getent_passwd[ansible_user_id][2] }}"
+    command: "master start --db {{ db_conn_string }} -v --listen-addr 0.0.0.0:12700"
+  tags:
+    - "fuzzy-master-container"

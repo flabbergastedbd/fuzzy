@@ -1,6 +1,11 @@
-fuzzy_src: ~/workspace/fuzzy-src
-fuzzy_workspace: ~/workspace/fuzzy
+fuzzy_src: ~/fuzzy-src
+fuzzy_workspace: ~/fuzzy
+fuzzy_workspace_relative: fuzzy
 certs_dir: certs
+
+fuzzy_image: fuzzy:0.1
 
 registry_username: "fuzzy"
 registry_password: "fuzzy"
+
+db_conn_string: postgres://fuzzy:fuzzy@localhost:5432/fuzzy

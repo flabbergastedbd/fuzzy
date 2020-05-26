@@ -8,6 +8,7 @@ fuzzing like corpus collection, crash collection, crash verification etc.
 - [Setup](setup/playbooks/README.md)
 - [Usage](docs/USAGE.md)
 - [Usecase Examples](docs/USECASES.md)
+- [Development](docs/DEV.md)
 
 ## Dashboards
 

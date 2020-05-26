@@ -5,7 +5,10 @@ use std::time::SystemTime;
 
 use log::{trace, error, debug};
 use regex::Regex;
+
+#[cfg(target_os = "linux")]
 use inotify::{Inotify, WatchMask, EventStream};
+
 use tokio::{
     fs::{self, File},
     stream::StreamExt,
@@ -48,12 +51,14 @@ pub async fn read_file(file_path: &Path) -> Result<Vec<u8>, Box<dyn Error>> {
     Ok(content)
 }
 
+#[cfg(target_os = "linux")]
 pub struct InotifyFileWatcher {
     _inotify: Inotify,
     stream: EventStream<Vec<u8>>,
     filter: Option<Regex>,
 }
 
+#[cfg(target_os = "linux")]
 impl InotifyFileWatcher {
     pub fn new(path: &Path, filter: Option<Regex>) -> Result<Self, Box<dyn Error>> {
         debug!("Creating new inotify file watcher at {:?}", path);

@@ -7,7 +7,6 @@ use tokio::sync::broadcast;
 
 use crate::xpc::orchestrator_client::OrchestratorClient;
 use crate::executor;
-use crate::utils::fs::InotifyFileWatcher;
 use crate::fuzz_driver::CrashConfig;
 use crate::common::crashes::upload_crash_from_disk;
 use crate::common::xpc::get_orchestrator_client;
@@ -45,12 +44,13 @@ impl CrashSyncer {
         Ok(())
     }
 
+    #[cfg(target_os = "linux")]
     async fn upload(
             &self,
             client: OrchestratorClient<Channel>) -> Result<(), Box<dyn Error>> {
         let mut client = client;
         info!("Creating crash upload sync");
-        let mut watcher = InotifyFileWatcher::new(&self.config.path, Some(self.config.filter.clone()))?;
+        let mut watcher = crate::utils::fs::InotifyFileWatcher::new(&self.config.path, Some(self.config.filter.clone()))?;
 
         while let Some(file) = watcher.get_new_file().await {
             // Match user provided match pattern
@@ -79,6 +79,14 @@ impl CrashSyncer {
                 &mut client
             ).await?
         }
+        Ok(())
+    }
+
+    #[cfg(not(target_os = "linux"))]
+    async fn upload(
+            &self,
+            client: OrchestratorClient<Channel>) -> Result<(), Box<dyn Error>> {
+        error!("Crash syncer is not ported yet to work on non linux systems");
         Ok(())
     }
 

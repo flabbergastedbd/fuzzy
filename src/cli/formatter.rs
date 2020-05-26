@@ -16,7 +16,7 @@ pub fn format_corpus<'a>(c: &'a Corpus) -> Vec<String> {
     ]
 }
 
-pub fn print_corpora(corpora: Vec<Corpus>) {
+pub fn _print_corpora(corpora: Vec<Corpus>) {
     let corpora_heading = vec![
         "ID",
         "Checksum",

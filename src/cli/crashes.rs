@@ -4,7 +4,6 @@ use std::error::Error;
 
 use log::{info, debug};
 use clap::ArgMatches;
-use tokio::task;
 
 use crate::common::crashes::download_crashes_to_disk;
 use crate::common::xpc::get_orchestrator_client;

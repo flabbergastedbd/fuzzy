@@ -4,7 +4,7 @@ use std::sync::Arc;
 use log::{warn, trace, error};
 use tokio::sync::RwLock;
 use heim::{
-    memory::{self, os::linux::MemoryExt},
+    memory,
     cpu,
     units::information
 };
@@ -62,7 +62,7 @@ pub async fn send_sys_stats(worker_id: i32) -> Result<(), Box<dyn Error>> {
         cpu_idle_time: cpu_time.idle().get::<heim::units::time::second>(),
 
         memory_total: memory.total().get::<information::megabyte>() as i32,
-        memory_used: memory.used().get::<information::megabyte>() as i32,
+        memory_used: get_used_memory()?,
 
         swap_total: swap.total().get::<information::megabyte>() as i32,
         swap_used: swap.used().get::<information::megabyte>() as i32,
@@ -76,3 +76,17 @@ pub async fn send_sys_stats(worker_id: i32) -> Result<(), Box<dyn Error>> {
 
     Ok(())
 }
+
+#[cfg(target_os = "linux")]
+fn get_used_memory() -> Result<i32, Box<dyn Error>> {
+    use heim::memory::os::linux::MemoryExt;
+
+    let memory = memory::memory().await?;
+    Ok(memory.used().get::<information::megabyte>() as i32)
+}
+
+#[cfg(not(target_os = "linux"))]
+fn get_used_memory() -> Result<i32, Box<dyn Error>> {
+    Ok(0)
+}
+

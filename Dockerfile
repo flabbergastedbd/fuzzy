@@ -1,22 +1,31 @@
 # docker build -t fuzzy:0.1 .
 FROM rust:slim
 
+RUN apt-get --yes update && \
+    apt-get --yes install libpq-dev apt-transport-https ca-certificates curl gnupg-agent software-properties-common && \
+    rm -rf /var/lib/apt/lists/*
+
+# Needed for diesel
+RUN curl -fsSL https://download.docker.com/linux/debian/gpg | apt-key add - && \
+    add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/debian $(lsb_release -cs) stable" && \
+    apt-get --yes update && apt-get --yes install docker-ce-cli && \
+    rm -rf /var/lib/apt/lists/*
+
+# Get & compile fuzzy
 WORKDIR /usr/src/fuzzy
 COPY . .
 
 # Needed for prost build
-RUN rustup component add rustfmt
+RUN rustup component add rustfmt && \
+    cargo build --release && \
+    cp target/release/fuzzy /bin/fuzzy && \
+    rm -rf /usr/src/fuzzy
 
-# Needed for diesel postgres
-RUN apt-get --yes update && apt-get --yes install libpq-dev
+# Add a fuzzy user just in case
+RUN useradd fuzzy
 
-# Needed for migrations
-#RUN cargo install diesel_cli --no-default-features --features "postgres"
+VOLUME /home/fuzzy
+WORKDIR /home/fuzzy
 
-# Needed for why we are doing all the above
-RUN cargo build --release
-
-# Need to have ca cert, server cert etc.. present here
-VOLUME /opt/fuzzy
-WORKDIR /opt/fuzzy
-ENTRYPOINT /usr/src/fuzzy/target/release/fuzzy
+USER fuzzy
+ENTRYPOINT /bin/fuzzy

@@ -22,6 +22,14 @@
   tags:
     - "fuzzy-worker-containers"
 
+- name: Get docker group
+  getent:
+    database: group
+    split: ':'
+  tags:
+    - "test-getent"
+    - "fuzzy-worker-containers"
+
 - name: Start container
   vars:
     ansible_python_interpreter: /usr/bin/python3
@@ -31,6 +39,8 @@
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock"
       - "{{ getent_passwd[ansible_user_id][4] }}/{{ fuzzy_workspace_relative }}:/home/fuzzy"
+      - "/etc/timezone:/etc/timezone:ro"
+      - "/etc/localtime:/etc/localtime:ro"
     # No namespace other than filesystem
     detach: yes
     pid_mode: host
@@ -38,9 +48,12 @@
     network_mode: host
     uts: host
 
+    recreate: yes
+    pull: yes
+
     entrypoint: /bin/fuzzy
     working_dir: /home/fuzzy
-    user: "{{ getent_passwd[ansible_user_id][1] }}:{{ getent_passwd[ansible_user_id][2] }}"
+    user: "{{ getent_passwd[ansible_user_id][1] }}:{{ getent_group['docker'][1] }}"
     command: "worker start --server-url https://{{ groups['master'][0] }}:12700/ -v --name {{ inventory_hostname }} {{ getent_passwd[ansible_user_id][4] }}/{{ fuzzy_workspace_relative }}:/home/fuzzy"
   tags:
     - "fuzzy-worker-containers"

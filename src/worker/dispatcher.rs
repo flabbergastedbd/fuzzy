@@ -62,7 +62,7 @@ pub async fn send_sys_stats(worker_id: i32) -> Result<(), Box<dyn Error>> {
         cpu_idle_time: cpu_time.idle().get::<heim::units::time::second>(),
 
         memory_total: memory.total().get::<information::megabyte>() as i32,
-        memory_used: get_used_memory()?,
+        memory_used: get_used_memory().await?,
 
         swap_total: swap.total().get::<information::megabyte>() as i32,
         swap_used: swap.used().get::<information::megabyte>() as i32,
@@ -78,7 +78,7 @@ pub async fn send_sys_stats(worker_id: i32) -> Result<(), Box<dyn Error>> {
 }
 
 #[cfg(target_os = "linux")]
-fn get_used_memory() -> Result<i32, Box<dyn Error>> {
+async fn get_used_memory() -> Result<i32, Box<dyn Error>> {
     use heim::memory::os::linux::MemoryExt;
 
     let memory = memory::memory().await?;
@@ -86,7 +86,7 @@ fn get_used_memory() -> Result<i32, Box<dyn Error>> {
 }
 
 #[cfg(not(target_os = "linux"))]
-fn get_used_memory() -> Result<i32, Box<dyn Error>> {
+async fn get_used_memory() -> Result<i32, Box<dyn Error>> {
     Ok(0)
 }
 

@@ -11,6 +11,9 @@ services:
       - "127.0.0.1:5432:5432"
     networks:
       - internal
+    volumes:
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
   grafana:
     image: grafana/grafana
     hostname: grafana
@@ -22,6 +25,8 @@ services:
       - "0.0.0.0:3000:3000"
     volumes:
       - ./grafana:/etc/grafana/provisioning
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
     networks:
       - internal
   registry:
@@ -38,6 +43,8 @@ services:
     volumes:
       - ./registry/auth:/auth
       - ./registry/certs:/certs
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
     networks:
       - internal
 networks:

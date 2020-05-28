@@ -136,7 +136,7 @@ impl Orchestrator for OrchestratorService {
         // prioritized.
         // If worker is asking for corpus, don't return the same corpus already found by it
         if let Some(worker_task_id) = filter_corpus.not_worker_task_id {
-            query = query.filter(corpora::worker_task_id.ne(worker_task_id));
+            query = query.filter(corpora::worker_task_id.ne(worker_task_id).or(corpora::worker_task_id.is_null()));
         } else if let Some(worker_task_id) = filter_corpus.for_worker_task_id {
             query = query.filter(corpora::worker_task_id.eq(worker_task_id));
         }

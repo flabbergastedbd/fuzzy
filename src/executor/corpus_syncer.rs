@@ -31,9 +31,10 @@ impl CorpusSyncer {
     pub async fn setup_corpus(&mut self) -> Result<(), Box<dyn Error>> {
         debug!("Syncing initial corpus");
         let mut client = get_orchestrator_client().await?;
+        // Initial syncing need not get
         download_corpus_to_disk(
             self.config.label.clone(),
-            self.worker_task_id,
+            None,
             None,
             None,
             UNIX_EPOCH,

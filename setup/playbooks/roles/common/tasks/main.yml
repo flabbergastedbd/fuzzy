@@ -1,4 +1,12 @@
 ---
+- name: Set timezone
+  timezone:
+    name: Asia/Kolkata
+  become: yes
+  become_user: root
+  tags:
+    - "fix-timezone"
+
 - name: Create fuzzy workspace
   file:
     path: "{{ fuzzy_workspace }}"

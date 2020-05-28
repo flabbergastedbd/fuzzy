@@ -125,7 +125,7 @@ impl FileWatcher {
                 let whitelist_match = self.whitelist_filter.as_ref().map(|r| r.is_match(&file_name)).unwrap_or(true);
                 if !blacklist_match && whitelist_match {
                     // This enables us to sync all files if filesystem doesnt support timestamps
-                    let timestamp = entry.metadata()?.created().unwrap_or(std::time::UNIX_EPOCH);
+                    let timestamp = entry.metadata()?.created().unwrap_or(now);
                     if  self.last_sync <= timestamp {
                         new_files.push(entry.path());
                     } else {

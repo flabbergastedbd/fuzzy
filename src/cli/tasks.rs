@@ -92,7 +92,7 @@ pub async fn cli(args: &ArgMatches) -> Result<(), Box<dyn Error>> {
 
             if let Some(task) = task {
                 let default_path = format!("{}.yaml", task.id);
-                let path = sub_matches.value_of("profile").unwrap_or(&default_path);
+                let path = sub_matches.value_of("profile_path").unwrap_or(&default_path);
                 write_profile_to_disk(&path, &task.profile).await?;
             } else {
                 error!("Got no task");

@@ -1,4 +1,3 @@
-use std::path::Path;
 use std::error::Error;
 
 use log::{info, error, debug};
@@ -6,11 +5,9 @@ use tonic::transport::channel::Channel;
 use tokio::sync::broadcast;
 
 use crate::xpc::orchestrator_client::OrchestratorClient;
-use crate::executor;
 use crate::fuzz_driver::CrashConfig;
 use crate::common::crashes::upload_crash_from_disk;
 use crate::common::xpc::get_orchestrator_client;
-use crate::utils::fs::rm_r;
 
 /// A file system corpus syncer. Need to convert this into trait when implementing docker
 pub struct CrashSyncer {
@@ -51,6 +48,7 @@ impl CrashSyncer {
         let mut client = client;
         info!("Creating crash upload sync");
         let mut watcher = crate::utils::fs::InotifyFileWatcher::new(&self.config.path, Some(self.config.filter.clone()))?;
+        let validator = super::crash_validator::CrashValidator::new(self.config.clone(), self.worker_task_id)?;
 
         while let Some(file) = watcher.get_new_file().await {
             // Match user provided match pattern
@@ -58,7 +56,7 @@ impl CrashSyncer {
             let file_path = file_path.join(file);
 
             // Verify crash if profile mandates it
-            let (output, verified) = match self.validate_crash(file_path.as_path()).await {
+            let (output, verified) = match validator.validate_crash(file_path.as_path()).await {
                 Ok((output, verified)) => {
                     (output, verified)
                 },
@@ -67,7 +65,6 @@ impl CrashSyncer {
                     (None, false)
                 },
             };
-
 
             info!("Uploading new crash: {:?}", file_path);
             upload_crash_from_disk(
@@ -88,46 +85,5 @@ impl CrashSyncer {
             client: OrchestratorClient<Channel>) -> Result<(), Box<dyn Error>> {
         error!("Crash syncer is not ported yet to work on non linux systems");
         Ok(())
-    }
-
-    async fn validate_crash(&self, crash: &Path) -> Result<(Option<String>, bool), Box<dyn Error>> {
-        if let Some(mut exec_config) = self.config.validate.clone() {
-            // Create a temporary name that will be passed as argv[-1]
-            let relative_file_name = "crash.fuzzy";
-            exec_config.args.push(relative_file_name.to_owned());
-
-            // Create executor
-            let mut executor = executor::new(exec_config, self.worker_task_id);
-            executor.setup().await?;
-
-            // Copy crash file into cwd of validate
-            let cwd = executor.get_cwd_path();
-            let temp_path = cwd.join(relative_file_name);
-            // Copy file into cwd
-            tokio::fs::copy(crash, temp_path.as_path()).await?;
-
-            let output = executor.spawn_blocking().await?;
-
-            // Any non zero exit code, we mark crash as verified
-            let verified = output.status.success() == false;
-
-            let stdout = std::str::from_utf8(&output.stdout)?;
-            let stderr = std::str::from_utf8(&output.stderr)?;
-
-            // Join stdout/stderr for now as output
-            let output = format!("STDOUT\n\
-                                  ------\n\
-                                  {}\n\
-                                  STDERR\n\
-                                  ------\n\
-                                  {}\n", stdout, stderr
-            );
-
-            rm_r(&cwd).await?;
-            Ok((Some(output), verified))
-        } else {
-            info!("Not validating crash {:?} as no validate in profile", crash);
-            Ok((None, false))
-        }
     }
 }

@@ -160,7 +160,7 @@ subcommands:
             about: Access crashes
             subcommands:
                 - download:
-                    about: Download corpus
+                    about: Download crashes
                     args:
                         - label:
                             help: Label for crashes to download
@@ -184,6 +184,16 @@ subcommands:
                         - task_id:
                             help: Get only crashes for task id.
                             long: task-id
+                - revalidate:
+                    about: Revalidate crashes with current profile
+                    args:
+                        - task_id:
+                            help: Label for crashes to download
+                            index: 1
+                            takes_value: true
+                        - all:
+                            help: Reverify all crashes (including verified).
+                            long: all
         - profile:
             about: Test fuzz profiles
             version: "0.1"

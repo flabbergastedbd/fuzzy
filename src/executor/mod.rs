@@ -18,6 +18,7 @@ use crash_syncer::CrashSyncer;
 // Both of filesystem variants, need to change
 pub mod corpus_syncer;
 pub mod crash_syncer;
+pub mod crash_validator;
 mod native;
 mod docker;
 

@@ -7,3 +7,4 @@ pub mod constants;
 pub mod xpc;
 pub mod executors;
 pub mod cli;
+pub mod tasks;

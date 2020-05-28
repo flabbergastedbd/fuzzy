@@ -121,8 +121,10 @@ impl CorpusSyncer {
     }
 
     pub async fn close(self, last_upload: SystemTime) -> Result<(), Box<dyn Error>> {
-        let client = get_orchestrator_client().await?;
-        self.upload(last_upload, client, false).await?;
+        if self.config.upload {
+            let client = get_orchestrator_client().await?;
+            self.upload(last_upload, client, false).await?;
+        }
         Ok(())
     }
 }

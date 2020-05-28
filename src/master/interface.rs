@@ -6,7 +6,12 @@ use tonic::{Request, Response, Status, Code};
 
 use crate::db::DbBroker;
 use crate::schema::{workers, tasks, corpora, crashes, worker_tasks, fuzz_stats, sys_stats};
-use crate::models::{Task, NewTask, Corpus, NewCorpus, Crash, NewCrash, NewFuzzStat};
+use crate::models::{
+    Task, NewTask,
+    Corpus, NewCorpus,
+    Crash, NewCrash, PatchCrash,
+    NewFuzzStat
+};
 use crate::xpc;
 use crate::xpc::orchestrator_server::Orchestrator;
 use crate::common::profiles::construct_profile;
@@ -203,6 +208,25 @@ impl Orchestrator for OrchestratorService {
         let conn = self.db_broker.get_conn();
         let rows_inserted = diesel::insert_into(crashes::table)
             .values(&new_crash)
+            .returning(crashes::id)
+            .execute(&conn);
+
+        // Failure of constraint will be logged here
+        if let Err(e) = rows_inserted {
+            error!("Unable to add crash : {}", e);
+            Err(Status::new(Code::InvalidArgument, format!("{}", e)))
+        } else {
+            Ok(Response::new({}))
+        }
+    }
+
+    async fn update_crash(&self, request: Request<PatchCrash>) -> Result<Response<()>, Status> {
+        let patch_crash: PatchCrash = request.into_inner();
+
+        let conn = self.db_broker.get_conn();
+        let rows_inserted = diesel::update(crashes::table)
+            .filter(crashes::id.eq(patch_crash.id))
+            .set(&patch_crash)
             .returning(crashes::id)
             .execute(&conn);
 

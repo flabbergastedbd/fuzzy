@@ -52,6 +52,7 @@ service Orchestrator {
     // Crash related
     rpc GetCrashes(FilterCrash) returns (Crashes);
     rpc SubmitCrash(NewCrash) returns (google.protobuf.Empty);
+    rpc UpdateCrash(PatchCrash) returns (google.protobuf.Empty);
 
     // Worker tasks
     rpc GetWorkerTask(FilterWorkerTask) returns (WorkerTasks);
@@ -131,6 +132,12 @@ message NewCrash {
     required bool verified = 4;
     optional string output = 5;
     optional int32 worker_task_id = 6;
+}
+
+message PatchCrash {
+    required int32 id = 1;
+    required bool verified = 2;
+    optional string output = 3;
 }
 
 message FilterCrash {

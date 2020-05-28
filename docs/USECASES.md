@@ -102,3 +102,13 @@ To download crashes that match a particular crash pattern
 ``` bash
 fuzzy cli crashes snappy_uncompress new_crashes/ --output "%SIGSEGV%"
 ```
+
+## Revalidate Crashes
+
+If you have changed fuzz profile and need to validate your crashes again, let us say for task id `2`
+
+``` bash
+fuzzy cli crashes revalidate 2 --all
+```
+
+`--all` flag revalidates verified crashes again with new config.

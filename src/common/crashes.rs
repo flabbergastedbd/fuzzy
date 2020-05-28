@@ -6,7 +6,7 @@ use log::debug;
 use tonic::{Request, transport::channel::Channel};
 use tokio::fs;
 
-use crate::models::{NewCrash, Crash};
+use crate::models::{NewCrash, Crash, PatchCrash};
 use crate::xpc::{self, orchestrator_client::OrchestratorClient};
 use crate::utils::{checksum, fs::{mkdir_p, read_file}};
 
@@ -35,6 +35,23 @@ pub async fn upload_crash_from_disk(file_path: &Path,
     };
 
     client.submit_crash(Request::new(new_crash)).await?;
+    Ok(())
+}
+
+pub async fn update_crash(
+    id: i32,
+    verified: bool,
+    output: Option<String>,
+    client: &mut OrchestratorClient<Channel>) -> Result<(), Box<dyn Error>> {
+
+    // Send request
+    let patch_crash = PatchCrash {
+        id,
+        verified,
+        output,
+    };
+
+    client.update_crash(Request::new(patch_crash)).await?;
     Ok(())
 }
 

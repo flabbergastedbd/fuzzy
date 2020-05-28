@@ -5,8 +5,13 @@ use std::error::Error;
 use log::{info, debug};
 use clap::ArgMatches;
 
-use crate::common::crashes::download_crashes_to_disk;
-use crate::common::xpc::get_orchestrator_client;
+use crate::common::{
+    crashes::{download_crashes, update_crash, download_crashes_to_disk},
+    xpc::get_orchestrator_client,
+    tasks::get_task,
+    profiles::construct_profile,
+};
+use crate::executor::crash_validator::CrashValidator;
 
 pub async fn cli(args: &ArgMatches) -> Result<(), Box<dyn Error>> {
     debug!("Creating interface client");
@@ -43,6 +48,37 @@ pub async fn cli(args: &ArgMatches) -> Result<(), Box<dyn Error>> {
             ).await?;
 
             info!("Successfully downloaded {} crashes to {}", crashes, path);
+        },
+        ("revalidate", Some(sub_matches)) => {
+            debug!("Revalidating crashes");
+            let crash_path = Path::new("crash.fuzzy");
+            let task_id = sub_matches.value_of("task_id").expect("Task id not provided").parse::<i32>()?;
+            let verified = match sub_matches.is_present("all") {
+                true => None,
+                false => Some(false),
+            };
+
+            let task = get_task(task_id, &mut client).await?;
+            let config = construct_profile(&task.profile)?;
+            let validator = CrashValidator::new(config.crash.clone(), None)?;
+
+            let crashes = download_crashes(
+                config.crash.label,
+                verified,
+                None,
+                Some(task.id),
+                None,
+                std::time::UNIX_EPOCH,
+                &mut client
+            ).await?;
+
+            for crash in crashes.iter() {
+                debug!("Validating crash {:?}", crash);
+                tokio::fs::write(crash_path, &crash.content).await?;
+                let (output, verified) = validator.validate_crash(crash_path).await?;
+                update_crash(crash.id, verified, output, &mut client).await?;
+                tokio::fs::remove_file(crash_path).await?;
+            }
         },
         // Listing all tasks
         _ => {},

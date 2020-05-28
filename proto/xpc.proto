@@ -40,7 +40,7 @@ message Worker {
 // User interface related
 service Orchestrator {
     // Task related functions for interface
-    rpc GetTasks(google.protobuf.Empty) returns (Tasks);
+    rpc GetTasks(FilterTask) returns (Tasks);
     rpc SubmitTask(NewTask) returns (google.protobuf.Empty);
     rpc UpdateTask(PatchTask) returns (google.protobuf.Empty);
 
@@ -67,6 +67,11 @@ service Orchestrator {
 
 message Tasks {
     repeated Task data = 1;
+}
+
+message FilterTask {
+    optional int32 id = 1;
+    optional bool active = 2;
 }
 
 message NewTask {

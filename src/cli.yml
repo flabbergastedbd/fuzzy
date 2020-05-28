@@ -77,6 +77,17 @@ subcommands:
         - tasks:
             about: Access/Edit/Remove task information
             subcommands:
+                - get:
+                    about: Get a task profile
+                    args:
+                      - id:
+                          help: Id of task
+                          takes_value: true
+                          index: 1
+                      - profile_path:
+                          help: Path to save profile
+                          takes_value: true
+                          long: profile
                 - add:
                     about: Add a new task
                     args:

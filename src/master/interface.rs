@@ -21,11 +21,25 @@ pub struct OrchestratorService {
 impl Orchestrator for OrchestratorService {
 
     // Task related calls
-    async fn get_tasks(&self, _: Request<()>) -> Result<Response<xpc::Tasks>, Status> {
-        debug!("Returning all tasks");
+    async fn get_tasks(&self, request: Request<xpc::FilterTask>) -> Result<Response<xpc::Tasks>, Status> {
+        debug!("Returning filtered tasks");
+
+        let filter_task: xpc::FilterTask = request.into_inner();
+        let mut query = tasks::table.into_boxed();
 
         let conn = self.db_broker.get_conn();
-        let task_list = tasks::table
+
+        // Filter by task id
+        if let Some(task_id) = filter_task.id {
+            query = query.filter(tasks::id.eq(task_id));
+        }
+
+        // Filter task active status
+        if let Some(active) = filter_task.active {
+            query = query.filter(tasks::active.eq(active));
+        }
+
+        let task_list = query
             .load::<Task>(&conn);
 
         if let Err(e) = task_list {

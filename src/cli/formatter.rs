@@ -4,7 +4,8 @@ pub fn format_task<'a>(t: &'a Task) -> Vec<String> {
     vec![
         format!("{}", t.id),
         t.name.clone(),
-        format!("{}", t.active)
+        format!("{}", t.active),
+        format!("{}", t.profile)
     ]
 }
 

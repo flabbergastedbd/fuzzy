@@ -1,12 +1,13 @@
 use std::path::Path;
 use std::error::Error;
 
-use log::{info, debug};
+use log::{info, debug, error};
 use clap::ArgMatches;
 use tonic::Request;
 
 use crate::models::{NewTask, PatchTask};
-use crate::common::profiles::construct_profile_from_disk;
+use crate::xpc::FilterTask;
+use crate::common::profiles::{write_profile_to_disk, construct_profile_from_disk};
 use crate::common::xpc::get_orchestrator_client;
 
 pub async fn cli(args: &ArgMatches) -> Result<(), Box<dyn Error>> {
@@ -61,16 +62,41 @@ pub async fn cli(args: &ArgMatches) -> Result<(), Box<dyn Error>> {
         ("list", Some(_)) => {
             debug!("Listing all tasks");
 
-            let response = client.get_tasks(Request::new({})).await?;
+            let filter_task = FilterTask {
+                id: None,
+                active: None,
+            };
+
+            let response = client.get_tasks(Request::new(filter_task)).await?;
             let tasks = response.into_inner().data;
 
-            let tasks_heading = vec!["ID", "Name", "Active"];
+            let tasks_heading = vec!["ID", "Name", "Active", "Profile"];
             let mut tasks_vec = Vec::new();
             for t in tasks.iter() {
                 tasks_vec.push(super::formatter::format_task(t));
             }
 
             super::print_results(tasks_heading, tasks_vec);
+        },
+        ("get", Some(sub_matches)) => {
+            let id = sub_matches.value_of("id").expect("No ID provided").parse::<i32>()?;
+            let filter_task = FilterTask {
+                id: Some(id),
+                active: None,
+            };
+
+            let response = client.get_tasks(Request::new(filter_task)).await?;
+            let mut tasks = response.into_inner().data;
+
+            let task = tasks.pop();
+
+            if let Some(task) = task {
+                let default_path = format!("{}.yaml", task.id);
+                let path = sub_matches.value_of("profile").unwrap_or(&default_path);
+                write_profile_to_disk(&path, &task.profile).await?;
+            } else {
+                error!("Got no task");
+            }
         },
         _ => {},
     }

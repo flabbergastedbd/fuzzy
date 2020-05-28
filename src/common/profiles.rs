@@ -35,3 +35,8 @@ pub fn validate_relative_path(path: &Box<Path>) -> Result<(), ValidationError> {
         Ok(())
     }
 }
+
+pub async fn write_profile_to_disk(path: &str, yaml_string: &str) -> Result<(), Box<dyn Error>> {
+    tokio::fs::write(path, yaml_string).await?;
+    Ok(())
+}

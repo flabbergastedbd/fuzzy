@@ -45,7 +45,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .type_attribute("Crash", "#[table_name = \"crashes\"]")
 
         // WorkerTask (Worker Task)
-        .type_attribute("WorkerTask", "#[derive(Queryable, Associations)]")
+        .type_attribute("WorkerTask", "#[derive(Queryable, Identifiable, Associations)]")
         .type_attribute("WorkerTask", "#[table_name = \"worker_tasks\"]")
         .type_attribute("WorkerTask", "#[belongs_to(Task)]")
         .type_attribute("WorkerTask", "#[belongs_to(Worker)]")

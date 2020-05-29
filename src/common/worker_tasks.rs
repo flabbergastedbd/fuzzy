@@ -12,7 +12,7 @@ pub async fn mark_worker_task_active(worker_task_id: Option<i32>) -> Result<(), 
 
         let patch_worker_task = PatchWorkerTask {
             id: worker_task_id,
-            active: true
+            running: true
         };
 
         client.update_worker_task(Request::new(patch_worker_task)).await?;
@@ -27,7 +27,7 @@ pub async fn mark_worker_task_inactive(worker_task_id: Option<i32>) -> Result<()
 
         let patch_worker_task = PatchWorkerTask {
             id: worker_task_id,
-            active: false
+            running: false
         };
 
         client.update_worker_task(Request::new(patch_worker_task)).await?;

@@ -170,7 +170,8 @@ message WorkerTask {
     required int32 worker_id = 3;
     required int32 cpus = 4;
     required bool active = 5;
-    required google.protobuf.Timestamp created_at = 6;
+    required bool running = 6;
+    required google.protobuf.Timestamp created_at = 7;
 }
 
 message WorkerTaskFull {
@@ -191,7 +192,7 @@ message FilterWorkerTask {
 
 message PatchWorkerTask {
     required int32 id = 1;
-    required bool active = 2;
+    required bool running = 2;
 }
 
 message NewFuzzStat {

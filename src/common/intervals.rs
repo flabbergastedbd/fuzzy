@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-const COMMON: u64 = 60;
+const COMMON: u64 = 10;
 
 // Worker related
 pub const WORKER_HEARTBEAT_INTERVAL: Duration = Duration::from_secs(COMMON);

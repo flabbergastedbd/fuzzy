@@ -68,6 +68,7 @@ table! {
         worker_id -> Int4,
         cpus -> Int4,
         active -> Bool,
+        running -> Bool,
         created_at -> Timestamp,
     }
 }

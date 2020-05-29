@@ -87,7 +87,7 @@ impl TaskManager {
     async fn handle_tasks_update(&mut self, worker_tasks: Vec<xpc::WorkerTaskFull>) -> Result<(), Box<dyn Error>> {
         trace!("Handling task updates, iterating over {} tasks", worker_tasks.len());
         for worker_task in worker_tasks.into_iter() {
-            let global_task_active = worker_task.task.active;
+            let global_task_active = worker_task.active;
 
             debug!("Looping on task: {:#?}", worker_task);
 

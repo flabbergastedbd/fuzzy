@@ -1,3 +1,4 @@
+use std::time::SystemTime;
 use std::error::Error;
 
 use log::{trace, error, warn, debug};
@@ -6,7 +7,7 @@ use diesel::dsl::sum;
 
 use crate::db::DbBroker;
 use crate::models::{Task, Worker, WorkerTask};
-use crate::schema::{tasks, worker_tasks, workers};
+use crate::schema::{tasks, worker_tasks, workers, sys_stats};
 use crate::common::profiles::construct_profile;
 
 #[derive(Clone)]
@@ -46,6 +47,44 @@ impl Scheduler {
         Ok(())
     }
 
+    fn is_worker_active(&self, worker: &Worker) -> Result<bool, Box<dyn Error>> {
+        let conn = self.db_broker.get_conn();
+
+        let activity_window = SystemTime::now() - (25 * crate::common::intervals::WORKER_HEARTBEAT_INTERVAL);
+
+        let sys_stats: i64 = sys_stats::table
+            .filter(
+                sys_stats::worker_id.eq(worker.id)
+                .and(sys_stats::created_at.gt(activity_window))
+            )
+            .count()
+            .first(&conn)?;
+
+        Ok(sys_stats > 0)
+    }
+
+    fn disable_inactive_workers(&self) -> Result<(), Box<dyn Error>> {
+        let conn = self.db_broker.get_conn();
+
+        let active_workers = workers::table.filter(workers::active.eq(true)).load::<Worker>(&conn)?;
+
+        for worker in active_workers {
+            if self.is_worker_active(&worker)? == false {
+                debug!("Worker {} found inactive", worker.id);
+                // Remove active on worker
+                diesel::update(workers::table)
+                    .filter(workers::id.eq(worker.id))
+                    .set(workers::active.eq(false))
+                    .execute(&conn)?;
+
+                // Deactivate all associated worker tasks
+                self.disable_worker_tasks_for_worker(&worker)?;
+            }
+        }
+
+        Ok(())
+    }
+
     fn disable_worker_tasks_for_task(&self, task: &Task) -> Result<(), Box<dyn Error>> {
         let conn = self.db_broker.get_conn();
 
@@ -55,7 +94,7 @@ impl Scheduler {
         Ok(())
     }
 
-    fn _disable_worker_tasks_for_worker(&self, worker: &Worker) -> Result<(), Box<dyn Error>> {
+    fn disable_worker_tasks_for_worker(&self, worker: &Worker) -> Result<(), Box<dyn Error>> {
         let conn = self.db_broker.get_conn();
 
         diesel::update(WorkerTask::belonging_to(worker))
@@ -71,12 +110,7 @@ impl Scheduler {
         let mut workers_free: Vec<(Worker, i32)> = vec![];
 
         for worker in workers {
-            let allocated: Option<i64> = WorkerTask::belonging_to(&worker)
-                .filter(worker_tasks::active.eq(true))
-                .select(sum(worker_tasks::cpus))
-                .first(&conn)?;
-
-            let free = worker.cpus - allocated.unwrap_or(0) as i32;
+            let free = self.get_free_cpus(&worker)?;
             if free > 0 {
                 workers_free.push((worker, free))
             }
@@ -84,6 +118,18 @@ impl Scheduler {
         }
 
         Ok(workers_free)
+    }
+
+    fn get_free_cpus(&self, worker: &Worker) -> Result<i32, Box<dyn Error>> {
+        let conn = self.db_broker.get_conn();
+
+        let allocated: Option<i64> = WorkerTask::belonging_to(worker)
+            .filter(worker_tasks::active.eq(true))
+            .select(sum(worker_tasks::cpus))
+            .first(&conn)?;
+
+        let free = worker.cpus - allocated.unwrap_or(0) as i32;
+        Ok(free)
     }
 
     fn get_new_requirement(&self, task: &Task, task_requirement: i32) -> Result<i32, Box<dyn Error>> {
@@ -113,19 +159,30 @@ impl Scheduler {
         Ok(())
     }
 
+    // Ensure that worker task is activatable by following conditions
+    //
+    // 1. Relevant worker is still active
+    // 2. There are free cpus left
+    //
     fn get_activatable_worker_task(&self, task: &Task, requirement: i32) -> Result<Option<WorkerTask>, Box<dyn Error>> {
         let conn = self.db_broker.get_conn();
 
-        let worker_task = WorkerTask::belonging_to(task)
+        let worker_tasks = WorkerTask::belonging_to(task).inner_join(workers::table)
             .filter(
                 worker_tasks::active.eq(false)
+                .and(workers::active.eq(true))
                 .and(worker_tasks::cpus.eq(requirement))
             )
-            .select(worker_tasks::all_columns)
-            .first::<WorkerTask>(&conn)
-            .optional()?;
+            .select((worker_tasks::all_columns, workers::all_columns))
+            .load::<(WorkerTask, Worker)>(&conn)?;
 
-        Ok(worker_task)
+        for (worker_task, worker) in worker_tasks {
+            if self.get_free_cpus(&worker)? >= requirement {
+                return Ok(Some(worker_task))
+            }
+        }
+
+        Ok(None)
     }
 
     fn allocate_tasks(&self) -> Result<(), Box<dyn Error>> {
@@ -147,6 +204,7 @@ impl Scheduler {
             if new_requirement > 0 {
                 // Always get free workers in loop as allocations might have happened
                 let free_workers = self.get_free_workers()?;
+                debug!("Got {} free workers", free_workers.len());
 
                 // 3. Check if existing inactive worker task can satisfy this
                 if let Some(worker_task) = self.get_activatable_worker_task(&task, new_requirement)? {
@@ -180,6 +238,9 @@ impl Scheduler {
     fn schedule(&self) -> Result<(), Box<dyn Error>> {
         // Disable stale worker tasks first, should free up resources
         self.disable_worker_tasks_for_inactive_tasks()?;
+
+        // Disable inactive workers
+        self.disable_inactive_workers()?;
 
         // Allocate tasks
         self.allocate_tasks()?;

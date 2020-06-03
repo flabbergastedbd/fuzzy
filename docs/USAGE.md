@@ -3,11 +3,11 @@
 ## Pre-Requisites
 
 - `fuzzy` binary or a docker container with fuzzy.
-- Remote url to connect to, also called as `--server-url`.
-- CA cert path aka `--cert-authority`.
-- Client cert to talk to api aka `--client-idenity`.
+- Remote url to connect to, also called as `--server-url`. This can be set as environment variable `FUZZY_CONNECT_URL`.
+- CA cert path aka `--cert-authority` or present in working directory as `ca.crt`.
+- Client cert to talk to api aka `--client-idenity` or present in working directory as `worker.pem`.
 
-These can be easily listed by running help for global options
+These can be easily listed by running help for global options, always use `--help`
 
 ``` bash
 Command line interface to interact with master
@@ -35,22 +35,11 @@ SUBCOMMANDS:
     tasks      Access/Edit/Remove task information
 ```
 
-> It is easy to keep the defaults in working directory to avoid passing most of these parameters. Like `ca.crt`,
-> `worker.pem`.
+Detailed usecases are documented [here](./USECASES.md) with examples.
 
-## Use Cases
+## Fuzz Profiles
 
-### Tasks
-
-Tasks are the main building block for fuzzy & can be accessed under `tasks` subcommand. Please read `--help` carefully
-for all subcommands as sometimes flags might not be intuitive.
-
-> Like, when editing a task not passing of `--active` flag will disable the task.
-
-#### New Task
-
-A task needs a [fuzzy profile][Fuzzy Profile]. Copy paste from one of the [samples][Fuzzy Profile Samples] and edit
-as needed.
+[Fuzzy Profile][] & [Fuzzy Profile Samples][].
 
 [Fuzzy Profile]: ./PROFILE.md
 [Fuzzy Profile Samples]: ../samples/profiles/task/

@@ -59,6 +59,12 @@ This can generally be used to generate lcov html reports locally to see how cove
 
 # Tasks
 
+## Add Task
+
+``` bash
+fuzzy cli tasks add specialTask <path to profile.yaml>
+```
+
 ## List Tasks
 
 ``` bash

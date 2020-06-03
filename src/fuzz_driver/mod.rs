@@ -18,6 +18,7 @@ pub mod stats;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum FuzzDriverEnum {
+    Fuzzy,
     Honggfuzz,
     Libfuzzer,
 }
@@ -69,17 +70,19 @@ pub trait FuzzDriver: Send {
     fn set_fuzz_config(&mut self, config: FuzzConfig);
 
     // Custom stat collector if need be
-    fn get_custom_stat_collector(&self, executor: &Box<dyn Executor>) -> Result<Box<dyn FuzzStatCollector>, Box<dyn Error>>;
-    fn get_stat_collector(&self, executor: &Box<dyn Executor>) -> Result<Box<dyn FuzzStatCollector>, Box<dyn Error>> {
+    fn get_custom_stat_collector(&self, executor: &Box<dyn Executor>) -> Result<Option<Box<dyn FuzzStatCollector>>, Box<dyn Error>>;
+    fn get_stat_collector(&self, executor: &Box<dyn Executor>) -> Result<Option<Box<dyn FuzzStatCollector>>, Box<dyn Error>> {
         let full_config = self.get_fuzz_config();
         if let Some(stat_config) = full_config.clone().fuzz_stat {
-            Ok(stats::new(
+            Ok(Some(stats::new(
                     stat_config,
                     full_config,
                     self.get_worker_task_id(),
-            ))
+            )))
+        } else if let Some(stat_collector) = self.get_custom_stat_collector(executor)? {
+            Ok(Some(stat_collector))
         } else {
-            Ok(self.get_custom_stat_collector(executor)?)
+            Ok(None)
         }
     }
 
@@ -144,7 +147,8 @@ pub trait FuzzDriver: Send {
             result = crash_syncer.upload_crashes(crash_longshot_recv) => {
                 error!("Error in syncing crashes: {:?}", result);
             },
-            result = stats_collector.start(stat_longshot_recv) => {
+            // Only unwrap if it is some
+            result = stats_collector.unwrap().start(stat_longshot_recv), if stats_collector.is_some() => {
                 error!("Error in collecting stats : {:?}", result);
             },
             _ = kill_switch => {
@@ -176,6 +180,38 @@ pub trait FuzzDriver: Send {
     }
 }
 
+pub struct FuzzyDriver {
+    config: FuzzConfig,
+    worker_task_id: Option<i32>,
+}
+
+impl FuzzyDriver {
+    pub fn new(config: FuzzConfig, worker_task_id: Option<i32>) -> Self {
+        Self { config, worker_task_id }
+    }
+}
+
+#[tonic::async_trait]
+impl FuzzDriver for FuzzyDriver {
+    fn get_fuzz_config(&self) -> FuzzConfig {
+        self.config.clone()
+    }
+
+    fn set_fuzz_config(&mut self, config: FuzzConfig) {
+        self.config = config;
+    }
+
+    fn get_worker_task_id(&self) -> Option<i32> {
+        self.worker_task_id.clone()
+    }
+
+    fn get_custom_stat_collector(&self, _: &Box<dyn Executor>) -> Result<Option<Box<dyn FuzzStatCollector>>, Box<dyn Error>> {
+        Ok(None)
+    }
+
+    fn fix_args(&mut self) {}
+}
+
 pub fn new(config: FuzzConfig, worker_task_id: Option<i32>) -> Box<dyn FuzzDriver> {
     match config.driver {
         FuzzDriverEnum::Libfuzzer => {
@@ -185,6 +221,10 @@ pub fn new(config: FuzzConfig, worker_task_id: Option<i32>) -> Box<dyn FuzzDrive
         FuzzDriverEnum::Honggfuzz => {
             debug!("Creating honggfuzz driver");
             Box::new(honggfuzz::HonggfuzzDriver::new(config, worker_task_id))
+        },
+        FuzzDriverEnum::Fuzzy => {
+            debug!("Creating Fuzzy driver");
+            Box::new(FuzzyDriver::new(config, worker_task_id))
         },
     }
 }

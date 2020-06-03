@@ -37,10 +37,10 @@ impl super::FuzzDriver for HonggfuzzDriver {
         self.worker_task_id.clone()
     }
 
-    fn get_custom_stat_collector(&self, executor: &Box<dyn Executor>) -> Result<Box<dyn FuzzStatCollector>, Box<dyn Error>> {
+    fn get_custom_stat_collector(&self, executor: &Box<dyn Executor>) -> Result<Option<Box<dyn FuzzStatCollector>>, Box<dyn Error>> {
         let log_path = executor.get_cwd_path().join(HONGGFUZZ_LOG);
         let stats_collector = HonggfuzzStatCollector::new(self.worker_task_id, log_path)?;
-        Ok(Box::new(stats_collector))
+        Ok(Some(Box::new(stats_collector)))
     }
 
     fn fix_args(&mut self) {

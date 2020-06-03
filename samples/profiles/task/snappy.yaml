@@ -1,6 +1,7 @@
 # There are two supported fuzz drivers as of now
 # 1. Libfuzzer
-# 2. Honggfuzz (Supports only coverage gathering as of now)
+# 2. Honggfuzz (No exec gathering, use LCov for coverage collector)
+# 3. Fuzzy (You are responsible for all correct parameters in args, so basically can run any fuzzer here)
 driver: Libfuzzer
 
 # Consists of configuration to fine tune execution environment where fuzzer will be run
@@ -19,9 +20,11 @@ execution:
   # Path to fuzzer, will be used as entrypoint if Docker executor
   executable: /workspace/snappy/build/snappy_uncompress_fuzzer
 
-  # DO NOT ADD folling PARAMETERS which are auto deduced based on `driver`.
+  # DO NOT ADD folling PARAMETERS which are auto deduced based on `driver` unless using `Fuzzy` driver.
   # - Any logging related parameters.
   # - Any multiprocessing related parameters like libfuzzer's `-fork` or honggfuzz's `--threads`.
+  #
+  # You still have to pass corpus parameters, crash directory parameter if any
   args: ['-close_fd_mask=3', 'corpus/']
 
   # Useful to provide environmental variables to fuzzers or programs being fuzzed
@@ -72,4 +75,3 @@ fuzz_stat:
     image: "snappy:fuzzy"
     executable: /bin/generate_lcov
     cwd: /profiling
-

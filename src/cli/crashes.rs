@@ -10,6 +10,7 @@ use crate::common::{
     xpc::get_orchestrator_client,
     tasks::get_task,
     profiles::construct_profile,
+    cli::parse_volume_map_settings,
 };
 use crate::executor::crash_validator::CrashValidator;
 
@@ -50,6 +51,7 @@ pub async fn cli(args: &ArgMatches) -> Result<(), Box<dyn Error>> {
             info!("Successfully downloaded {} crashes to {}", crashes, path);
         },
         ("revalidate", Some(sub_matches)) => {
+            parse_volume_map_settings(sub_matches);
             debug!("Revalidating crashes");
             let crash_path = Path::new("crash.fuzzy");
             let task_id = sub_matches.value_of("task_id").expect("Task id not provided").parse::<i32>()?;

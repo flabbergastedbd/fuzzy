@@ -191,6 +191,10 @@ subcommands:
                             help: Label for crashes to download
                             index: 1
                             takes_value: true
+                        - container_volume:
+                            help: "Start agent with docker executor support by providing a mount mapping (<host_path>:<path_inside_container_running_worker>)"
+                            takes_value: true
+                            index: 2
                         - all:
                             help: Reverify all crashes (including verified).
                             long: all

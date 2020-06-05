@@ -39,6 +39,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         // PatchCrash (Crash with limited fields)
         .type_attribute("PatchCrash", "#[derive(Queryable, Insertable, AsChangeset, Associations)]")
         .type_attribute("PatchCrash", "#[table_name = \"crashes\"]")
+        .type_attribute("PatchCrash", "#[changeset_options(treat_none_as_null=\"true\")]")
 
         // Crash
         .type_attribute("Crash", "#[derive(Queryable, Identifiable, Associations)]")

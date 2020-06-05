@@ -19,6 +19,7 @@ use crash_syncer::CrashSyncer;
 pub mod corpus_syncer;
 pub mod crash_syncer;
 pub mod crash_validator;
+pub mod crash_deduplicator;
 mod native;
 mod docker;
 

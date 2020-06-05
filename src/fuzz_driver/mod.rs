@@ -46,6 +46,9 @@ pub struct CrashConfig {
 
     #[serde(default)]
     pub validate: Option<ExecutorConfig>,
+
+    #[serde(default)]
+    pub deduplicate: Option<ExecutorConfig>,
 }
 
 #[derive(Serialize, Deserialize, Validate, Debug, Clone)]

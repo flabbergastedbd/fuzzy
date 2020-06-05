@@ -57,6 +57,7 @@ service Orchestrator {
     // Worker tasks
     rpc GetWorkerTask(FilterWorkerTask) returns (WorkerTasks);
     rpc UpdateWorkerTask(PatchWorkerTask) returns (google.protobuf.Empty);
+    rpc FetchWorkerTask(Id) returns (WorkerTaskFull);
 
     // Fuzz stats
     rpc SubmitFuzzStat(NewFuzzStat) returns (google.protobuf.Empty);
@@ -143,13 +144,13 @@ message PatchCrash {
 }
 
 message FilterCrash {
-    required string label = 1;
+    optional string label = 1;
     optional bool verified = 2;
     optional string output = 3;
     optional int32 task_id = 4;
-    optional int64 latest = 7;
-    required google.protobuf.Timestamp created_after = 8;
-    optional int32 duplicate = 9;
+    optional int64 latest = 5;
+    required google.protobuf.Timestamp created_after = 6;
+    required bool duplicate = 7;
 }
 
 message Crash {

@@ -49,6 +49,7 @@ impl CrashSyncer {
         info!("Creating crash upload sync");
         let mut watcher = crate::utils::fs::InotifyFileWatcher::new(&self.config.path, Some(self.config.filter.clone()))?;
         let validator = super::crash_validator::CrashValidator::new(self.config.clone(), self.worker_task_id)?;
+        let deduplicator = super::crash_deduplicator::CrashDeduplicator::new(self.config.clone(), self.worker_task_id)?;
 
         while let Some(file) = watcher.get_new_file().await {
             // Match user provided match pattern
@@ -66,6 +67,11 @@ impl CrashSyncer {
                 },
             };
 
+            let mut dup_crash_id = None;
+            if let Some(out) = output.as_ref() {
+                dup_crash_id = deduplicator.dedup_crash(out).await?;
+            }
+
             info!("Uploading new crash: {:?}", file_path);
             upload_crash_from_disk(
                 file_path.as_path(),
@@ -73,6 +79,7 @@ impl CrashSyncer {
                 verified,
                 output,
                 self.worker_task_id,
+                dup_crash_id,
                 &mut client
             ).await?
         }

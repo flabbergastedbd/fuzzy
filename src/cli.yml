@@ -162,8 +162,8 @@ subcommands:
                 - download:
                     about: Download crashes
                     args:
-                        - label:
-                            help: Label for crashes to download
+                        - task_id:
+                            help: Get only crashes for task id.
                             index: 1
                             takes_value: true
                         - path:
@@ -181,14 +181,14 @@ subcommands:
                         - verified:
                             help: Get only verified crashes.
                             long: verified
-                        - task_id:
-                            help: Get only crashes for task id.
-                            long: task-id
+                        - duplicate:
+                            help: Get all crashes including duplicates
+                            long: duplicate
                 - revalidate:
                     about: Revalidate crashes with current profile
                     args:
                         - task_id:
-                            help: Label for crashes to download
+                            help: Task id for crashes to download
                             index: 1
                             takes_value: true
                         - container_volume:
@@ -196,7 +196,21 @@ subcommands:
                             takes_value: true
                             index: 2
                         - all:
-                            help: Reverify all crashes (including verified).
+                            help: Revalidate all crashes (including validated).
+                            long: all
+                - deduplicate:
+                    about: Deduplicate crashes with current profile
+                    args:
+                        - task_id:
+                            help: Task id for crashes to download
+                            index: 1
+                            takes_value: true
+                        - container_volume:
+                            help: "Start agent with docker executor support by providing a mount mapping (<host_path>:<path_inside_container_running_worker>)"
+                            takes_value: true
+                            index: 2
+                        - all:
+                            help: Deduplicate all crashes (including duplicate).
                             long: all
         - profile:
             about: Test fuzz profiles

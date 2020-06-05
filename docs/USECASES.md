@@ -114,7 +114,17 @@ fuzzy cli crashes snappy_uncompress new_crashes/ --output "%SIGSEGV%"
 If you have changed fuzz profile and need to validate your crashes again, let us say for task id `2`
 
 ``` bash
-fuzzy cli crashes revalidate 2 --all
+fuzzy cli crashes revalidate 2 /tmp:/tmp --all
+```
+
+`--all` flag revalidates verified crashes again with new config.
+
+## Deduplicate Crashes
+
+If you have changed fuzz profile and need to deduplicate your crashes again, let us say for task id `2`
+
+``` bash
+fuzzy cli crashes deduplicate 2 /tmp:/tmp --all
 ```
 
 `--all` flag revalidates verified crashes again with new config.

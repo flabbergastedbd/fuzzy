@@ -44,6 +44,7 @@ Crash handling and verification.
 - `label`: An identifier to be attached to crashes that are found.
 - `filter`: A rust regex, to filter out crashes incase of fuzzer not being able to save crashes to a separate directory.
 - `validate`: Can be skipped if crash validation is not required.
+- `deduplicate`: Can be skipped if crash validation is not required.
 
 ### Validate
 
@@ -54,6 +55,24 @@ Parameters used to validate crashes, same as [Execution](#execution) above.
 *Changes*
 
 - `args`: Arguments to pass to validator process. *Path to crash file will be added an last parameter*.
+
+### Deduplicate
+
+Parameters used to deduplicate crashes, same as [Execution](#execution) above.
+
+> Zero exit code will mark the second path be marked as crash as first.
+
+*Changes*
+
+- `args`: Two paths containing crash outputs are passed as args, exit code `0` indicates that they are duplicates (like `diff`).
+
+``` bash
+#!/bin/bash
+#
+# A simple dedup script that removes hex values from output before comparing which generally leaves call trace.
+#
+diff <(cat $1 | sed -e "s/0x[0-9a-fA-F]*//g") <(cat $2 | sed -e "s/0x[0-9a-fA-F]*//g")
+```
 
 ## Fuzz Stat
 

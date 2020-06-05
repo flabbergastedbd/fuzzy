@@ -16,6 +16,7 @@ pub async fn upload_crash_from_disk(file_path: &Path,
                            verified: bool,
                            output: Option<String>,
                            worker_task_id: Option<i32>,
+                           duplicate: Option<i32>,
                            client: &mut OrchestratorClient<Channel>) -> Result<(), Box<dyn Error>> {
 
     debug!("Trying to upload {:?} to crashes", file_path);
@@ -32,6 +33,7 @@ pub async fn upload_crash_from_disk(file_path: &Path,
         verified,
         output,
         worker_task_id,
+        duplicate,
     };
 
     client.submit_crash(Request::new(new_crash)).await?;
@@ -42,6 +44,7 @@ pub async fn update_crash(
     id: i32,
     verified: bool,
     output: Option<String>,
+    duplicate: Option<i32>,
     client: &mut OrchestratorClient<Channel>) -> Result<(), Box<dyn Error>> {
 
     // Send request
@@ -49,6 +52,7 @@ pub async fn update_crash(
         id,
         verified,
         output,
+        duplicate,
     };
 
     client.update_crash(Request::new(patch_crash)).await?;
@@ -56,12 +60,13 @@ pub async fn update_crash(
 }
 
 pub async fn download_crashes(
-    label: String,
+    label: Option<String>,
     verified: Option<bool>,
     output: Option<String>,
     task_id: Option<i32>,
     latest: Option<i64>,
     created_after: SystemTime,
+    duplicate: bool,
     client: &mut OrchestratorClient<Channel>) -> Result<Vec<Crash>, Box<dyn Error>> {
 
     let filter_request = xpc::FilterCrash {
@@ -70,26 +75,28 @@ pub async fn download_crashes(
         output,
         task_id,
         latest,
-        created_after: prost_types::Timestamp::from(created_after)
+        created_after: prost_types::Timestamp::from(created_after),
+        duplicate,
     };
     let response = client.get_crashes(Request::new(filter_request)).await?;
     Ok(response.into_inner().data)
 }
 
 pub async fn download_crashes_to_disk(
-    label: String,
+    label: Option<String>,
     verified: Option<bool>,
     output: Option<String>,
     task_id: Option<i32>,
     latest: Option<i64>,
     created_after: SystemTime,
+    duplicate: bool,
     dir: &Path,
     client: &mut OrchestratorClient<Channel>) -> Result<usize, Box<dyn Error>> {
     debug!("Trying to download crashes to {:?}", dir);
 
     mkdir_p(dir).await?;
 
-    let crashes = download_crashes(label, verified, output, task_id, latest, created_after, client).await?;
+    let crashes = download_crashes(label, verified, output, task_id, latest, created_after, duplicate, client).await?;
 
     for crash in crashes.iter() {
         let mut crash_path = dir.join(&crash.checksum);

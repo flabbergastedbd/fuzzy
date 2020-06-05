@@ -12,7 +12,10 @@ use crate::common::{
     profiles::construct_profile,
     cli::parse_volume_map_settings,
 };
-use crate::executor::crash_validator::CrashValidator;
+use crate::executor::{
+    crash_validator::CrashValidator,
+    crash_deduplicator::CrashDeduplicator,
+};
 
 pub async fn cli(args: &ArgMatches) -> Result<(), Box<dyn Error>> {
     debug!("Creating interface client");
@@ -32,18 +35,16 @@ pub async fn cli(args: &ArgMatches) -> Result<(), Box<dyn Error>> {
 
             let output = sub_matches.value_of("output").map(|s| s.to_owned());
 
-            let task_id = match sub_matches.value_of("task_id") {
-                Some(task_id) => Some(task_id.parse::<i32>()?),
-                None => None,
-            };
+            let task_id = sub_matches.value_of("task_id").expect("Task id not provided").parse::<i32>()?;
 
             let crashes = download_crashes_to_disk(
-                sub_matches.value_of("label").expect("Label not provided").to_owned(),
+                None,
                 verified,
                 output,
-                task_id,
+                Some(task_id),
                 latest,
                 SystemTime::UNIX_EPOCH,
+                sub_matches.is_present("duplicate"),
                 Path::new(path),
                 &mut client
             ).await?;
@@ -65,12 +66,13 @@ pub async fn cli(args: &ArgMatches) -> Result<(), Box<dyn Error>> {
             let validator = CrashValidator::new(config.crash.clone(), None)?;
 
             let crashes = download_crashes(
-                config.crash.label,
+                Some(config.crash.label),
                 verified,
                 None,
                 Some(task.id),
                 None,
                 std::time::UNIX_EPOCH,
+                sub_matches.is_present("duplicate"),
                 &mut client
             ).await?;
 
@@ -78,8 +80,46 @@ pub async fn cli(args: &ArgMatches) -> Result<(), Box<dyn Error>> {
                 debug!("Validating crash {:?}", crash);
                 tokio::fs::write(crash_path, &crash.content).await?;
                 let (output, verified) = validator.validate_crash(crash_path).await?;
-                update_crash(crash.id, verified, output, &mut client).await?;
+                // Set duplicate to None as you need to revalidate
+                update_crash(crash.id, verified, output, None, &mut client).await?;
                 tokio::fs::remove_file(crash_path).await?;
+            }
+        },
+        ("deduplicate", Some(sub_matches)) => {
+            parse_volume_map_settings(sub_matches);
+            debug!("Deduplicating crashes");
+            let task_id = sub_matches.value_of("task_id").expect("Task id not provided").parse::<i32>()?;
+
+            let task = get_task(task_id, &mut client).await?;
+            let config = construct_profile(&task.profile)?;
+
+            let mut crashes = download_crashes(
+                Some(config.crash.label.clone()),
+                Some(true), // Only verified crashes
+                None,
+                Some(task.id),
+                None,
+                std::time::UNIX_EPOCH,
+                sub_matches.is_present("all"),
+                &mut client
+            ).await?;
+            let _ = crashes.remove(0); // Remove one crash atleast to avoid looping on deduplication
+
+            for crash in crashes.iter() {
+                if let Some(output) = crash.output.as_ref() {
+                    let deduplicator = CrashDeduplicator::new(config.crash.clone(), crash.worker_task_id)?;
+                    info!("Deduplicating crash {:?}", crash.id);
+                    let mut dup_crash_id = deduplicator.dedup_crash(output).await?;
+                    // Ignore if we detect a duplicate crash with same or greater id or else we
+                    // will go in loops
+                    if let Some(duplicate_id) = dup_crash_id {
+                        if duplicate_id >= crash.id {
+                            dup_crash_id = None;
+                        }
+                    }
+                    info!("Updating it with duplicate: {:?}", dup_crash_id);
+                    update_crash(crash.id, crash.verified, crash.output.clone(), dup_crash_id, &mut client).await?;
+                }
             }
         },
         // Listing all tasks

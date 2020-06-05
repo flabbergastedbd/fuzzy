@@ -239,6 +239,7 @@ impl Orchestrator for OrchestratorService {
         }
     }
 
+    /// Always return in order
     async fn get_crashes(&self, request: Request<xpc::FilterCrash>) -> Result<Response<xpc::Crashes>, Status> {
 
         let filter_crash = request.into_inner();
@@ -249,9 +250,13 @@ impl Orchestrator for OrchestratorService {
 
         let mut query = crashes::table.inner_join(worker_tasks::table)
             .filter(
-                crashes::label.ilike(filter_crash.label).and(
-                crashes::created_at.gt(created_after))
+                crashes::created_at.gt(created_after)
             ).into_boxed();
+
+        // Check if label present
+        if let Some(label) = filter_crash.label {
+            query = query.filter(crashes::label.ilike(label));
+        }
 
         // Check if verified provided
         if let Some(verified) = filter_crash.verified {
@@ -261,6 +266,11 @@ impl Orchestrator for OrchestratorService {
         // If output filter on it
         if let Some(output) = filter_crash.output {
             query = query.filter(crashes::output.ilike(output));
+        }
+
+        // If duplicates are not wanted, filter them
+        if filter_crash.duplicate == false {
+            query = query.filter(crashes::duplicate.is_null());
         }
 
         // If task id filter on it
@@ -274,6 +284,8 @@ impl Orchestrator for OrchestratorService {
         // If limit is present, sort by latest
         if let Some(limit) = filter_crash.latest {
             query = query.order(crashes::created_at.desc()).limit(limit);
+        } else {
+            query = query.order(crashes::created_at.asc())
         }
 
         let crash_list = query.select(crashes::all_columns).load::<Crash>(&conn);
@@ -309,6 +321,26 @@ impl Orchestrator for OrchestratorService {
             Err(Status::new(Code::InvalidArgument, format!("{}", e)))
         } else {
             Ok(Response::new(xpc::WorkerTasks { data: tasks.unwrap() }))
+        }
+    }
+
+    async fn fetch_worker_task(&self, request: Request<xpc::Id>) -> Result<Response<xpc::WorkerTaskFull>, Status> {
+        let id = request.into_inner();
+
+        let conn = self.db_broker.get_conn();
+        let task = worker_tasks::table.inner_join(tasks::table)
+            .filter(
+                worker_tasks::id.eq(id.value)
+            )
+            .select((worker_tasks::id, tasks::all_columns, worker_tasks::cpus, worker_tasks::active))
+            .first::<xpc::WorkerTaskFull>(&conn);
+
+        // Failure of constraint will be logged here
+        if let Ok(task) = task {
+            Ok(Response::new(task))
+        } else {
+            error!("Unable to fetch worker tasks : {:?}", task);
+            Err(Status::new(Code::InvalidArgument, format!("{:?}", task)))
         }
     }
 

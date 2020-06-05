@@ -19,6 +19,7 @@ table! {
         output -> Nullable<Varchar>,
         worker_task_id -> Nullable<Int4>,
         created_at -> Timestamp,
+        duplicate -> Nullable<Int4>,
     }
 }
 

@@ -132,12 +132,14 @@ message NewCrash {
     required bool verified = 4;
     optional string output = 5;
     optional int32 worker_task_id = 6;
+    optional int32 duplicate = 7;
 }
 
 message PatchCrash {
     required int32 id = 1;
     required bool verified = 2;
     optional string output = 3;
+    optional int32 duplicate = 4;
 }
 
 message FilterCrash {
@@ -147,6 +149,7 @@ message FilterCrash {
     optional int32 task_id = 4;
     optional int64 latest = 7;
     required google.protobuf.Timestamp created_after = 8;
+    optional int32 duplicate = 9;
 }
 
 message Crash {
@@ -158,6 +161,7 @@ message Crash {
     optional string output = 6;
     optional int32 worker_task_id = 7;
     required google.protobuf.Timestamp created_at = 8;
+    optional int32 duplicate = 9;
 }
 
 message Crashes {

@@ -54,6 +54,6 @@
     entrypoint: /bin/fuzzy
     working_dir: /home/fuzzy
     user: "{{ getent_passwd[ansible_user_id][1] }}:{{ getent_group['docker'][1] }}"
-    command: "worker start --server-url https://{{ groups['master'][0] }}:12700/ -v --name {{ inventory_hostname }} {{ getent_passwd[ansible_user_id][4] }}/{{ fuzzy_workspace_relative }}:/home/fuzzy"
+    command: "worker start --server-url https://{{ groups['master'][0] }}:12700/ --name {{ inventory_hostname }} {{ getent_passwd[ansible_user_id][4] }}/{{ fuzzy_workspace_relative }}:/home/fuzzy"
   tags:
     - "fuzzy-worker-containers"

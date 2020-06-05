@@ -101,6 +101,6 @@
     entrypoint: /bin/fuzzy
     working_dir: /home/fuzzy
     user: "{{ getent_passwd[ansible_user_id][1] }}:{{ getent_group['docker'][1] }}"
-    command: "master start --db {{ db_conn_string }} -v --listen-addr 0.0.0.0:12700"
+    command: "master start --db {{ db_conn_string }} --listen-addr 0.0.0.0:12700"
   tags:
     - "fuzzy-master-container"

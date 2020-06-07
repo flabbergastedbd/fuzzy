@@ -1,18 +1,14 @@
 use std::error::Error;
 use std::sync::Arc;
 
-use log::{warn, trace, error};
+use heim::{cpu, memory, units::information};
+use log::{error, trace, warn};
 use tokio::sync::RwLock;
-use heim::{
-    memory,
-    cpu,
-    units::information
-};
 
-use crate::models::{NewWorker, NewSysStat};
-use crate::xpc::collector_client::CollectorClient;
 use crate::common::intervals::WORKER_HEARTBEAT_INTERVAL;
 use crate::common::xpc::get_orchestrator_client;
+use crate::models::{NewSysStat, NewWorker};
+use crate::xpc::collector_client::CollectorClient;
 
 // Heartbeat interval in seconds
 
@@ -42,7 +38,10 @@ pub async fn heartbeat(worker_lock: Arc<RwLock<NewWorker>>) -> Result<(), Box<dy
                 error!("Sending heartbeat failed");
             }
         } else {
-            warn!("Failed to send a heartbeat, will try after {:?}: {:?}", WORKER_HEARTBEAT_INTERVAL, channel_or_error);
+            warn!(
+                "Failed to send a heartbeat, will try after {:?}: {:?}",
+                WORKER_HEARTBEAT_INTERVAL, channel_or_error
+            );
         }
         interval.tick().await;
     }
@@ -89,4 +88,3 @@ async fn get_used_memory() -> Result<i32, Box<dyn Error>> {
 async fn get_used_memory() -> Result<i32, Box<dyn Error>> {
     Ok(0)
 }
-

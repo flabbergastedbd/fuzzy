@@ -1,17 +1,21 @@
-use std::path::Path;
 use std::error::Error;
+use std::path::Path;
 
-use log::{warn, info, error, debug};
 use clap::ArgMatches;
-use tokio::{sync::oneshot, sync::broadcast, signal::unix::{signal, SignalKind}, task::LocalSet};
+use log::{debug, error, info, warn};
+use tokio::{
+    signal::unix::{signal, SignalKind},
+    sync::broadcast,
+    sync::oneshot,
+    task::LocalSet,
+};
 
+use crate::common::cli::parse_volume_map_settings;
 use crate::executor::{self, ExecutorConfig};
 use crate::fuzz_driver::{self, FuzzConfig};
 use crate::utils::fs::read_file;
-use crate::common::cli::parse_volume_map_settings;
 
 pub async fn cli(args: &ArgMatches) -> Result<(), Box<dyn Error>> {
-
     match args.subcommand() {
         // Adding a new task
         ("executor", Some(sub_matches)) => {
@@ -70,7 +74,7 @@ pub async fn cli(args: &ArgMatches) -> Result<(), Box<dyn Error>> {
                 error!("Error sending longshot: {:?}", e);
             }
             executor.close().await?;
-        },
+        }
         ("task", Some(sub_matches)) => {
             parse_volume_map_settings(sub_matches);
             debug!("Testing fuzz driver profile");
@@ -109,9 +113,9 @@ pub async fn cli(args: &ArgMatches) -> Result<(), Box<dyn Error>> {
             }
 
             local.await;
-        },
+        }
         // Listing all tasks
-        _ => {},
+        _ => {}
     }
 
     Ok(())

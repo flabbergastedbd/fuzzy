@@ -1,15 +1,19 @@
-use std::sync::Arc;
-use std::error::Error;
 use std::collections::HashMap;
+use std::error::Error;
+use std::sync::Arc;
 
-use log::{warn, trace, debug, error, info};
-use tokio::{sync::RwLock, sync::oneshot::{self, error::TryRecvError}, task::JoinHandle};
+use log::{debug, error, info, trace, warn};
+use tokio::{
+    sync::oneshot::{self, error::TryRecvError},
+    sync::RwLock,
+    task::JoinHandle,
+};
 
-use crate::xpc;
-use crate::worker::NewWorker;
-use crate::fuzz_driver::{self, FuzzConfig};
-use crate::xpc::orchestrator_client::OrchestratorClient;
 use crate::common::intervals::WORKER_TASK_REFRESH_INTERVAL;
+use crate::fuzz_driver::{self, FuzzConfig};
+use crate::worker::NewWorker;
+use crate::xpc;
+use crate::xpc::orchestrator_client::OrchestratorClient;
 
 struct TaskManagerTask {
     task_updated_at: prost_types::Timestamp,
@@ -24,9 +28,7 @@ pub struct TaskManager {
 
 impl TaskManager {
     pub fn new() -> Self {
-        Self {
-            tasks: HashMap::new(),
-        }
+        Self { tasks: HashMap::new() }
     }
 
     async fn remove_worker_task(&mut self, worker_task_id: &i32) -> Result<(), Box<dyn Error>> {
@@ -71,12 +73,15 @@ impl TaskManager {
             }
         });
 
-        self.tasks.insert(wtask.id, TaskManagerTask {
-            driver_handle,
-            kill_switch: tx,
-            dead_switch: dead_rx,
-            task_updated_at: wtask.task.updated_at,
-        });
+        self.tasks.insert(
+            wtask.id,
+            TaskManagerTask {
+                driver_handle,
+                kill_switch: tx,
+                dead_switch: dead_rx,
+                task_updated_at: wtask.task.updated_at,
+            },
+        );
 
         Ok(())
     }
@@ -136,7 +141,7 @@ impl TaskManager {
                 };
 
                 let response = client.get_worker_task(filter_worker_task).await;
-                if let Err(e) =  response {
+                if let Err(e) = response {
                     error!("Getting worker task failed: {}", e);
                 } else {
                     let worker_tasks = response.unwrap().into_inner();

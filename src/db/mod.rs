@@ -5,7 +5,7 @@ use diesel::r2d2::{ConnectionManager, Pool, PooledConnection};
 
 #[derive(Clone)]
 pub struct DbBroker {
-    pool: Pool<ConnectionManager<PgConnection>>
+    pool: Pool<ConnectionManager<PgConnection>>,
 }
 
 impl DbBroker {
@@ -14,9 +14,9 @@ impl DbBroker {
         let manager = ConnectionManager::<PgConnection>::new(connection_string);
         let pool = Pool::builder()
             .max_size(5)
-            .build(manager).expect("Failed to create db connection pool");
+            .build(manager)
+            .expect("Failed to create db connection pool");
         DbBroker { pool }
-
     }
 
     pub fn get_conn(&self) -> PooledConnection<ConnectionManager<PgConnection>> {

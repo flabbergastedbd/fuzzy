@@ -1,12 +1,12 @@
+use std::error::Error;
 use std::path::Path;
 use std::time::SystemTime;
-use std::error::Error;
 
-use log::{info, debug};
 use clap::ArgMatches;
+use log::{debug, info};
 use tokio::task;
 
-use crate::common::corpora::{delete_corpus, upload_corpus_from_disk, download_corpus_to_disk};
+use crate::common::corpora::{delete_corpus, download_corpus_to_disk, upload_corpus_from_disk};
 use crate::common::xpc::get_orchestrator_client;
 
 pub async fn cli(args: &ArgMatches) -> Result<(), Box<dyn Error>> {
@@ -23,15 +23,15 @@ pub async fn cli(args: &ArgMatches) -> Result<(), Box<dyn Error>> {
             let task_set = task::LocalSet::new();
 
             for file_path in files.into_iter() {
-                let file_path        = file_path.to_owned();
-                let label            = sub_matches.value_of("label").unwrap().to_owned();
+                let file_path = file_path.to_owned();
+                let label = sub_matches.value_of("label").unwrap().to_owned();
                 let mut local_client = client.clone(); // Create new client clones to pass
                 task_set.spawn_local(async move {
                     upload_corpus_from_disk(Path::new(file_path.as_str()), label, None, &mut local_client).await
                 });
             }
             task_set.await;
-        },
+        }
         ("download", Some(sub_matches)) => {
             debug!("Downloading corpus");
             let path = sub_matches.value_of("path").expect("Path to save corpus not provided");
@@ -48,25 +48,22 @@ pub async fn cli(args: &ArgMatches) -> Result<(), Box<dyn Error>> {
                 latest,
                 SystemTime::UNIX_EPOCH,
                 Path::new(path),
-                &mut client
-            ).await?;
+                &mut client,
+            )
+            .await?;
 
             info!("Successfully downloaded {} corpus to {}", corpora, path);
-        },
+        }
         ("delete", Some(sub_matches)) => {
-            let label = sub_matches.value_of("label").expect("Label to delete not provided").to_owned();
+            let label = sub_matches
+                .value_of("label")
+                .expect("Label to delete not provided")
+                .to_owned();
 
-            let _ = delete_corpus(
-                label,
-                None,
-                None,
-                None,
-                SystemTime::UNIX_EPOCH,
-                &mut client
-            ).await?;
-        },
+            let _ = delete_corpus(label, None, None, None, SystemTime::UNIX_EPOCH, &mut client).await?;
+        }
         // Listing all tasks
-        _ => {},
+        _ => {}
     }
 
     Ok(())

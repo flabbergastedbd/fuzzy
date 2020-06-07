@@ -1,8 +1,8 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 // Need to be here for generated rust code by prost
-use diesel::{Queryable, Identifiable, Insertable, AsChangeset};
+use diesel::{AsChangeset, Identifiable, Insertable, Queryable};
 
 // Insert table names
-use super::schema::{tasks, workers, corpora, crashes, worker_tasks, fuzz_stats, sys_stats};
+use super::schema::{corpora, crashes, fuzz_stats, sys_stats, tasks, worker_tasks, workers};
 
 tonic::include_proto!("xpc"); // The string specified here must match the proto package name

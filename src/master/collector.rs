@@ -1,10 +1,10 @@
 use diesel::prelude::*;
-use log::{error, debug};
-use tonic::{Request, Response, Code, Status};
+use log::{debug, error};
+use tonic::{Code, Request, Response, Status};
 
-use crate::schema::workers;
-use crate::models::{NewWorker, Worker};
 use crate::db::DbBroker;
+use crate::models::{NewWorker, Worker};
+use crate::schema::workers;
 use crate::xpc::collector_server::Collector;
 
 #[derive(Clone)]
@@ -15,7 +15,6 @@ pub struct CollectorService {
 #[tonic::async_trait]
 impl Collector for CollectorService {
     async fn heartbeat(&self, request: Request<NewWorker>) -> Result<Response<Worker>, Status> {
-
         // First get inner type of tonic::Request & then use our From traits
         let new_worker: NewWorker = request.into_inner();
         debug!("Received a heartbeat request from {}", new_worker.uuid);
@@ -26,9 +25,11 @@ impl Collector for CollectorService {
         // Upsert the new agent
         let worker = diesel::insert_into(workers::table)
             .values(&new_worker)
-            .on_conflict(workers::uuid).do_update().set(&new_worker)
+            .on_conflict(workers::uuid)
+            .do_update()
+            .set(&new_worker)
             .load::<Worker>(&conn);
-            // .execute(&conn);
+        // .execute(&conn);
 
         if let Err(e) = worker {
             error!("Unable to update db due to {}", e);
@@ -38,7 +39,6 @@ impl Collector for CollectorService {
             Ok(Response::new(worker))
         }
     }
-
 }
 
 impl CollectorService {

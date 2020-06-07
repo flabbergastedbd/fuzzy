@@ -1,5 +1,5 @@
-use std::path::Path;
 use std::error::Error;
+use std::path::Path;
 
 use validator::{Validate, ValidationError};
 
@@ -23,7 +23,9 @@ pub async fn construct_profile_from_disk(path: &Path) -> Result<FuzzConfig, Box<
 pub fn validate_fuzz_profile(config: &FuzzConfig) -> Result<(), ValidationError> {
     // Because for lcov collector we redownload corpus as of now
     if config.fuzz_stat.is_some() && config.corpus.upload == false {
-        return Err(ValidationError::new("Fuzz stat collectors are not supported when corpus upload is disabled."));
+        return Err(ValidationError::new(
+            "Fuzz stat collectors are not supported when corpus upload is disabled.",
+        ));
     }
     Ok(())
 }

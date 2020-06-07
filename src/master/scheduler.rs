@@ -1,14 +1,14 @@
-use std::time::SystemTime;
 use std::error::Error;
+use std::time::SystemTime;
 
-use log::{trace, error, warn, debug};
-use diesel::prelude::*;
 use diesel::dsl::sum;
+use diesel::prelude::*;
+use log::{debug, error, trace, warn};
 
+use crate::common::profiles::construct_profile;
 use crate::db::DbBroker;
 use crate::models::{Task, Worker, WorkerTask};
-use crate::schema::{tasks, worker_tasks, workers, sys_stats};
-use crate::common::profiles::construct_profile;
+use crate::schema::{sys_stats, tasks, worker_tasks, workers};
 
 #[derive(Clone)]
 pub struct Scheduler {
@@ -34,7 +34,8 @@ impl Scheduler {
         let conn = self.db_broker.get_conn();
 
         // Get tasks which are inactive by themselves but have active worker tasks
-        let stale_tasks = worker_tasks::table.inner_join(tasks::table)
+        let stale_tasks = worker_tasks::table
+            .inner_join(tasks::table)
             .filter(tasks::active.eq(false).and(worker_tasks::active.eq(true)))
             .select(tasks::all_columns)
             .load::<Task>(&conn)?;
@@ -54,8 +55,9 @@ impl Scheduler {
 
         let sys_stats: i64 = sys_stats::table
             .filter(
-                sys_stats::worker_id.eq(worker.id)
-                .and(sys_stats::created_at.gt(activity_window))
+                sys_stats::worker_id
+                    .eq(worker.id)
+                    .and(sys_stats::created_at.gt(activity_window)),
             )
             .count()
             .first(&conn)?;
@@ -114,7 +116,6 @@ impl Scheduler {
             if free > 0 {
                 workers_free.push((worker, free))
             }
-
         }
 
         Ok(workers_free)
@@ -137,7 +138,7 @@ impl Scheduler {
 
         let allocated: Option<i64> = WorkerTask::belonging_to(task)
             .filter(
-                worker_tasks::active.eq(true) // and that are active
+                worker_tasks::active.eq(true), // and that are active
             )
             .select(sum(worker_tasks::cpus))
             .first(&conn)?;
@@ -167,18 +168,20 @@ impl Scheduler {
     fn get_activatable_worker_task(&self, task: &Task, requirement: i32) -> Result<Option<WorkerTask>, Box<dyn Error>> {
         let conn = self.db_broker.get_conn();
 
-        let worker_tasks = WorkerTask::belonging_to(task).inner_join(workers::table)
+        let worker_tasks = WorkerTask::belonging_to(task)
+            .inner_join(workers::table)
             .filter(
-                worker_tasks::active.eq(false)
-                .and(workers::active.eq(true))
-                .and(worker_tasks::cpus.eq(requirement))
+                worker_tasks::active
+                    .eq(false)
+                    .and(workers::active.eq(true))
+                    .and(worker_tasks::cpus.eq(requirement)),
             )
             .select((worker_tasks::all_columns, workers::all_columns))
             .load::<(WorkerTask, Worker)>(&conn)?;
 
         for (worker_task, worker) in worker_tasks {
             if self.get_free_cpus(&worker)? >= requirement {
-                return Ok(Some(worker_task))
+                return Ok(Some(worker_task));
             }
         }
 
@@ -189,9 +192,7 @@ impl Scheduler {
         let conn = self.db_broker.get_conn();
 
         // Get active tasks, loop over them allocating
-        let active_tasks = tasks::table
-            .filter(tasks::active.eq(true))
-            .load::<Task>(&conn)?;
+        let active_tasks = tasks::table.filter(tasks::active.eq(true)).load::<Task>(&conn)?;
 
         for task in active_tasks {
             // Construct profile
@@ -209,7 +210,7 @@ impl Scheduler {
                 // 3. Check if existing inactive worker task can satisfy this
                 if let Some(worker_task) = self.get_activatable_worker_task(&task, new_requirement)? {
                     self.activate_worker_task(&worker_task)?;
-                    continue
+                    continue;
                 }
 
                 // 4. If not create a new worker task
@@ -226,7 +227,6 @@ impl Scheduler {
                 } else {
                     warn!("Couldn't find free worker for task: {}", task.id);
                 }
-
             } else {
                 trace!("Task already seems to be fully allocated: {:#?}\n", task);
             }
@@ -256,7 +256,10 @@ impl Scheduler {
             interval.tick().await;
             if let Err(e) = self.schedule() {
                 error!("Failed to schedule tasks: {}", e);
-                warn!("Will try again in {:?}", crate::common::intervals::MASTER_SCHEDULER_INTERVAL);
+                warn!(
+                    "Will try again in {:?}",
+                    crate::common::intervals::MASTER_SCHEDULER_INTERVAL
+                );
             }
         }
     }

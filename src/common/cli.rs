@@ -1,20 +1,12 @@
 use std::env;
 
-use log::error;
 use clap::ArgMatches;
+use log::error;
 
+use crate::common::constants::{FUZZY_CA_CERT, FUZZY_CLIENT_PEM, FUZZY_CONNECT_URL};
+use crate::common::executors::{set_container_volume_map, validate_container_volume_map};
+use crate::common::xpc::{set_ca_crt, set_connect_url, set_worker_pem};
 use log::debug;
-use crate::common::executors::{validate_container_volume_map, set_container_volume_map};
-use crate::common::xpc::{
-    set_connect_url,
-    set_ca_crt,
-    set_worker_pem
-};
-use crate::common::constants::{
-    FUZZY_CONNECT_URL,
-    FUZZY_CA_CERT,
-    FUZZY_CLIENT_PEM,
-};
 
 pub fn parse_volume_map_settings(sub_matches: &ArgMatches) {
     // Set up volume map after verifying
@@ -48,7 +40,12 @@ fn get_arg(sub_matches: &ArgMatches, arg_name: &str, env_key: &str, default: &st
 
 pub fn parse_global_settings(sub_matches: &ArgMatches) {
     // Set up connect addr environment variable
-    let connect_addr = get_arg(sub_matches, "connect_addr", FUZZY_CONNECT_URL, "https://localhost:12700/");
+    let connect_addr = get_arg(
+        sub_matches,
+        "connect_addr",
+        FUZZY_CONNECT_URL,
+        "https://localhost:12700/",
+    );
     set_connect_url(&connect_addr);
 
     // Set up connect addr environment variable

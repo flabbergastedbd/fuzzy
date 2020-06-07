@@ -1,5 +1,5 @@
-use std::path::Path;
 use std::error::Error;
+use std::path::Path;
 
 use log::info;
 
@@ -43,12 +43,14 @@ impl CrashValidator {
             let stderr = std::str::from_utf8(&output.stderr)?;
 
             // Join stdout/stderr for now as output
-            let output = format!("STDOUT\n\
+            let output = format!(
+                "STDOUT\n\
                                   ------\n\
                                   {}\n\
                                   STDERR\n\
                                   ------\n\
-                                  {}\n", stdout, stderr
+                                  {}\n",
+                stdout, stderr
             );
 
             // Remove cwd

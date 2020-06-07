@@ -1,16 +1,20 @@
-use std::path::Path;
-use std::sync::Arc;
 use std::error::Error;
 use std::fmt;
 use std::fs;
+use std::path::Path;
+use std::sync::Arc;
 
 use clap::ArgMatches;
-use log::{warn, error, info, debug}; use uuid::Uuid;
-use tokio::{sync::RwLock, signal::unix::{signal, SignalKind}};
 use heim::units::information;
+use log::{debug, error, info, warn};
+use tokio::{
+    signal::unix::{signal, SignalKind},
+    sync::RwLock,
+};
+use uuid::Uuid;
 
-use crate::models::NewWorker;
 use crate::common::cli::{parse_global_settings, parse_volume_map_settings};
+use crate::models::NewWorker;
 
 mod dispatcher;
 mod tasks;
@@ -53,7 +57,8 @@ impl NewWorker {
     pub fn with_name(mut self, name: Option<&str>) -> Self {
         if let Some(custom_name) = name {
             self.name = Some(custom_name.to_owned());
-        } self
+        }
+        self
     }
 
     // Assign given name to this worker
@@ -101,8 +106,8 @@ pub async fn main_loop(worker: Arc<RwLock<NewWorker>>) -> Result<(), Box<dyn Err
     tokio::spawn(async move {
         let mut worker_writable = worker_clone.write().await;
         worker_writable.update_self().await
-    }).await?;
-
+    })
+    .await?;
 
     // Launch periodic heartbeat dispatcher
     info!("Launching heartbeat task");
@@ -168,7 +173,7 @@ pub fn main(arg_matches: &ArgMatches) {
                 error!("{}", e);
                 panic!("Failed to start main loop")
             }
-        },
+        }
         _ => {}
     }
 }

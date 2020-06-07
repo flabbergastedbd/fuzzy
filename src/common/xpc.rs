@@ -1,16 +1,15 @@
 use std::env;
-use std::path::Path;
 use std::error::Error;
+use std::path::Path;
 
-use log::{error, debug};
-use tonic::transport::{ClientTlsConfig, Channel, Endpoint, Identity, Certificate};
+use log::{debug, error};
+use tonic::transport::{Certificate, Channel, ClientTlsConfig, Endpoint, Identity};
 
-use crate::xpc::orchestrator_client::OrchestratorClient;
 use crate::common::constants::{
-    WORKER_CONNECT_CACERT_ENV_KEY,
-    WORKER_CONNECT_WORKERPEM_ENV_KEY,
-    WORKER_CONNECT_ADDR_ENV_KEY};
+    WORKER_CONNECT_ADDR_ENV_KEY, WORKER_CONNECT_CACERT_ENV_KEY, WORKER_CONNECT_WORKERPEM_ENV_KEY,
+};
 use crate::utils::fs::read_file;
+use crate::xpc::orchestrator_client::OrchestratorClient;
 
 // Client pem utils
 pub fn set_worker_pem(path: &str) {
@@ -69,8 +68,7 @@ pub async fn get_server_endpoint() -> Result<Endpoint, Box<dyn Error>> {
         .ca_certificate(Certificate::from_pem(ca_cert_bytes))
         .identity(Identity::from_pem(&worker_pem_bytes, &worker_pem_bytes));
 
-    let endpoint = tonic::transport::Channel::from_shared(url)?
-        .tls_config(tls_config);
+    let endpoint = tonic::transport::Channel::from_shared(url)?.tls_config(tls_config);
 
     Ok(endpoint)
 }

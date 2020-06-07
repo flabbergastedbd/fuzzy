@@ -1,14 +1,14 @@
-use std::path::Path;
 use std::error::Error;
+use std::path::Path;
 
-use log::{info, debug, error};
 use clap::ArgMatches;
+use log::{debug, error, info};
 use tonic::Request;
 
+use crate::common::profiles::{construct_profile_from_disk, write_profile_to_disk};
+use crate::common::xpc::get_orchestrator_client;
 use crate::models::{NewTask, PatchTask};
 use crate::xpc::FilterTask;
-use crate::common::profiles::{write_profile_to_disk, construct_profile_from_disk};
-use crate::common::xpc::get_orchestrator_client;
 
 pub async fn cli(args: &ArgMatches) -> Result<(), Box<dyn Error>> {
     debug!("Creating interface client");
@@ -32,7 +32,7 @@ pub async fn cli(args: &ArgMatches) -> Result<(), Box<dyn Error>> {
             let _ = client.submit_task(Request::new(new_task)).await?;
             // TODO: Error handling
             info!("Successfilly added task");
-        },
+        }
         ("edit", Some(sub_matches)) => {
             debug!("Editing a task");
             let profile_path = sub_matches.value_of("profile_path");
@@ -57,15 +57,12 @@ pub async fn cli(args: &ArgMatches) -> Result<(), Box<dyn Error>> {
             // Validate executor & driver as we do crude transforms via enums & strum
             let _ = client.update_task(Request::new(patch_task)).await?;
             info!("Updated task successfully");
-        },
+        }
         // Listing all tasks
         ("list", Some(_)) => {
             debug!("Listing all tasks");
 
-            let filter_task = FilterTask {
-                id: None,
-                active: None,
-            };
+            let filter_task = FilterTask { id: None, active: None };
 
             let response = client.get_tasks(Request::new(filter_task)).await?;
             let tasks = response.into_inner().data;
@@ -77,7 +74,7 @@ pub async fn cli(args: &ArgMatches) -> Result<(), Box<dyn Error>> {
             }
 
             super::print_results(tasks_heading, tasks_vec);
-        },
+        }
         ("get", Some(sub_matches)) => {
             let id = sub_matches.value_of("id").expect("No ID provided").parse::<i32>()?;
             let filter_task = FilterTask {
@@ -99,8 +96,8 @@ pub async fn cli(args: &ArgMatches) -> Result<(), Box<dyn Error>> {
             } else {
                 error!("Got no task");
             }
-        },
-        _ => {},
+        }
+        _ => {}
     }
 
     Ok(())

@@ -1,21 +1,16 @@
 use std::time::{Duration, UNIX_EPOCH};
 
 use diesel::prelude::*;
-use log::{error, debug};
-use tonic::{Request, Response, Status, Code};
+use log::{debug, error};
+use tonic::{Code, Request, Response, Status};
 
+use crate::common::profiles::construct_profile;
 use crate::db::DbBroker;
-use crate::schema::{workers, tasks, corpora, crashes, worker_tasks, fuzz_stats, sys_stats};
-use crate::models::{
-    Task, NewTask,
-    Corpus, NewCorpus,
-    Crash, NewCrash, PatchCrash,
-    NewFuzzStat
-};
+use crate::models::{Corpus, Crash, NewCorpus, NewCrash, NewFuzzStat, NewTask, PatchCrash, Task};
+use crate::schema::{corpora, crashes, fuzz_stats, sys_stats, tasks, worker_tasks, workers};
 use crate::xpc;
 use crate::xpc::orchestrator_server::Orchestrator;
-use crate::common::profiles::construct_profile;
-pub use crate::xpc::orchestrator_server::OrchestratorServer as OrchestratorServer;
+pub use crate::xpc::orchestrator_server::OrchestratorServer;
 
 #[derive(Clone)]
 pub struct OrchestratorService {
@@ -24,7 +19,6 @@ pub struct OrchestratorService {
 
 #[tonic::async_trait]
 impl Orchestrator for OrchestratorService {
-
     // Task related calls
     async fn get_tasks(&self, request: Request<xpc::FilterTask>) -> Result<Response<xpc::Tasks>, Status> {
         debug!("Returning filtered tasks");
@@ -44,25 +38,25 @@ impl Orchestrator for OrchestratorService {
             query = query.filter(tasks::active.eq(active));
         }
 
-        let task_list = query
-            .load::<Task>(&conn);
+        let task_list = query.load::<Task>(&conn);
 
         if let Err(e) = task_list {
             error!("Unable to get task: {}", e);
             Err(Status::new(Code::NotFound, ""))
         } else {
-            Ok(Response::new(xpc::Tasks { data: task_list.unwrap() }))
+            Ok(Response::new(xpc::Tasks {
+                data: task_list.unwrap(),
+            }))
         }
     }
 
     async fn submit_task(&self, request: Request<NewTask>) -> Result<Response<()>, Status> {
-
         // First get inner type of tonic::Request & then use our From traits
         let new_task: NewTask = request.into_inner();
 
         if let Err(e) = construct_profile(new_task.profile.as_str()) {
             error!("Bad profile: {}", e);
-            return Err(Status::new(Code::InvalidArgument, format!("{}", e)))
+            return Err(Status::new(Code::InvalidArgument, format!("{}", e)));
         }
 
         // Check profile is valid
@@ -84,17 +78,16 @@ impl Orchestrator for OrchestratorService {
     }
 
     async fn update_task(&self, request: Request<xpc::PatchTask>) -> Result<Response<()>, Status> {
-
         // First get inner type of tonic::Request & then use our From traits
         let patch_task: xpc::PatchTask = request.into_inner();
 
-            // .into_boxed();
+        // .into_boxed();
 
         if let Some(patch_profile) = patch_task.profile.clone() {
             if let Ok(_) = construct_profile(patch_profile.as_str()) {
                 debug!("Valid profile submitted");
             } else {
-                return Err(Status::new(Code::InvalidArgument, "Bad profile submitted"))
+                return Err(Status::new(Code::InvalidArgument, "Bad profile submitted"));
             }
         }
 
@@ -138,7 +131,6 @@ impl Orchestrator for OrchestratorService {
     }
 
     async fn get_corpus(&self, request: Request<xpc::FilterCorpus>) -> Result<Response<xpc::Corpora>, Status> {
-
         let filter_corpus = request.into_inner();
         debug!("Filtering and sending corpus {:?}", filter_corpus);
 
@@ -147,15 +139,21 @@ impl Orchestrator for OrchestratorService {
 
         let mut query = corpora::table
             .filter(
-                corpora::label.ilike(filter_corpus.label).and(
-                corpora::created_at.gt(created_after))
-            ).into_boxed();
+                corpora::label
+                    .ilike(filter_corpus.label)
+                    .and(corpora::created_at.gt(created_after)),
+            )
+            .into_boxed();
 
         // Only one of for_worker_task_id or not_worker_task_id is used. not_ variant is
         // prioritized.
         // If worker is asking for corpus, don't return the same corpus already found by it
         if let Some(worker_task_id) = filter_corpus.not_worker_task_id {
-            query = query.filter(corpora::worker_task_id.ne(worker_task_id).or(corpora::worker_task_id.is_null()));
+            query = query.filter(
+                corpora::worker_task_id
+                    .ne(worker_task_id)
+                    .or(corpora::worker_task_id.is_null()),
+            );
         } else if let Some(worker_task_id) = filter_corpus.for_worker_task_id {
             query = query.filter(corpora::worker_task_id.eq(worker_task_id));
         }
@@ -171,23 +169,24 @@ impl Orchestrator for OrchestratorService {
             error!("Unable to get corpus: {}", e);
             Err(Status::new(Code::NotFound, ""))
         } else {
-            Ok(Response::new(xpc::Corpora { data: corpus_list.unwrap() }))
+            Ok(Response::new(xpc::Corpora {
+                data: corpus_list.unwrap(),
+            }))
         }
     }
 
     async fn delete_corpus(&self, request: Request<xpc::FilterCorpus>) -> Result<Response<()>, Status> {
-
         let filter_corpus = request.into_inner();
         debug!("Filtering and deleting corpus: {:?}", filter_corpus);
 
         let conn = self.db_broker.get_conn();
         let created_after = UNIX_EPOCH + Duration::from_secs(filter_corpus.created_after.seconds as u64);
 
-        let query = corpora::table
-            .filter(
-                corpora::label.ilike(filter_corpus.label).and(
-                corpora::created_at.gt(created_after))
-            );
+        let query = corpora::table.filter(
+            corpora::label
+                .ilike(filter_corpus.label)
+                .and(corpora::created_at.gt(created_after)),
+        );
 
         let result = diesel::delete(query).execute(&conn);
 
@@ -241,17 +240,16 @@ impl Orchestrator for OrchestratorService {
 
     /// Always return in order
     async fn get_crashes(&self, request: Request<xpc::FilterCrash>) -> Result<Response<xpc::Crashes>, Status> {
-
         let filter_crash = request.into_inner();
         debug!("Filtering and sending crashes {:?}", filter_crash);
 
         let conn = self.db_broker.get_conn();
         let created_after = UNIX_EPOCH + Duration::from_secs(filter_crash.created_after.seconds as u64);
 
-        let mut query = crashes::table.inner_join(worker_tasks::table)
-            .filter(
-                crashes::created_at.gt(created_after)
-            ).into_boxed();
+        let mut query = crashes::table
+            .inner_join(worker_tasks::table)
+            .filter(crashes::created_at.gt(created_after))
+            .into_boxed();
 
         // Check if label present
         if let Some(label) = filter_crash.label {
@@ -276,8 +274,9 @@ impl Orchestrator for OrchestratorService {
         // If task id filter on it
         if let Some(task_id) = filter_crash.task_id {
             query = query.filter(
-                worker_tasks::task_id.eq(task_id)
-                .and(crashes::worker_task_id.eq(worker_tasks::id.nullable()))
+                worker_tasks::task_id
+                    .eq(task_id)
+                    .and(crashes::worker_task_id.eq(worker_tasks::id.nullable())),
             );
         }
 
@@ -294,25 +293,38 @@ impl Orchestrator for OrchestratorService {
             error!("Unable to get corpus: {}", e);
             Err(Status::new(Code::NotFound, ""))
         } else {
-            Ok(Response::new(xpc::Crashes { data: crash_list.unwrap() }))
+            Ok(Response::new(xpc::Crashes {
+                data: crash_list.unwrap(),
+            }))
         }
     }
 
     // Worker task related calls
-    async fn get_worker_task(&self, request: Request<xpc::FilterWorkerTask>) -> Result<Response<xpc::WorkerTasks>, Status> {
+    async fn get_worker_task(
+        &self,
+        request: Request<xpc::FilterWorkerTask>,
+    ) -> Result<Response<xpc::WorkerTasks>, Status> {
         let filter_worker_task = request.into_inner();
         debug!("Filtering worker tasks with {:#?}", filter_worker_task);
 
         let conn = self.db_broker.get_conn();
-        let tasks = worker_tasks::table.inner_join(tasks::table).inner_join(workers::table)
+        let tasks = worker_tasks::table
+            .inner_join(tasks::table)
+            .inner_join(workers::table)
             .filter(
-                workers::uuid.eq(filter_worker_task.worker_uuid)
-                .and(
-                    worker_tasks::worker_id.eq(workers::id).and(tasks::active.eq(true)) // Active tasks
-                    .or(worker_tasks::id.eq_any(filter_worker_task.worker_task_ids)) // Non active tasks that worker is already running
-                )
+                workers::uuid.eq(filter_worker_task.worker_uuid).and(
+                    worker_tasks::worker_id
+                        .eq(workers::id)
+                        .and(tasks::active.eq(true)) // Active tasks
+                        .or(worker_tasks::id.eq_any(filter_worker_task.worker_task_ids)), // Non active tasks that worker is already running
+                ),
             )
-            .select((worker_tasks::id, tasks::all_columns, worker_tasks::cpus, worker_tasks::active))
+            .select((
+                worker_tasks::id,
+                tasks::all_columns,
+                worker_tasks::cpus,
+                worker_tasks::active,
+            ))
             .load::<xpc::WorkerTaskFull>(&conn);
 
         // Failure of constraint will be logged here
@@ -328,11 +340,15 @@ impl Orchestrator for OrchestratorService {
         let id = request.into_inner();
 
         let conn = self.db_broker.get_conn();
-        let task = worker_tasks::table.inner_join(tasks::table)
-            .filter(
-                worker_tasks::id.eq(id.value)
-            )
-            .select((worker_tasks::id, tasks::all_columns, worker_tasks::cpus, worker_tasks::active))
+        let task = worker_tasks::table
+            .inner_join(tasks::table)
+            .filter(worker_tasks::id.eq(id.value))
+            .select((
+                worker_tasks::id,
+                tasks::all_columns,
+                worker_tasks::cpus,
+                worker_tasks::active,
+            ))
             .first::<xpc::WorkerTaskFull>(&conn);
 
         // Failure of constraint will be logged here

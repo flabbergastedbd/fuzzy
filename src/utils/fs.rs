@@ -1,18 +1,18 @@
-use std::io::{BufRead, Seek, SeekFrom};
 use std::error::Error;
+use std::io::{BufRead, Seek, SeekFrom};
 use std::path::{Path, PathBuf};
 use std::time::SystemTime;
 
-use log::{trace, error, debug};
+use log::{debug, error, trace};
 use regex::Regex;
 
 #[cfg(target_os = "linux")]
-use inotify::{Inotify, WatchMask, EventStream};
+use inotify::{EventStream, Inotify, WatchMask};
 
 use tokio::{
     fs::{self, File},
-    stream::StreamExt,
     io::AsyncReadExt,
+    stream::StreamExt,
 };
 
 use crate::utils::get_human_dt;
@@ -26,7 +26,7 @@ pub fn tail_n(file_path: &Path, bytes: u64) -> Result<Vec<String>, Box<dyn Error
     file.seek(SeekFrom::Start(length - bytes))?;
 
     let reader = std::io::BufReader::new(file);
-    let lines: Vec<String> = reader.lines().map(|line| { line.unwrap() }).collect();
+    let lines: Vec<String> = reader.lines().map(|line| line.unwrap()).collect();
 
     Ok(lines)
 }
@@ -70,7 +70,11 @@ impl InotifyFileWatcher {
 
         let stream = inotify.event_stream(buffer)?;
 
-        Ok(Self { _inotify: inotify, stream, filter })
+        Ok(Self {
+            _inotify: inotify,
+            stream,
+            filter,
+        })
     }
 
     pub async fn get_new_file(&mut self) -> Option<String> {
@@ -79,11 +83,11 @@ impl InotifyFileWatcher {
             debug!("Received inotify event: {:?}", event_or_error);
             if let Err(e) = event_or_error {
                 error!("Inotify stream error: {:?}", e);
-                break None
+                break None;
             } else {
                 let file_name = event_or_error.unwrap().name?.into_string().unwrap();
                 if self.filter.as_ref().map(|r| r.is_match(&file_name)) == Some(true) {
-                    break Some(file_name)
+                    break Some(file_name);
                 }
                 debug!("Skipping {:?}, due to filter match", file_name);
                 continue;
@@ -101,7 +105,12 @@ pub struct FileWatcher {
 }
 
 impl FileWatcher {
-    pub fn new(path: &Path, blacklist_filter: Option<Regex>, whitelist_filter: Option<Regex>, last_sync: SystemTime) -> Result<Self, Box<dyn Error>> {
+    pub fn new(
+        path: &Path,
+        blacklist_filter: Option<Regex>,
+        whitelist_filter: Option<Regex>,
+        last_sync: SystemTime,
+    ) -> Result<Self, Box<dyn Error>> {
         debug!("Creating new file watcher at {:?}", path);
         Ok(Self {
             path: path.to_path_buf(),
@@ -113,7 +122,11 @@ impl FileWatcher {
 
     // TODO: This does lot of syscalls, fix this
     pub fn get_new_files(&mut self) -> Result<Vec<PathBuf>, Box<dyn Error>> {
-        debug!("Trying to get new files at {:?} since {:?}", self.path, get_human_dt(self.last_sync));
+        debug!(
+            "Trying to get new files at {:?} since {:?}",
+            self.path,
+            get_human_dt(self.last_sync)
+        );
         let mut new_files = vec![];
         // Dedup is handled on master anyways, this is to not miss anything
         let now = SystemTime::now();
@@ -121,18 +134,34 @@ impl FileWatcher {
         for entry in entries {
             let entry = entry?;
             if let Some(file_name) = entry.file_name().to_str() {
-                let blacklist_match = self.blacklist_filter.as_ref().map(|r| r.is_match(&file_name)).unwrap_or(true);
-                let whitelist_match = self.whitelist_filter.as_ref().map(|r| r.is_match(&file_name)).unwrap_or(true);
+                let blacklist_match = self
+                    .blacklist_filter
+                    .as_ref()
+                    .map(|r| r.is_match(&file_name))
+                    .unwrap_or(true);
+                let whitelist_match = self
+                    .whitelist_filter
+                    .as_ref()
+                    .map(|r| r.is_match(&file_name))
+                    .unwrap_or(true);
                 if !blacklist_match && whitelist_match {
                     // This enables us to sync all files if filesystem doesnt support timestamps
                     let timestamp = entry.metadata()?.created().unwrap_or(now);
-                    if  self.last_sync <= timestamp {
+                    if self.last_sync <= timestamp {
                         new_files.push(entry.path());
                     } else {
-                        trace!("Old timestamp detected should have been synced: {:?}", get_human_dt(timestamp));
+                        trace!(
+                            "Old timestamp detected should have been synced: {:?}",
+                            get_human_dt(timestamp)
+                        );
                     }
                 } else {
-                    trace!("Skipping {} (Blacklist Match: {:?} - Whitelist Match: {:?}", file_name, blacklist_match, whitelist_match);
+                    trace!(
+                        "Skipping {} (Blacklist Match: {:?} - Whitelist Match: {:?}",
+                        file_name,
+                        blacklist_match,
+                        whitelist_match
+                    );
                 }
             }
         }

@@ -1,17 +1,14 @@
-use std::time::UNIX_EPOCH;
 use std::error::Error;
+use std::time::UNIX_EPOCH;
 
 use log::info;
 use tonic::transport::channel::Channel;
 
+use crate::common::{crashes::download_crashes, xpc::get_orchestrator_client};
 use crate::executor;
-use crate::xpc::{self, orchestrator_client::OrchestratorClient};
 use crate::fuzz_driver::CrashConfig;
 use crate::utils::fs::rm_r;
-use crate::common::{
-    xpc::get_orchestrator_client,
-    crashes::download_crashes,
-};
+use crate::xpc::{self, orchestrator_client::OrchestratorClient};
 
 pub struct CrashDeduplicator {
     config: CrashConfig,
@@ -23,12 +20,13 @@ impl CrashDeduplicator {
         Ok(Self { config, worker_task_id })
     }
 
-    async fn get_task_id(worker_task_id: Option<i32>, client: &mut OrchestratorClient<Channel>) -> Result<Option<i32>, Box<dyn Error>> {
+    async fn get_task_id(
+        worker_task_id: Option<i32>,
+        client: &mut OrchestratorClient<Channel>,
+    ) -> Result<Option<i32>, Box<dyn Error>> {
         let mut task_id = None;
         if let Some(worker_task_id) = worker_task_id {
-            let id = xpc::Id {
-                value: worker_task_id
-            };
+            let id = xpc::Id { value: worker_task_id };
             let wtask = client.fetch_worker_task(id).await?.into_inner();
             task_id = Some(wtask.task.id);
         }
@@ -51,15 +49,8 @@ impl CrashDeduplicator {
             exec_config.args.push(new_output_filename.to_owned());
 
             // Get all non duplicate crashes
-            let crashes = download_crashes(
-                None,
-                Some(true),
-                None,
-                task_id,
-                None,
-                UNIX_EPOCH,
-                false,
-                &mut client).await?;
+            let crashes =
+                download_crashes(None, Some(true), None, task_id, None, UNIX_EPOCH, false, &mut client).await?;
             let mut dup_crash_id = None;
 
             // Create executor to be used repeatedly
@@ -69,7 +60,7 @@ impl CrashDeduplicator {
             // Create paths to write contents to
             let cwd = executor.get_cwd_path();
             let new_output_path = cwd.join(new_output_filename);
-            tokio::fs::write(new_output_path.as_path(), output).await?;  // Since this is done only once
+            tokio::fs::write(new_output_path.as_path(), output).await?; // Since this is done only once
             let existing_output_path = cwd.join(existing_output_filename);
 
             // Copy new output file into cwd of validate
@@ -84,7 +75,7 @@ impl CrashDeduplicator {
                     // Zero exit code means duplicate just like diff command
                     if output.status.success() == true {
                         dup_crash_id = Some(crash.id);
-                        break
+                        break;
                     }
                 }
             }

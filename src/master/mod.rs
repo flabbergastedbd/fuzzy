@@ -1,16 +1,16 @@
-use std::path::Path;
 use std::error::Error;
 use std::net::SocketAddr;
+use std::path::Path;
 
 use clap::ArgMatches;
-use log::{error, info, debug};
-use tonic::transport::{Server, ServerTlsConfig};
+use log::{debug, error, info};
 use tokio::signal::unix::{signal, SignalKind};
+use tonic::transport::{Server, ServerTlsConfig};
 
 use crate::db::DbBroker;
-use crate::xpc::collector_server::CollectorServer;
 use crate::utils::fs::read_file;
-use interface::{OrchestratorService, OrchestratorServer};
+use crate::xpc::collector_server::CollectorServer;
+use interface::{OrchestratorServer, OrchestratorService};
 
 mod collector;
 mod interface;
@@ -23,10 +23,7 @@ pub struct Master {
 }
 
 impl Master {
-    fn new(
-            listen_address: &str,
-            db_connect_str: &str
-            ) -> Master {
+    fn new(listen_address: &str, db_connect_str: &str) -> Master {
         debug!("Initializing new master");
         let master = Master {
             listen_addr: listen_address.parse().expect("Invalid listen address provided"),
@@ -95,7 +92,9 @@ pub fn main(arg_matches: &ArgMatches) {
             info!("Starting master agent");
             let master = Master::new(
                 sub_matches.value_of("listen_addr").unwrap_or("127.0.0.1:12700"),
-                sub_matches.value_of("db_connect_str").unwrap_or("postgres://fuzzy:fuzzy@127.0.0.1:5432/fuzzy"),
+                sub_matches
+                    .value_of("db_connect_str")
+                    .unwrap_or("postgres://fuzzy:fuzzy@127.0.0.1:5432/fuzzy"),
             );
 
             let server_pem_path = sub_matches.value_of("server_pem").unwrap_or("server.pem");
@@ -105,7 +104,7 @@ pub fn main(arg_matches: &ArgMatches) {
                 error!("Master exited with error: {}", e);
                 std::process::exit(1);
             }
-        },
+        }
         _ => {}
     }
 }

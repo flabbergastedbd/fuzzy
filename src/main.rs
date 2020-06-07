@@ -1,46 +1,35 @@
 use std::error::Error;
 
-use log::{debug, LevelFilter};
-use clap::{App, load_yaml};
+use clap::{load_yaml, App};
 use fern::colors::{Color, ColoredLevelConfig};
+use log::{debug, LevelFilter};
 
 mod cli;
-mod db;
-mod xpc;
-mod master;
-mod worker;
-mod utils;
 mod common;
+mod db;
 mod executor;
 mod fuzz_driver;
+mod master;
+mod utils;
+mod worker;
+mod xpc;
 
-#[macro_use] extern crate validator_derive;
+#[macro_use]
+extern crate validator_derive;
 // TODO https://github.com/diesel-rs/diesel/issues/2155
-#[macro_use] extern crate diesel;
-pub mod schema;
+#[macro_use]
+extern crate diesel;
 pub mod models;
+pub mod schema;
 
 fn setup_logging(verbose: u64, file_path: &str) -> Result<(), Box<dyn Error>> {
     let mut config = fern::Dispatch::new();
 
     config = match verbose {
-        1 => {
-            config
-                .level(LevelFilter::Info)
-                .level_for("fuzzy", LevelFilter::Debug)
-        },
-        2 => {
-            config
-                .level(LevelFilter::Debug)
-        },
-        3 => {
-            config
-                .level(LevelFilter::Info)
-                .level_for("fuzzy", LevelFilter::Trace)
-        },
-        _ => {
-            config.level(LevelFilter::Info)
-        },
+        1 => config.level(LevelFilter::Info).level_for("fuzzy", LevelFilter::Debug),
+        2 => config.level(LevelFilter::Debug),
+        3 => config.level(LevelFilter::Info).level_for("fuzzy", LevelFilter::Trace),
+        _ => config.level(LevelFilter::Info),
     };
 
     // Colors first
@@ -78,10 +67,7 @@ fn setup_logging(verbose: u64, file_path: &str) -> Result<(), Box<dyn Error>> {
         })
         .chain(std::io::stdout());
 
-    config
-        .chain(file_config)
-        .chain(stdout_config)
-        .apply()?;
+    config.chain(file_config).chain(stdout_config).apply()?;
 
     // Logging to log file.
     debug!("Log initialization complete");
@@ -104,13 +90,13 @@ fn main() {
     match arg_matches.subcommand() {
         ("master", Some(sub_matches)) => {
             master::main(sub_matches);
-        },
+        }
         ("worker", Some(sub_matches)) => {
             worker::main(sub_matches);
-        },
+        }
         ("cli", Some(sub_matches)) => {
             cli::main(sub_matches);
-        },
+        }
         _ => {}
     }
 }

@@ -2,8 +2,8 @@ use std::error::Error;
 
 use tonic::Request;
 
-use crate::models::PatchWorkerTask;
 use crate::common::xpc::get_orchestrator_client;
+use crate::models::PatchWorkerTask;
 
 pub async fn mark_worker_task_active(worker_task_id: Option<i32>) -> Result<(), Box<dyn Error>> {
     if worker_task_id.is_some() {
@@ -12,7 +12,7 @@ pub async fn mark_worker_task_active(worker_task_id: Option<i32>) -> Result<(), 
 
         let patch_worker_task = PatchWorkerTask {
             id: worker_task_id,
-            running: true
+            running: true,
         };
 
         client.update_worker_task(Request::new(patch_worker_task)).await?;
@@ -27,12 +27,10 @@ pub async fn mark_worker_task_inactive(worker_task_id: Option<i32>) -> Result<()
 
         let patch_worker_task = PatchWorkerTask {
             id: worker_task_id,
-            running: false
+            running: false,
         };
 
         client.update_worker_task(Request::new(patch_worker_task)).await?;
     }
     Ok(())
 }
-
-

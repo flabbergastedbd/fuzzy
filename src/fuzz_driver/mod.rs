@@ -1,19 +1,19 @@
-use std::path::Path;
 use std::error::Error;
+use std::path::Path;
 
+use log::{debug, error, info, warn};
 use regex::Regex;
-use log::{info, warn, error, debug};
-use serde::{Serialize, Deserialize};
-use tokio::sync::{oneshot, broadcast};
+use serde::{Deserialize, Serialize};
+use tokio::sync::{broadcast, oneshot};
 use validator::Validate;
 
 use super::executor::{self, Executor, ExecutorConfig};
-use crate::common::worker_tasks::{mark_worker_task_active, mark_worker_task_inactive};
-use stats::{FuzzStatConfig, FuzzStatCollector};
 use crate::common::profiles::{validate_fuzz_profile, validate_relative_path};
+use crate::common::worker_tasks::{mark_worker_task_active, mark_worker_task_inactive};
+use stats::{FuzzStatCollector, FuzzStatConfig};
 
-mod libfuzzer;
 mod honggfuzz;
+mod libfuzzer;
 pub mod stats;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -73,15 +73,17 @@ pub trait FuzzDriver: Send {
     fn set_fuzz_config(&mut self, config: FuzzConfig);
 
     // Custom stat collector if need be
-    fn get_custom_stat_collector(&self, executor: &Box<dyn Executor>) -> Result<Option<Box<dyn FuzzStatCollector>>, Box<dyn Error>>;
-    fn get_stat_collector(&self, executor: &Box<dyn Executor>) -> Result<Option<Box<dyn FuzzStatCollector>>, Box<dyn Error>> {
+    fn get_custom_stat_collector(
+        &self,
+        executor: &Box<dyn Executor>,
+    ) -> Result<Option<Box<dyn FuzzStatCollector>>, Box<dyn Error>>;
+    fn get_stat_collector(
+        &self,
+        executor: &Box<dyn Executor>,
+    ) -> Result<Option<Box<dyn FuzzStatCollector>>, Box<dyn Error>> {
         let full_config = self.get_fuzz_config();
         if let Some(stat_config) = full_config.clone().fuzz_stat {
-            Ok(Some(stats::new(
-                    stat_config,
-                    full_config,
-                    self.get_worker_task_id(),
-            )))
+            Ok(Some(stats::new(stat_config, full_config, self.get_worker_task_id())))
         } else if let Some(stat_collector) = self.get_custom_stat_collector(executor)? {
             Ok(Some(stat_collector))
         } else {
@@ -108,7 +110,11 @@ pub trait FuzzDriver: Send {
         Ok(())
     }
 
-    async fn start(&mut self, kill_switch: oneshot::Receiver<u8>, death_switch: oneshot::Sender<u8>) -> Result<(), Box<dyn Error>> {
+    async fn start(
+        &mut self,
+        kill_switch: oneshot::Receiver<u8>,
+        death_switch: oneshot::Sender<u8>,
+    ) -> Result<(), Box<dyn Error>> {
         // Before anything call fix args, so that drivers can do changes
         self.fix_args();
 
@@ -208,7 +214,10 @@ impl FuzzDriver for FuzzyDriver {
         self.worker_task_id.clone()
     }
 
-    fn get_custom_stat_collector(&self, _: &Box<dyn Executor>) -> Result<Option<Box<dyn FuzzStatCollector>>, Box<dyn Error>> {
+    fn get_custom_stat_collector(
+        &self,
+        _: &Box<dyn Executor>,
+    ) -> Result<Option<Box<dyn FuzzStatCollector>>, Box<dyn Error>> {
         Ok(None)
     }
 
@@ -220,14 +229,14 @@ pub fn new(config: FuzzConfig, worker_task_id: Option<i32>) -> Box<dyn FuzzDrive
         FuzzDriverEnum::Libfuzzer => {
             debug!("Creating libFuzzer driver");
             Box::new(libfuzzer::LibFuzzerDriver::new(config, worker_task_id))
-        },
+        }
         FuzzDriverEnum::Honggfuzz => {
             debug!("Creating honggfuzz driver");
             Box::new(honggfuzz::HonggfuzzDriver::new(config, worker_task_id))
-        },
+        }
         FuzzDriverEnum::Fuzzy => {
             debug!("Creating Fuzzy driver");
             Box::new(FuzzyDriver::new(config, worker_task_id))
-        },
+        }
     }
 }

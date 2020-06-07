@@ -1,27 +1,27 @@
-use std::path::{Path, PathBuf};
-use std::error::Error;
 use std::collections::HashMap;
+use std::error::Error;
+use std::path::{Path, PathBuf};
 
 use log::debug;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 // use serde_regex::{Serialize, Deserialize};
 use tokio::{
-    process::{ChildStdout, ChildStderr},
     io::{BufReader, Lines},
+    process::{ChildStderr, ChildStdout},
     sync::broadcast,
 };
 
-use crate::fuzz_driver::{CrashConfig, CorpusConfig};
+use crate::fuzz_driver::{CorpusConfig, CrashConfig};
 use corpus_syncer::CorpusSyncer;
 use crash_syncer::CrashSyncer;
 
 // Both of filesystem variants, need to change
 pub mod corpus_syncer;
+pub mod crash_deduplicator;
 pub mod crash_syncer;
 pub mod crash_validator;
-pub mod crash_deduplicator;
-mod native;
 mod docker;
+mod native;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum ExecutorEnum {
@@ -49,7 +49,6 @@ pub struct ExecutorConfig {
     #[serde(default)]
     pub envs: HashMap<String, String>,
 }
-
 
 // Only fear was tokio::process::Child which seems to obey Send so we do too
 #[tonic::async_trait]
@@ -91,7 +90,7 @@ pub fn new(config: ExecutorConfig, worker_task_id: Option<i32>) -> Box<dyn Execu
         ExecutorEnum::Native => {
             debug!("Creating native executor");
             Box::new(native::NativeExecutor::new(config, worker_task_id))
-        },
+        }
         ExecutorEnum::Docker => {
             debug!("Creating docker executor");
             Box::new(docker::DockerExecutor::new(config, worker_task_id))

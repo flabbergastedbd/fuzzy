@@ -1,19 +1,20 @@
 use std::error::Error;
 
-use log::{error, debug};
 use clap::ArgMatches;
-use prettytable::{Table, Row};
+use log::{debug, error};
+use prettytable::{Row, Table};
 
 use crate::common::cli::parse_global_settings;
 
-mod formatter;
-mod tasks;
 mod corpora;
 mod crashes;
+mod formatter;
 mod profile;
+mod tasks;
 
 fn print_results<T>(headings: Vec<&str>, entries: Vec<Vec<T>>)
-    where T: std::fmt::Display
+where
+    T: std::fmt::Display,
 {
     let mut table = Table::new();
     table.add_row(Row::from(headings));
@@ -34,16 +35,16 @@ async fn main_loop(arg_matches: &ArgMatches) -> Result<(), Box<dyn Error>> {
     match arg_matches.subcommand() {
         ("tasks", Some(sub_matches)) => {
             tasks::cli(sub_matches).await?;
-        },
+        }
         ("corpora", Some(sub_matches)) => {
             corpora::cli(sub_matches).await?;
-        },
+        }
         ("crashes", Some(sub_matches)) => {
             crashes::cli(sub_matches).await?;
-        },
+        }
         ("profile", Some(sub_matches)) => {
             profile::cli(sub_matches).await?;
-        },
+        }
         _ => {}
     }
     Ok(())

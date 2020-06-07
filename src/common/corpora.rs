@@ -1,24 +1,25 @@
-use std::path::Path;
-use std::time::SystemTime;
 use std::error::Error;
 use std::io;
+use std::path::Path;
+use std::time::SystemTime;
 
-use log::{warn, debug};
-use tonic::{Request, transport::channel::Channel};
+use log::{debug, warn};
 use tokio::fs;
+use tonic::{transport::channel::Channel, Request};
 
-use crate::models::{NewCorpus, Corpus};
-use crate::xpc::{self, orchestrator_client::OrchestratorClient};
+use crate::models::{Corpus, NewCorpus};
 use crate::utils::{checksum, fs::read_file};
+use crate::xpc::{self, orchestrator_client::OrchestratorClient};
 
 pub const CORPUS_FILE_EXT: &str = "fuzzy";
 
 // Corpus related utilities
-pub async fn upload_corpus_from_disk(file_path: &Path,
-                           label: String,
-                           worker_task_id: Option<i32>,
-                           client: &mut OrchestratorClient<Channel>) -> Result<(), Box<dyn Error>> {
-
+pub async fn upload_corpus_from_disk(
+    file_path: &Path,
+    label: String,
+    worker_task_id: Option<i32>,
+    client: &mut OrchestratorClient<Channel>,
+) -> Result<(), Box<dyn Error>> {
     debug!("Trying to upload {:?} to corpus", file_path);
     let content = read_file(file_path).await?;
 
@@ -37,14 +38,18 @@ pub async fn upload_corpus_from_disk(file_path: &Path,
     Ok(())
 }
 
-pub async fn download_corpus(label: String,
-                             not_worker_task_id: Option<i32>,
-                             for_worker_task_id: Option<i32>,
-                             latest: Option<i64>,
-                             created_after: SystemTime,
-                             client: &mut OrchestratorClient<Channel>) -> Result<Vec<Corpus>, Box<dyn Error>> {
-    debug!("Downloading corpus with label {} updated after {:?} for worker_task_id {:?}", label,
-            created_after, not_worker_task_id);
+pub async fn download_corpus(
+    label: String,
+    not_worker_task_id: Option<i32>,
+    for_worker_task_id: Option<i32>,
+    latest: Option<i64>,
+    created_after: SystemTime,
+    client: &mut OrchestratorClient<Channel>,
+) -> Result<Vec<Corpus>, Box<dyn Error>> {
+    debug!(
+        "Downloading corpus with label {} updated after {:?} for worker_task_id {:?}",
+        label, created_after, not_worker_task_id
+    );
 
     let filter_corpus = xpc::FilterCorpus {
         label,
@@ -57,14 +62,15 @@ pub async fn download_corpus(label: String,
     Ok(response.into_inner().data)
 }
 
-pub async fn delete_corpus(label: String,
-                             not_worker_task_id: Option<i32>,
-                             for_worker_task_id: Option<i32>,
-                             latest: Option<i64>,
-                             created_after: SystemTime,
-                             client: &mut OrchestratorClient<Channel>) -> Result<(), Box<dyn Error>> {
-    warn!("Deleting corpus with label {} updated after {:?}", label,
-            created_after);
+pub async fn delete_corpus(
+    label: String,
+    not_worker_task_id: Option<i32>,
+    for_worker_task_id: Option<i32>,
+    latest: Option<i64>,
+    created_after: SystemTime,
+    client: &mut OrchestratorClient<Channel>,
+) -> Result<(), Box<dyn Error>> {
+    warn!("Deleting corpus with label {} updated after {:?}", label, created_after);
 
     let filter_corpus = xpc::FilterCorpus {
         label,
@@ -77,23 +83,33 @@ pub async fn delete_corpus(label: String,
     Ok(())
 }
 
-pub async fn download_corpus_to_disk(label: String,
-                                     not_worker_task_id: Option<i32>,
-                                     for_worker_task_id: Option<i32>,
-                                     limit: Option<i64>,
-                                     created_after: SystemTime,
-                                     dir: &Path,
-                                     client: &mut OrchestratorClient<Channel>) -> Result<usize, Box<dyn Error>> {
-
-    let corpora = download_corpus(label, not_worker_task_id, for_worker_task_id, limit, created_after, client).await?;
+pub async fn download_corpus_to_disk(
+    label: String,
+    not_worker_task_id: Option<i32>,
+    for_worker_task_id: Option<i32>,
+    limit: Option<i64>,
+    created_after: SystemTime,
+    dir: &Path,
+    client: &mut OrchestratorClient<Channel>,
+) -> Result<usize, Box<dyn Error>> {
+    let corpora = download_corpus(
+        label,
+        not_worker_task_id,
+        for_worker_task_id,
+        limit,
+        created_after,
+        client,
+    )
+    .await?;
 
     // Check if exists, if not create. If exists and not a directory, Err
     if dir.exists() == false {
         fs::create_dir_all(dir).await?;
     } else if dir.is_dir() == false {
         return Err(Box::new(io::Error::new(
-                    io::ErrorKind::InvalidInput,
-                    format!("{:?} is not a directory to download corpus", dir))))
+            io::ErrorKind::InvalidInput,
+            format!("{:?} is not a directory to download corpus", dir),
+        )));
     }
 
     for corpus in corpora.iter() {

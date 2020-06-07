@@ -1,11 +1,11 @@
-use std::path::{Path, PathBuf};
 use std::error::Error;
+use std::path::{Path, PathBuf};
 
-use log::{trace, error, info, debug, warn};
+use log::{debug, error, info, trace, warn};
 use regex::Regex;
 use tokio::fs;
 
-use super::{FuzzStatCollector, FuzzConfig};
+use super::{FuzzConfig, FuzzStatCollector};
 use crate::executor::Executor;
 use crate::models::NewFuzzStat;
 use crate::utils::fs::tail_n;
@@ -36,7 +36,10 @@ impl super::FuzzDriver for LibFuzzerDriver {
         self.worker_task_id.clone()
     }
 
-    fn get_custom_stat_collector(&self, executor: &Box<dyn Executor>) -> Result<Option<Box<dyn FuzzStatCollector>>, Box<dyn Error>> {
+    fn get_custom_stat_collector(
+        &self,
+        executor: &Box<dyn Executor>,
+    ) -> Result<Option<Box<dyn FuzzStatCollector>>, Box<dyn Error>> {
         let log_path = executor.get_cwd_path();
         let stats_collector = LibFuzzerStatCollector::new(self.config.execution.cpus, self.worker_task_id, log_path)?;
         Ok(Some(Box::new(stats_collector)))
@@ -44,7 +47,10 @@ impl super::FuzzDriver for LibFuzzerDriver {
 
     fn fix_args(&mut self) {
         self.config.execution.args.insert(0, "-reload=1".to_owned());
-        self.config.execution.args.insert(0, format!("-workers={}", self.config.execution.cpus));
+        self.config
+            .execution
+            .args
+            .insert(0, format!("-workers={}", self.config.execution.cpus));
     }
 }
 
@@ -82,11 +88,11 @@ impl super::FuzzStatCollector for LibFuzzerStatCollector {
         if total_stats > 0 {
             // Submit gathered stats
             let average_stat = NewFuzzStat {
-                branch_coverage: Some(total_coverage/total_stats),
+                branch_coverage: Some(total_coverage / total_stats),
                 function_coverage: None,
                 line_coverage: None,
-                execs: Some(total_execs/total_stats),
-                memory: Some(total_memory/total_stats),
+                execs: Some(total_execs / total_stats),
+                memory: Some(total_memory / total_stats),
                 worker_task_id: self.worker_task_id,
             };
             Ok(Some(average_stat))
@@ -102,7 +108,9 @@ impl LibFuzzerStatCollector {
             instances,
             path,
             log_filter: Regex::new(r"fuzz-\d+.log")?,
-            stat_filter: Regex::new(r"^.* cov: (?P<coverage>\d+) .* exec/s: (?P<execs>\d+) rss: (?P<memory>\d+)Mb .*$")?,
+            stat_filter: Regex::new(
+                r"^.* cov: (?P<coverage>\d+) .* exec/s: (?P<execs>\d+) rss: (?P<memory>\d+)Mb .*$",
+            )?,
             worker_task_id: worker_task_id.unwrap_or(0),
         })
     }
@@ -118,8 +126,9 @@ impl LibFuzzerStatCollector {
             Ok(new_stat)
         } else {
             Err(Box::new(std::io::Error::new(
-                        std::io::ErrorKind::InvalidData,
-                        format!("Unable to get stat from libfuzzer log: {:?}", line))))
+                std::io::ErrorKind::InvalidData,
+                format!("Unable to get stat from libfuzzer log: {:?}", line),
+            )))
         }
     }
 
@@ -171,14 +180,15 @@ impl LibFuzzerStatCollector {
                     worker_task_id: self.worker_task_id,
                 };
                 trace!("Found stat: {:?}", new_fuzz_stat);
-                return Ok(new_fuzz_stat)
+                return Ok(new_fuzz_stat);
             }
         }
-        Err(Box::new(std::io::Error::new(std::io::ErrorKind::InvalidData,
-            format!("Unable to get stat from line: {}", line))))
+        Err(Box::new(std::io::Error::new(
+            std::io::ErrorKind::InvalidData,
+            format!("Unable to get stat from line: {}", line),
+        )))
     }
 }
-
 
 #[cfg(test)]
 mod tests {

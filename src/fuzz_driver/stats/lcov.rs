@@ -1,18 +1,18 @@
-use std::time::{UNIX_EPOCH, Duration, SystemTime};
-use std::path::{Path, PathBuf};
 use std::error::Error;
+use std::path::{Path, PathBuf};
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
+use lcov_parser::{FromFile, LCOVRecord};
 use log::{debug, error};
 use tokio::fs::read_dir;
 use tokio::stream::StreamExt;
-use lcov_parser::{LCOVRecord, FromFile};
 
-use crate::executor;
-use crate::models::NewFuzzStat;
-use crate::fuzz_driver::FuzzConfig;
 use super::{FuzzStatCollector, FuzzStatConfig};
-use crate::common::xpc::get_orchestrator_client;
 use crate::common::corpora::download_corpus_to_disk;
+use crate::common::xpc::get_orchestrator_client;
+use crate::executor;
+use crate::fuzz_driver::FuzzConfig;
+use crate::models::NewFuzzStat;
 use crate::utils::err_output;
 use crate::utils::fs::rm_r;
 
@@ -63,7 +63,8 @@ impl FuzzStatCollector for LCovCollector {
             self.last_sync,
             cwd.as_path(),
             &mut client,
-        ).await?;
+        )
+        .await?;
 
         let mut new_fuzz_stat: Option<NewFuzzStat> = None;
         if num_files > 0 {
@@ -85,7 +86,7 @@ impl FuzzStatCollector for LCovCollector {
                     let path = file.path();
                     let extension = path.extension();
                     if extension.is_some() && extension.unwrap() == "lcov" {
-                        return Some(path)
+                        return Some(path);
                     }
                 }
                 None
@@ -131,21 +132,23 @@ impl LCovCollector {
 
         for record in records.iter() {
             match record {
-                LCOVRecord::LinesHit(n) => { lines_hit += n },
-                LCOVRecord::BranchesHit(n) => { branches_hit += n },
-                LCOVRecord::FunctionsHit(n) => { functions_hit += n },
+                LCOVRecord::LinesHit(n) => lines_hit += n,
+                LCOVRecord::BranchesHit(n) => branches_hit += n,
+                LCOVRecord::FunctionsHit(n) => functions_hit += n,
                 /*
                 LCOVRecord::LinesFound(n) => { lines_found += n },
                 LCOVRecord::BranchesFound(n) => { branches_found += n },
                 LCOVRecord::FunctionsFound(n) => { functions_found += n },
                 */
-                _ => { continue }
+                _ => continue,
             }
         }
 
         if branches_hit == 0 && lines_hit == 0 && functions_hit == 0 {
-            Err(Box::new(std::io::Error::new(std::io::ErrorKind::InvalidData,
-                                           format!("Unable to get parse lcov info from {:?}", path))))
+            Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                format!("Unable to get parse lcov info from {:?}", path),
+            )))
         } else {
             // We send percentages instead of raw count
             Ok(NewFuzzStat {

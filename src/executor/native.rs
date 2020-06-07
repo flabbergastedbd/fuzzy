@@ -1,20 +1,20 @@
-use std::process::Stdio;
 use std::error::Error;
-use std::path::{Path, PathBuf};
 use std::io::{self, ErrorKind};
+use std::path::{Path, PathBuf};
+use std::process::Stdio;
 
-use log::{error, debug};
+use log::{debug, error};
 use tokio::{
-    process::{Command, Child, ChildStdout, ChildStderr},
-    io::{BufReader, AsyncBufReadExt, Lines},
+    io::{AsyncBufReadExt, BufReader, Lines},
+    process::{Child, ChildStderr, ChildStdout, Command},
     sync::broadcast,
 };
 
-use super::ExecutorConfig;
-use crate::fuzz_driver::{CrashConfig, CorpusConfig};
 use super::corpus_syncer::CorpusSyncer;
 use super::crash_syncer::CrashSyncer;
-use crate::utils::fs::{rm_r, mkdir_p};
+use super::ExecutorConfig;
+use crate::fuzz_driver::{CorpusConfig, CrashConfig};
+use crate::utils::fs::{mkdir_p, rm_r};
 
 pub struct NativeExecutor {
     config: ExecutorConfig,
@@ -59,8 +59,10 @@ impl super::Executor for NativeExecutor {
             }
             Ok(())
         } else {
-            Err(Box::new(io::Error::new(ErrorKind::InvalidData,
-                             "wait() called on executor")))
+            Err(Box::new(io::Error::new(
+                ErrorKind::InvalidData,
+                "wait() called on executor",
+            )))
         }
     }
 
@@ -78,31 +80,25 @@ impl super::Executor for NativeExecutor {
     }
 
     fn get_stdout_reader(&mut self) -> Option<Lines<BufReader<ChildStdout>>> {
-        let out = self.child.as_mut().map(|c| { c.stdout.take() })??;
+        let out = self.child.as_mut().map(|c| c.stdout.take())??;
         let reader = BufReader::new(out).lines();
         Some(reader)
     }
 
     fn get_stderr_reader(&mut self) -> Option<Lines<BufReader<ChildStderr>>> {
-        let out = self.child.as_mut().map(|c| { c.stderr.take() })??;
+        let out = self.child.as_mut().map(|c| c.stderr.take())??;
         let reader = BufReader::new(out).lines();
         Some(reader)
     }
 
     fn get_corpus_syncer(&self, mut config: CorpusConfig) -> Result<CorpusSyncer, Box<dyn Error>> {
         config.path = self.config.cwd.join(config.path).into_boxed_path();
-        Ok(CorpusSyncer::new(
-                config,
-                self.worker_task_id
-        )?)
+        Ok(CorpusSyncer::new(config, self.worker_task_id)?)
     }
 
     fn get_crash_syncer(&self, mut config: CrashConfig) -> Result<CrashSyncer, Box<dyn Error>> {
         config.path = self.config.cwd.join(config.path).into_boxed_path();
-        Ok(CrashSyncer::new(
-                config,
-                self.worker_task_id
-        )?)
+        Ok(CrashSyncer::new(config, self.worker_task_id)?)
     }
 
     fn get_cwd_path(&self) -> PathBuf {
@@ -123,14 +119,15 @@ impl NativeExecutor {
     pub fn new(config: ExecutorConfig, worker_task_id: Option<i32>) -> Self {
         debug!("Creating new native executor with config: {:#?}", config);
         Self {
-            config, child: None, worker_task_id
+            config,
+            child: None,
+            worker_task_id,
         }
     }
 
     fn create_cmd(&self) -> Command {
         let mut cmd = Command::new(self.config.executable.clone());
-        cmd
-            .args(self.config.args.clone())
+        cmd.args(self.config.args.clone())
             .envs(self.config.envs.clone())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
@@ -149,12 +146,11 @@ async fn pid_exists(pid: u32) -> Result<(), Box<dyn Error>> {
         interval.tick().await;
         if heim::process::pid_exists(pid as i32).await? == false {
             if fail_count > 4 {
-                break
+                break;
             } else {
                 fail_count = fail_count + 1;
             }
         }
     }
     Ok(())
-
 }

@@ -1,15 +1,15 @@
 use std::error::Error;
 
 use log::error;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use tokio::sync::broadcast;
 use tonic::Request;
 
 use super::executor::ExecutorConfig;
+use crate::common::intervals::WORKER_FUZZDRIVER_STAT_UPLOAD_INTERVAL;
+use crate::common::xpc::get_orchestrator_client;
 use crate::fuzz_driver::FuzzConfig;
 use crate::models::NewFuzzStat;
-use crate::common::xpc::get_orchestrator_client;
-use crate::common::intervals::WORKER_FUZZDRIVER_STAT_UPLOAD_INTERVAL;
 
 mod lcov;
 
@@ -55,7 +55,7 @@ pub trait FuzzStatCollector: Send + Sync {
                 Err(e) => {
                     error!("Failed to collect stat: {}", e);
                     None
-                },
+                }
             };
 
             if let Some(stat) = stat {
@@ -74,10 +74,12 @@ pub trait FuzzStatCollector: Send + Sync {
     }
 }
 
-pub fn new(config: FuzzStatConfig, full_config: FuzzConfig, worker_task_id: Option<i32>) -> Box<impl FuzzStatCollector> {
+pub fn new(
+    config: FuzzStatConfig,
+    full_config: FuzzConfig,
+    worker_task_id: Option<i32>,
+) -> Box<impl FuzzStatCollector> {
     match config.collector {
-        StatCollectorEnum::LCov => {
-            Box::new(lcov::LCovCollector::new(config, full_config, worker_task_id))
-        },
+        StatCollectorEnum::LCov => Box::new(lcov::LCovCollector::new(config, full_config, worker_task_id)),
     }
 }

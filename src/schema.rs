@@ -94,4 +94,12 @@ joinable!(sys_stats -> workers (worker_id));
 joinable!(worker_tasks -> tasks (task_id));
 joinable!(worker_tasks -> workers (worker_id));
 
-allow_tables_to_appear_in_same_query!(corpora, crashes, fuzz_stats, sys_stats, tasks, worker_tasks, workers,);
+allow_tables_to_appear_in_same_query!(
+    corpora,
+    crashes,
+    fuzz_stats,
+    sys_stats,
+    tasks,
+    worker_tasks,
+    workers,
+);

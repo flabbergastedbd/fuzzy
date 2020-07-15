@@ -128,3 +128,12 @@ fuzzy cli crashes deduplicate 2 /tmp:/tmp --all
 ```
 
 `--all` flag revalidates verified crashes again with new config.
+
+## Searching Crashes
+
+If you have enabled crash validation, `stdout` and `stderr` are saved as output. This can be searched using cli flag `--output`
+using `ilike` patterns of postgres.
+
+``` bash
+fuzzy cli crashes download 1 ~/workspace/fuzzy_configs/ats/crashes/ --output "%str_alloc%"
+```

@@ -69,8 +69,8 @@ crash:
     cpus: 1
     executor: Docker
     image: "<private_registry>:5000/snappy:fuzzy"
-    executable: /bin/sh
-    args: ['-c', 'diff <(cat $1 | sed -e "s/0x[0-9a-fA-F]*//g") <(cat $2 | sed -e "s/0x[0-9a-fA-F]*//g")']
+    executable: /bin/bash
+    args: ['-c', 'diff <(cat $0 | sed -e "s/0x[0-9a-fA-F]*//g") <(cat $1 | sed -e "s/0x[0-9a-fA-F]*//g")']
     cwd: /deduplication
 
 # A null fuzz stat will fall back to stat collection by fuzz drivers if implemented. This will

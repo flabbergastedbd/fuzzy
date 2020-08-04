@@ -1,3 +1,4 @@
+use std::str;
 use std::error::Error;
 use std::os::unix::fs::MetadataExt;
 use std::path::{Path, PathBuf};
@@ -38,6 +39,9 @@ pub struct DockerExecutor {
 impl super::Executor for DockerExecutor {
     async fn setup(&self) -> Result<(), Box<dyn Error>> {
         debug!("Setting up docker execution environment");
+
+        // Force pull the image in a blocking fashion
+        force_pull_image(self.config.image.clone()).await?;
 
         // Current working directory is where we mount a volume
         // cwd: Is used to mount a volume at that
@@ -230,6 +234,29 @@ impl DockerExecutor {
             .kill_on_drop(true);
         debug!("Command: {:#?}", cmd);
         Ok(cmd)
+    }
+}
+
+async fn force_pull_image(image: String) -> Result<(), Box<dyn Error>> {
+    let mut cmd = Command::new("docker");
+    cmd.arg("pull")
+        .arg(image.clone())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .kill_on_drop(true);
+
+    let child = cmd.spawn()?;
+    let output = child.wait_with_output().await?;
+
+    if output.status.success() == false {
+        Err(
+            Box::new(std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                format!("Unable to pull image: {}", &image)
+            ))
+        )
+    } else {
+        Ok(())
     }
 }
 

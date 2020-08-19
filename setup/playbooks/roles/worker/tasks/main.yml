@@ -41,6 +41,7 @@
       - "{{ getent_passwd[ansible_user_id][4] }}/{{ fuzzy_workspace_relative }}:/home/fuzzy"
       - "/etc/timezone:/etc/timezone:ro"
       - "/etc/localtime:/etc/localtime:ro"
+      - "{{ getent_passwd[ansible_user_id][4] }}/.docker:/.docker" # docker login creds stored at $HOME/.docker/config.json && $HOME = / on fuzzy containers as we run nameless
     # No namespace other than filesystem
     detach: yes
     pid_mode: host

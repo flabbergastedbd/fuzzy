@@ -117,6 +117,20 @@ subcommands:
                       - active:
                           help: Mark task as active, lack of this will mark it inactive
                           long: active
+                - start:
+                    about: Start a task
+                    args:
+                      - id:
+                          help: Id of task
+                          takes_value: true
+                          index: 1
+                - stop:
+                    about: Stop a task
+                    args:
+                      - id:
+                          help: Id of task
+                          takes_value: true
+                          index: 1
                 - list:
                     about: List all tasks
         - corpora:

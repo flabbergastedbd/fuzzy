@@ -76,15 +76,23 @@ fuzzy cli tasks list
 To stop a task `snappy` with id `1`.
 
 ``` bash
-fuzzy cli tasks edit 1
+fuzzy cli tasks stop 1
+```
+
+## Update Task
+
+To update a task `snappy` with id `1` with a new profile.
+
+``` bash
+fuzzy cli tasks edit 1 --profile <path_to_profile.yaml>
 ```
 
 ## Restart Task
 
-To restart a task `snappy` with id `1` with a new profile.
+To start a task `snappy` with id `1`.
 
 ``` bash
-fuzzy cli tasks edit 1 --active --profile <path_to_profile.yaml>
+fuzzy cli tasks start 1
 ```
 
 # Crashes

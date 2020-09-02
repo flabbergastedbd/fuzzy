@@ -4,7 +4,6 @@ use std::path::Path;
 use clap::ArgMatches;
 use log::{debug, error, info};
 use tonic::Request;
-
 use crate::common::profiles::{construct_profile_from_disk, write_profile_to_disk};
 use crate::common::xpc::get_orchestrator_client;
 use crate::models::{NewTask, PatchTask};
@@ -52,6 +51,38 @@ pub async fn cli(args: &ArgMatches) -> Result<(), Box<dyn Error>> {
                 name,
                 active,
                 profile,
+            };
+
+            // Validate executor & driver as we do crude transforms via enums & strum
+            let _ = client.update_task(Request::new(patch_task)).await?;
+            info!("Updated task successfully");
+        }
+        ("stop", Some(sub_matches)) => {
+            info!("Stopping the task");
+
+            let id = sub_matches.value_of("id").expect("No ID provided").parse::<i32>()?;
+
+            let patch_task = PatchTask {
+                id,
+                name: None,
+                active: false,
+                profile: None,
+            };
+
+            // Validate executor & driver as we do crude transforms via enums & strum
+            let _ = client.update_task(Request::new(patch_task)).await?;
+            info!("Updated task successfully");
+        }
+        ("start", Some(sub_matches)) => {
+            info!("Starting the task");
+
+            let id = sub_matches.value_of("id").expect("No ID provided").parse::<i32>()?;
+
+            let patch_task = PatchTask {
+                id,
+                name: None,
+                active: true,
+                profile: None,
             };
 
             // Validate executor & driver as we do crude transforms via enums & strum

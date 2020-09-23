@@ -79,9 +79,10 @@ fn setup_logging(verbose: u64, file_path: &str) -> Result<(), Box<dyn Error>> {
 
 fn setup_logging(verbose: u64) -> Result<(), Box<dyn Error>> {
     let level = match verbose {
-        1 => Level::DEBUG,
-        2 => Level::TRACE,
-        _ => Level::INFO,
+        1 => Level::INFO,
+        2 => Level::DEBUG,
+        3 => Level::TRACE,
+        _ => Level::WARN,
     };
 
     let subscriber = tracing_subscriber::fmt()
@@ -101,6 +102,7 @@ fn main() {
     let verbose_count = arg_matches.occurrences_of("verbose");
     // let logfile_path = arg_matches.value_of("logfile").unwrap_or("fuzzy.log");
     let global_span = span!(Level::TRACE, "fuzzy");
+    // This guard will only be dropped once application exits
     let _guard = global_span.enter();
 
     if let Err(e) = setup_logging(verbose_count) {

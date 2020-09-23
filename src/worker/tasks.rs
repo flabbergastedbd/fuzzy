@@ -149,6 +149,7 @@ impl TaskManager {
                         error!("Error while handling task updates: {}", e);
                     }
                 }
+                drop(worker);
             } else {
                 warn!("Failed to get tasks, will try after {:?}", WORKER_TASK_REFRESH_INTERVAL);
             }

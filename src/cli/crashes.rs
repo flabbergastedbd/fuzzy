@@ -3,7 +3,7 @@ use std::path::Path;
 use std::time::SystemTime;
 
 use clap::ArgMatches;
-use log::{debug, info};
+use tracing::{debug, info};
 
 use crate::common::{
     cli::parse_volume_map_settings,

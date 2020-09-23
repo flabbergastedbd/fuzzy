@@ -6,7 +6,7 @@ use std::sync::Arc;
 
 use clap::ArgMatches;
 use heim::units::information;
-use log::{debug, error, info, warn};
+use tracing::{debug, error, info, warn};
 use tokio::{
     signal::unix::{signal, SignalKind},
     sync::RwLock,

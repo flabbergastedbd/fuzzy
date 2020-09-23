@@ -1,7 +1,7 @@
 use std::error::Error;
 use std::path::Path;
 
-use log::info;
+use tracing::info;
 
 use crate::executor;
 use crate::fuzz_driver::CrashConfig;

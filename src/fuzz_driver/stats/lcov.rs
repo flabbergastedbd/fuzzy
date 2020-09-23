@@ -3,7 +3,7 @@ use std::path::{Path, PathBuf};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use lcov_parser::{FromFile, LCOVRecord};
-use log::{debug, error};
+use tracing::{debug, error};
 use tokio::fs::read_dir;
 use tokio::stream::StreamExt;
 

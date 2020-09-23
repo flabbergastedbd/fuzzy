@@ -1,7 +1,7 @@
 use std::error::Error;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
-use log::{debug, error, info};
+use tracing::{debug, error, info};
 use regex::Regex;
 use tokio::sync::broadcast;
 use tonic::transport::channel::Channel;

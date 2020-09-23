@@ -4,7 +4,7 @@ use std::os::unix::fs::MetadataExt;
 use std::path::{Path, PathBuf};
 use std::process::Stdio;
 
-use log::{debug, error};
+use tracing::{debug, error};
 use tokio::{
     fs,
     io::{AsyncBufReadExt, BufReader, Lines},

@@ -63,6 +63,17 @@ table! {
 }
 
 table! {
+    trace_events (id) {
+        id -> Int4,
+        worker_id -> Int4,
+        level -> Int4,
+        span -> Varchar,
+        content -> Varchar,
+        created_at -> Timestamp,
+    }
+}
+
+table! {
     worker_tasks (id) {
         id -> Int4,
         task_id -> Int4,
@@ -91,6 +102,7 @@ joinable!(corpora -> worker_tasks (worker_task_id));
 joinable!(crashes -> worker_tasks (worker_task_id));
 joinable!(fuzz_stats -> worker_tasks (worker_task_id));
 joinable!(sys_stats -> workers (worker_id));
+joinable!(trace_events -> workers (worker_id));
 joinable!(worker_tasks -> tasks (task_id));
 joinable!(worker_tasks -> workers (worker_id));
 
@@ -100,6 +112,7 @@ allow_tables_to_appear_in_same_query!(
     fuzz_stats,
     sys_stats,
     tasks,
+    trace_events,
     worker_tasks,
     workers,
 );

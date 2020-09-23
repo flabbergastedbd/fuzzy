@@ -1,8 +1,8 @@
 use std::error::Error;
 
 use clap::{load_yaml, App};
-use fern::colors::{Color, ColoredLevelConfig};
-use log::{debug, LevelFilter};
+use tracing::{span, debug, Level};
+use tracing_subscriber;
 
 mod cli;
 mod common;
@@ -22,6 +22,7 @@ extern crate diesel;
 pub mod models;
 pub mod schema;
 
+/*
 fn setup_logging(verbose: u64, file_path: &str) -> Result<(), Box<dyn Error>> {
     let mut config = fern::Dispatch::new();
 
@@ -74,6 +75,23 @@ fn setup_logging(verbose: u64, file_path: &str) -> Result<(), Box<dyn Error>> {
 
     Ok(())
 }
+*/
+
+fn setup_logging(verbose: u64) -> Result<(), Box<dyn Error>> {
+    let level = match verbose {
+        1 => Level::DEBUG,
+        2 => Level::TRACE,
+        _ => Level::INFO,
+    };
+
+    let subscriber = tracing_subscriber::fmt()
+        .with_target(true)
+        .with_max_level(level)
+        .finish();
+
+    tracing::subscriber::set_global_default(subscriber)?;
+    Ok(())
+}
 
 fn main() {
     let yaml = load_yaml!("cli.yml");
@@ -81,10 +99,18 @@ fn main() {
 
     // Enable debug logging as per -vvv
     let verbose_count = arg_matches.occurrences_of("verbose");
-    let logfile_path = arg_matches.value_of("logfile").unwrap_or("fuzzy.log");
+    // let logfile_path = arg_matches.value_of("logfile").unwrap_or("fuzzy.log");
+    let global_span = span!(Level::TRACE, "fuzzy");
+    let _guard = global_span.enter();
+
+    if let Err(e) = setup_logging(verbose_count) {
+        panic!("Error while setting up logging: {}", e);
+    }
+    /*
     if let Err(e) = setup_logging(verbose_count, logfile_path) {
         panic!("Error while setting up logging: {}", e);
     }
+    */
 
     debug!("Matching subcommand and will launch appropriate main()");
     match arg_matches.subcommand() {

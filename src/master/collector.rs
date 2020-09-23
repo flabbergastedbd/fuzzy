@@ -1,5 +1,5 @@
 use diesel::prelude::*;
-use log::{debug, error};
+use tracing::{debug, error};
 use tonic::{Code, Request, Response, Status};
 
 use crate::db::DbBroker;

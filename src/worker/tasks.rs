@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::error::Error;
 use std::sync::Arc;
 
-use log::{debug, error, info, trace, warn};
+use tracing::{debug, error, info, trace, warn};
 use tokio::{
     sync::oneshot::{self, error::TryRecvError},
     sync::RwLock,

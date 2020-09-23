@@ -1,6 +1,6 @@
 use chrono::{offset::Local, DateTime};
 use data_encoding::HEXLOWER;
-use log::{info, warn};
+use tracing::{info, warn};
 use ring::digest;
 use std::time::SystemTime;
 
@@ -18,7 +18,7 @@ pub fn get_human_dt(time: SystemTime) -> String {
 
 pub fn err_output(output: std::process::Output) {
     if output.status.success() == false {
-        info!("Stdout: {:?}", String::from_utf8(output.stdout));
-        warn!("Stderr: {:?}", String::from_utf8(output.stderr));
+        info!("Stdout: {:?}", String::from_utf8(output.stdout.clone()));
+        warn!("Stderr: {:?}", String::from_utf8(output.stderr.clone()));
     }
 }

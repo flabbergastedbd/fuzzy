@@ -1,7 +1,7 @@
 use std::error::Error;
 
 use clap::ArgMatches;
-use log::{debug, error};
+use tracing::{debug, error};
 use prettytable::{Row, Table};
 
 use crate::common::cli::parse_global_settings;

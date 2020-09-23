@@ -2,7 +2,7 @@ use std::error::Error;
 use std::sync::Arc;
 
 use heim::{cpu, memory, units::information};
-use log::{error, trace, warn};
+use tracing::{error, trace, warn};
 use tokio::sync::RwLock;
 
 use crate::common::intervals::WORKER_HEARTBEAT_INTERVAL;

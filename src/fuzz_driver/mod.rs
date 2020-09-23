@@ -1,7 +1,7 @@
 use std::error::Error;
 use std::path::Path;
 
-use log::{debug, error, info, warn};
+use tracing::{debug, error, info, warn};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use tokio::sync::{broadcast, oneshot};

@@ -2,7 +2,7 @@ use std::error::Error;
 use std::path::Path;
 
 use clap::ArgMatches;
-use log::{debug, error, info, warn};
+use tracing::{debug, error, info, warn};
 use tokio::{
     signal::unix::{signal, SignalKind},
     sync::broadcast,

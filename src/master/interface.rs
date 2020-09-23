@@ -1,13 +1,13 @@
 use std::time::{Duration, UNIX_EPOCH};
 
 use diesel::prelude::*;
-use log::{debug, error};
+use tracing::{debug, error};
 use tonic::{Code, Request, Response, Status};
 
 use crate::common::profiles::construct_profile;
 use crate::db::DbBroker;
 use crate::models::{Corpus, Crash, NewCorpus, NewCrash, NewFuzzStat, NewTask, PatchCrash, Task};
-use crate::schema::{corpora, crashes, fuzz_stats, sys_stats, tasks, worker_tasks, workers};
+use crate::schema::{corpora, crashes, fuzz_stats, sys_stats, tasks, worker_tasks, workers, trace_events};
 use crate::xpc;
 use crate::xpc::orchestrator_server::Orchestrator;
 pub use crate::xpc::orchestrator_server::OrchestratorServer;
@@ -406,7 +406,25 @@ impl Orchestrator for OrchestratorService {
             .execute(&conn);
 
         if let Err(e) = rows_inserted {
-            error!("Unable to add crash : {}", e);
+            error!("Unable to add sys stat : {}", e);
+            Err(Status::new(Code::InvalidArgument, format!("{}", e)))
+        } else {
+            Ok(Response::new({}))
+        }
+    }
+
+    // Trace event related calls
+    async fn submit_trace_event(&self, request: Request<xpc::NewTraceEvent>) -> Result<Response<()>, Status> {
+        let new_trace_event = request.into_inner();
+
+        let conn = self.db_broker.get_conn();
+
+        let rows_inserted = diesel::insert_into(trace_events::table)
+            .values(&new_trace_event)
+            .execute(&conn);
+
+        if let Err(e) = rows_inserted {
+            error!("Unable to add trace event : {}", e);
             Err(Status::new(Code::InvalidArgument, format!("{}", e)))
         } else {
             Ok(Response::new({}))

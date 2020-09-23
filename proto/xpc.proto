@@ -1,6 +1,9 @@
-// Sticking to proto3 due to a very important thing
-// Option<> is only present in proto2 as per prost, and we need
-// that type as we have null columns in DB.
+// Note:
+// 1. Sticking to proto3 due to a very important thing as Option<>
+//    is only present in proto2 as per prost, and we need that type
+//    as we have null columns in DB.
+// 2. Cannot use u8, u16, i8, i16 as prost doesn't support those datatypes.
+//
 syntax = "proto2";
 
 import "google/protobuf/empty.proto";
@@ -64,6 +67,7 @@ service Orchestrator {
 
     // Sys stat
     rpc SubmitSysStat(NewSysStat) returns (google.protobuf.Empty);
+    rpc SubmitTraceEvent(NewTraceEvent) returns (google.protobuf.Empty);
 }
 
 
@@ -218,4 +222,19 @@ message NewSysStat {
     required int32 swap_total       = 6;
     required int32 swap_used        = 7;
     required int32 worker_id        = 8;
+}
+
+// Levels
+// 0 - Off
+// 1 - Panic
+// 2 - Error
+// 3 - Warn
+// 4 - Info
+// 5 - Debug
+// 6 - Trace
+message NewTraceEvent {
+    required int32 worker_id = 1;
+    required int32 level     = 2;
+    required string span     = 3;
+    required string content  = 4;
 }

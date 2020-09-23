@@ -3,7 +3,7 @@ use std::io;
 use std::path::Path;
 use std::time::SystemTime;
 
-use log::{debug, warn};
+use tracing::{debug, warn};
 use tokio::fs;
 use tonic::{transport::channel::Channel, Request};
 

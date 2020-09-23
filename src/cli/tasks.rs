@@ -2,7 +2,7 @@ use std::error::Error;
 use std::path::Path;
 
 use clap::ArgMatches;
-use log::{debug, error, info};
+use tracing::{debug, error, info};
 use tonic::Request;
 use crate::common::profiles::{construct_profile_from_disk, write_profile_to_disk};
 use crate::common::xpc::get_orchestrator_client;

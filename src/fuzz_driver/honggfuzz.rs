@@ -1,7 +1,7 @@
 use std::error::Error;
 use std::path::PathBuf;
 
-use log::{error, info, trace};
+use tracing::{error, info, trace};
 use regex::Regex;
 
 use super::{FuzzConfig, FuzzStatCollector};

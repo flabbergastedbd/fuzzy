@@ -3,7 +3,7 @@ use std::io::{BufRead, Seek, SeekFrom};
 use std::path::{Path, PathBuf};
 use std::time::SystemTime;
 
-use log::{debug, error, trace};
+use tracing::{debug, error, trace};
 use regex::Regex;
 
 #[cfg(target_os = "linux")]

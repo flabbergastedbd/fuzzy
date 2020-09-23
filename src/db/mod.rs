@@ -1,4 +1,4 @@
-use log::info;
+use tracing::info;
 
 use diesel::pg::PgConnection;
 use diesel::r2d2::{ConnectionManager, Pool, PooledConnection};

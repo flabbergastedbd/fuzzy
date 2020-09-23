@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::error::Error;
 use std::path::{Path, PathBuf};
 
-use log::debug;
+use tracing::debug;
 use serde::{Deserialize, Serialize};
 // use serde_regex::{Serialize, Deserialize};
 use tokio::{

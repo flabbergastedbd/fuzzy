@@ -3,7 +3,7 @@ use std::time::SystemTime;
 
 use diesel::dsl::sum;
 use diesel::prelude::*;
-use log::{debug, error, trace, warn};
+use tracing::{debug, error, trace, warn};
 
 use crate::common::profiles::construct_profile;
 use crate::db::DbBroker;

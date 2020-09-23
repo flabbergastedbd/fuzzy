@@ -2,7 +2,7 @@ use std::time::SystemTime;
 use std::path::PathBuf;
 use std::error::Error;
 
-use log::{debug, error};
+use tracing::{debug, error};
 use tokio::fs::read_dir;
 use tokio::stream::StreamExt;
 

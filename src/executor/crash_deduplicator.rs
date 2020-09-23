@@ -1,7 +1,7 @@
 use std::error::Error;
 use std::time::UNIX_EPOCH;
 
-use log::info;
+use tracing::info;
 use tonic::transport::channel::Channel;
 
 use crate::common::{crashes::download_crashes, xpc::get_orchestrator_client};

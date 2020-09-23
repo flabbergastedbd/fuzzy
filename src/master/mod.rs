@@ -3,7 +3,7 @@ use std::net::SocketAddr;
 use std::path::Path;
 
 use clap::ArgMatches;
-use log::{debug, error, info};
+use tracing::{debug, error, info};
 use tokio::signal::unix::{signal, SignalKind};
 use tonic::transport::{Server, ServerTlsConfig};
 

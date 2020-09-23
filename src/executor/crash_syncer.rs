@@ -1,6 +1,6 @@
 use std::error::Error;
 
-use log::{debug, error, info};
+use tracing::{debug, error, info};
 use tokio::sync::broadcast;
 use tonic::transport::channel::Channel;
 

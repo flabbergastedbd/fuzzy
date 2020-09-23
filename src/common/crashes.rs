@@ -2,7 +2,7 @@ use std::error::Error;
 use std::path::Path;
 use std::time::SystemTime;
 
-use log::debug;
+use tracing::debug;
 use tokio::fs;
 use tonic::{transport::channel::Channel, Request};
 

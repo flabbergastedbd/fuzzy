@@ -72,6 +72,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         )
         .type_attribute("NewSysStat", "#[table_name = \"sys_stats\"]")
         .type_attribute("NewSysStat", "#[belongs_to(Worker)]")
+        // NewTraceEvent
+        .type_attribute(
+            "NewTraceEvent",
+            "#[derive(Queryable, Insertable, Associations)]",
+        )
+        .type_attribute("NewTraceEvent", "#[table_name = \"trace_events\"]")
+        .type_attribute("NewTraceEvent", "#[belongs_to(Worker)]")
         // All fields of this name, prost converts them to prost_types::Timestamp, which diesel
         // doesn't support natively so we customize deserialization behaviour for one field
         //

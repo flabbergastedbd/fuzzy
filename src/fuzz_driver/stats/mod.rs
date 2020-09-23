@@ -1,6 +1,6 @@
 use std::error::Error;
 
-use log::error;
+use tracing::error;
 use serde::{Deserialize, Serialize};
 use tokio::sync::broadcast;
 use tonic::Request;

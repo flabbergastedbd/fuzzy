@@ -1,7 +1,7 @@
 use std::error::Error;
 use std::path::{Path, PathBuf};
 
-use log::{debug, error, info, trace, warn};
+use tracing::{debug, error, info, trace, warn};
 use regex::Regex;
 use tokio::fs;
 

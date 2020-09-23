@@ -1,12 +1,11 @@
 use std::env;
 
 use clap::ArgMatches;
-use log::error;
+use tracing::{debug, error};
 
 use crate::common::constants::{FUZZY_CA_CERT, FUZZY_CLIENT_PEM, FUZZY_CONNECT_URL};
 use crate::common::executors::{set_container_volume_map, validate_container_volume_map};
 use crate::common::xpc::{set_ca_crt, set_connect_url, set_worker_pem};
-use log::debug;
 
 pub fn parse_volume_map_settings(sub_matches: &ArgMatches) {
     // Set up volume map after verifying

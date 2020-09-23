@@ -3,7 +3,7 @@ use std::error::Error;
 use std::io::{self, ErrorKind};
 use std::path::PathBuf;
 
-use log::{debug, error};
+use tracing::{debug, error};
 
 use crate::common::constants::WORKER_CONTAINER_VOLUME_MAP;
 

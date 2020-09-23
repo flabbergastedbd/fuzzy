@@ -3,7 +3,7 @@ use std::path::Path;
 use std::time::SystemTime;
 
 use clap::ArgMatches;
-use log::{debug, info};
+use tracing::{debug, info};
 use tokio::task;
 
 use crate::common::corpora::{delete_corpus, download_corpus_to_disk, upload_corpus_from_disk};

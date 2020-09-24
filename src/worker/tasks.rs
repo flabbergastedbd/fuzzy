@@ -1,17 +1,15 @@
 use std::collections::HashMap;
 use std::error::Error;
-use std::sync::Arc;
 
 use tracing::{debug, error, info, trace, warn};
 use tokio::{
     sync::oneshot::{self, error::TryRecvError},
-    sync::RwLock,
     task::JoinHandle,
 };
 
 use crate::common::intervals::WORKER_TASK_REFRESH_INTERVAL;
 use crate::fuzz_driver::{self, FuzzConfig};
-use crate::worker::NewWorker;
+use crate::worker::Worker;
 use crate::xpc;
 use crate::xpc::orchestrator_client::OrchestratorClient;
 
@@ -122,7 +120,7 @@ impl TaskManager {
         Ok(())
     }
 
-    pub async fn spawn(&mut self, worker_lock: Arc<RwLock<NewWorker>>) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn spawn(&mut self, worker: Worker) -> Result<(), Box<dyn std::error::Error>> {
         let mut interval = tokio::time::interval(WORKER_TASK_REFRESH_INTERVAL);
         loop {
             trace!("Trying to get tasks and update");
@@ -130,9 +128,6 @@ impl TaskManager {
             let endpoint = crate::common::xpc::get_server_endpoint().await?;
             if let Ok(channel) = endpoint.connect().await {
                 let mut client = OrchestratorClient::new(channel);
-                // Aquire read lock
-                let worker = worker_lock.read().await;
-
                 // Create new filter request
                 let worker_clone = worker.clone();
                 let filter_worker_task = xpc::FilterWorkerTask {
@@ -149,7 +144,6 @@ impl TaskManager {
                         error!("Error while handling task updates: {}", e);
                     }
                 }
-                drop(worker);
             } else {
                 warn!("Failed to get tasks, will try after {:?}", WORKER_TASK_REFRESH_INTERVAL);
             }

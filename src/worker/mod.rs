@@ -2,22 +2,28 @@ use std::error::Error;
 use std::fmt;
 use std::fs;
 use std::path::Path;
-use std::sync::Arc;
 
 use clap::ArgMatches;
 use heim::units::information;
 use tracing::{debug, error, info, warn};
 use tokio::{
     signal::unix::{signal, SignalKind},
-    sync::RwLock,
+    sync::mpsc,
 };
+use tracing_subscriber::{
+    registry::Registry,
+    layer::SubscriberExt
+};
+use tracing_futures::WithSubscriber;
 use uuid::Uuid;
 
 use crate::common::cli::{parse_global_settings, parse_volume_map_settings};
-use crate::models::NewWorker;
+use crate::models::{NewWorker, NewTraceEvent, Worker};
+use crate::xpc::collector_client::CollectorClient;
 
 mod dispatcher;
 mod tasks;
+mod log_layer;
 
 const METADATA_PATH: &str = ".fuzzy_worker.yaml";
 
@@ -87,6 +93,17 @@ impl NewWorker {
             self.memory = memory.unwrap().total().get::<information::megabyte>() as i32;
         }
     }
+
+    pub async fn get_worker_info(&self) -> Result<Worker, Box<dyn Error>> {
+        let endpoint = crate::common::xpc::get_server_endpoint().await?;
+        let channel = endpoint.connect().await?;
+        // Send heartbeat
+        let mut client = CollectorClient::new(channel);
+        let request = tonic::Request::new(self.clone());
+        let response = client.heartbeat(request).await?;
+        let worker = response.into_inner();
+        Ok(worker)
+    }
 }
 
 impl fmt::Display for NewWorker {
@@ -100,31 +117,32 @@ impl fmt::Display for NewWorker {
 }
 
 #[tokio::main]
-pub async fn main_loop(worker: Arc<RwLock<NewWorker>>) -> Result<(), Box<dyn Error>> {
+pub async fn main_loop(mut new_worker: NewWorker) -> Result<(), Box<dyn Error>> {
     // Launch a cpu update task, because of well `heim` and async only
-    let worker_clone = worker.clone();
-    tokio::spawn(async move {
-        let mut worker_writable = worker_clone.write().await;
-        worker_writable.update_self().await
-    })
-    .await?;
+    // Then get worker info struct
+    new_worker.update_self().await;
+    let worker = new_worker.get_worker_info().await?;
+
+    let (tx, rx) = mpsc::channel::<NewTraceEvent>(20);
+
+    // Spin up log registry subscriber with network-logging layer
+    let subscriber = Registry::default()
+        .with(log_layer::layer(tx, worker.id));
 
     // Launch periodic heartbeat dispatcher
     info!("Launching heartbeat task");
     let worker_clone = worker.clone();
     let heartbeat_handle = tokio::spawn(async move {
-        // let d = dispatcher::Dispatcher::new();
-        if let Err(e) = dispatcher::heartbeat(worker_clone).await {
+        if let Err(e) = dispatcher::heartbeat(worker_clone, rx).await {
             error!("Dispatcher exited with error: {}", e);
         }
     });
 
     // Launch task manager
     let mut task_manager = tasks::TaskManager::new();
-    let worker_clone = worker.clone();
     info!("Launching task manager task");
     let task_manager_handle = tokio::spawn(async move {
-        if let Err(e) = task_manager.spawn(worker_clone).await {
+        if let Err(e) = task_manager.spawn(worker).with_subscriber(subscriber).await {
             error!("Task manager exited with error: {}", e);
         }
     });
@@ -169,7 +187,7 @@ pub fn main(arg_matches: &ArgMatches) {
             parse_volume_map_settings(sub_matches);
 
             // Start main loop
-            if let Err(e) = main_loop(Arc::new(RwLock::new(w))) {
+            if let Err(e) = main_loop(w) {
                 error!("{}", e);
                 panic!("Failed to start main loop")
             }

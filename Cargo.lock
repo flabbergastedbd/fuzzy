@@ -492,6 +492,7 @@ dependencies = [
  "tonic",
  "tonic-build",
  "tracing",
+ "tracing-core",
  "tracing-futures",
  "tracing-subscriber",
  "uuid",

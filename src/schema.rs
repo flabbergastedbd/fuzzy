@@ -67,8 +67,8 @@ table! {
         id -> Int4,
         worker_id -> Int4,
         level -> Int4,
-        span -> Varchar,
-        content -> Varchar,
+        target -> Varchar,
+        message -> Varchar,
         created_at -> Timestamp,
     }
 }

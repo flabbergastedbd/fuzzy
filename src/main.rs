@@ -22,73 +22,25 @@ extern crate diesel;
 pub mod models;
 pub mod schema;
 
-/*
-fn setup_logging(verbose: u64, file_path: &str) -> Result<(), Box<dyn Error>> {
-    let mut config = fern::Dispatch::new();
-
-    config = match verbose {
-        1 => config.level(LevelFilter::Info).level_for("fuzzy", LevelFilter::Debug),
-        2 => config.level(LevelFilter::Debug),
-        3 => config.level(LevelFilter::Info).level_for("fuzzy", LevelFilter::Trace),
-        _ => config.level(LevelFilter::Info),
-    };
-
-    // Colors first
-    let colors = ColoredLevelConfig::new()
-        .error(Color::Red)
-        .warn(Color::Yellow)
-        .info(Color::White)
-        .debug(Color::White)
-        .trace(Color::BrightBlack);
-
-    let file_config = fern::Dispatch::new()
-        .format(move |out, message, record| {
-            out.finish(format_args!(
-                "{color_line}[{date}][{target}][{level}{color_line}] {message}\x1B[0m",
-                color_line = format_args!("\x1B[{}m", colors.get_color(&record.level()).to_fg_str()),
-                date = chrono::Local::now().format("%Y-%m-%d %H:%M:%S"),
-                target = record.target(),
-                level = colors.color(record.level()),
-                message = message,
-            ));
-        })
-        .chain(fern::log_file(file_path)?);
-
-    // Stdout config
-    let stdout_config = fern::Dispatch::new()
-        .format(move |out, message, record| {
-            out.finish(format_args!(
-                "{color_line}[{date}][{target}][{level}{color_line}] {message}\x1B[0m",
-                color_line = format_args!("\x1B[{}m", colors.get_color(&record.level()).to_fg_str()),
-                date = chrono::Local::now().format("%Y-%m-%d %H:%M:%S"),
-                target = record.target(),
-                level = colors.color(record.level()),
-                message = message,
-            ));
-        })
-        .chain(std::io::stdout());
-
-    config.chain(file_config).chain(stdout_config).apply()?;
-
-    // Logging to log file.
-    debug!("Log initialization complete");
-
-    Ok(())
-}
-*/
-
 fn setup_logging(verbose: u64) -> Result<(), Box<dyn Error>> {
-    let level = match verbose {
-        1 => Level::INFO,
-        2 => Level::DEBUG,
-        3 => Level::TRACE,
-        _ => Level::WARN,
-    };
+    let subscriber_builder = tracing_subscriber::fmt()
+        .with_target(true);
 
-    let subscriber = tracing_subscriber::fmt()
-        .with_target(true)
-        .with_max_level(level)
-        .finish();
+    let builder = match verbose {
+        1 => {
+            subscriber_builder.with_env_filter("fuzzy=info")
+        },
+        2 => {
+            subscriber_builder.with_env_filter("fuzzy=debug")
+        },
+        3 => {
+            subscriber_builder.with_env_filter("fuzzy=trace")
+        },
+        _ => {
+            subscriber_builder.with_env_filter("fuzzy=warn")
+        }
+    };
+    let subscriber = builder.finish();
 
     tracing::subscriber::set_global_default(subscriber)?;
     Ok(())

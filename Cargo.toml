@@ -35,7 +35,8 @@ lcov-parser = "3.2"
 validator = "0.10"
 validator_derive = "0.10"
 tracing = "0.1"
-tracing-futures = "0.2"
+tracing-core = "0.1"
+tracing-futures = { version = "0.2" }
 tracing-subscriber = "0.2"
 
 [build-dependencies]

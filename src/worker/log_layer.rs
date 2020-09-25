@@ -2,18 +2,20 @@ use std::fmt;
 
 use tokio::sync::mpsc::Sender;
 use tracing::{field::{Visit, Field}, error, Subscriber};
-use tracing_core::{Event, Level, Metadata};
+use tracing_core::{Event, Level};
 use tracing_subscriber::layer::{Context, Layer};
 
+use crate::TraceEvent;
 use crate::models::NewTraceEvent;
 
 pub struct NetworkLoggingLayer {
-    tx: Sender<NewTraceEvent>,
-    worker_id: i32,
+    tx: Sender<TraceEvent>
 }
 
-pub fn layer(tx: Sender<NewTraceEvent>, worker_id: i32) -> NetworkLoggingLayer {
-    NetworkLoggingLayer { tx, worker_id }
+impl NetworkLoggingLayer {
+    pub fn new(tx: Sender<TraceEvent>) -> Self {
+        Self { tx }
+    }
 }
 
 impl Visit for NewTraceEvent {
@@ -57,14 +59,13 @@ impl<S:Subscriber> Layer<S> for NetworkLoggingLayer {
                 message: String::new(),
                 target: metadata.target().to_string(),
                 level,
-                worker_id: self.worker_id,
+                worker_id: 0,
             };
             event.record(&mut new_trace_event);
             println!("{:?}", new_trace_event);
 
-
         if level < 4 {
-            if let Err(e) = self.tx.clone().try_send(new_trace_event) {
+            if let Err(e) = self.tx.clone().try_send(TraceEvent::NewEvent(new_trace_event)) {
                 error!("Failed to send event to master: {}", e);
             }
         }

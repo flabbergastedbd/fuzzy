@@ -36,7 +36,7 @@ validator = "0.10"
 validator_derive = "0.10"
 tracing = "0.1"
 tracing-core = "0.1"
-tracing-futures = { version = "0.2" }
+tracing-futures = { version = "0.2", features = [] }
 tracing-subscriber = "0.2"
 
 [build-dependencies]

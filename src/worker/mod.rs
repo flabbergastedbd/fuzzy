@@ -3,27 +3,21 @@ use std::fmt;
 use std::fs;
 use std::path::Path;
 
+use tokio::sync::mpsc::Receiver;
 use clap::ArgMatches;
 use heim::units::information;
 use tracing::{debug, error, info, warn};
-use tokio::{
-    signal::unix::{signal, SignalKind},
-    sync::mpsc,
-};
-use tracing_subscriber::{
-    registry::Registry,
-    layer::SubscriberExt
-};
-use tracing_futures::WithSubscriber;
+use tokio::signal::unix::{signal, SignalKind};
 use uuid::Uuid;
 
+use crate::TraceEvent;
 use crate::common::cli::{parse_global_settings, parse_volume_map_settings};
-use crate::models::{NewWorker, NewTraceEvent, Worker};
+use crate::models::{NewWorker, Worker};
 use crate::xpc::collector_client::CollectorClient;
 
 mod dispatcher;
 mod tasks;
-mod log_layer;
+pub mod log_layer;
 
 const METADATA_PATH: &str = ".fuzzy_worker.yaml";
 
@@ -117,23 +111,17 @@ impl fmt::Display for NewWorker {
 }
 
 #[tokio::main]
-pub async fn main_loop(mut new_worker: NewWorker) -> Result<(), Box<dyn Error>> {
+pub async fn main_loop(mut new_worker: NewWorker, trace_rx: Receiver<TraceEvent>) -> Result<(), Box<dyn Error>> {
     // Launch a cpu update task, because of well `heim` and async only
     // Then get worker info struct
     new_worker.update_self().await;
     let worker = new_worker.get_worker_info().await?;
 
-    let (tx, rx) = mpsc::channel::<NewTraceEvent>(20);
-
-    // Spin up log registry subscriber with network-logging layer
-    let subscriber = Registry::default()
-        .with(log_layer::layer(tx, worker.id));
-
     // Launch periodic heartbeat dispatcher
     info!("Launching heartbeat task");
     let worker_clone = worker.clone();
     let heartbeat_handle = tokio::spawn(async move {
-        if let Err(e) = dispatcher::heartbeat(worker_clone, rx).await {
+        if let Err(e) = dispatcher::heartbeat(worker_clone, trace_rx).await {
             error!("Dispatcher exited with error: {}", e);
         }
     });
@@ -142,7 +130,7 @@ pub async fn main_loop(mut new_worker: NewWorker) -> Result<(), Box<dyn Error>> 
     let mut task_manager = tasks::TaskManager::new();
     info!("Launching task manager task");
     let task_manager_handle = tokio::spawn(async move {
-        if let Err(e) = task_manager.spawn(worker).with_subscriber(subscriber).await {
+        if let Err(e) = task_manager.spawn(worker).await {
             error!("Task manager exited with error: {}", e);
         }
     });
@@ -169,7 +157,7 @@ pub async fn main_loop(mut new_worker: NewWorker) -> Result<(), Box<dyn Error>> 
 }
 
 // Called from main if woker subcommand found, parameters can be seen in src/cli.yml
-pub fn main(arg_matches: &ArgMatches) {
+pub fn main(arg_matches: &ArgMatches, trace_rx: Receiver<TraceEvent>) {
     debug!("Worker main function launched");
 
     match arg_matches.subcommand() {
@@ -187,7 +175,7 @@ pub fn main(arg_matches: &ArgMatches) {
             parse_volume_map_settings(sub_matches);
 
             // Start main loop
-            if let Err(e) = main_loop(w) {
+            if let Err(e) = main_loop(w, trace_rx) {
                 error!("{}", e);
                 panic!("Failed to start main loop")
             }

@@ -1,8 +1,15 @@
 use std::error::Error;
 
 use clap::{load_yaml, App};
-use tracing::{span, debug, Level};
-use tracing_subscriber;
+use tracing::debug;
+use tokio::sync::mpsc::Receiver;
+use tracing_subscriber::{
+    self,
+    fmt,
+    registry::Registry,
+    layer::SubscriberExt,
+    EnvFilter
+};
 
 mod cli;
 mod common;
@@ -22,28 +29,33 @@ extern crate diesel;
 pub mod models;
 pub mod schema;
 
-fn setup_logging(verbose: u64) -> Result<(), Box<dyn Error>> {
-    let subscriber_builder = tracing_subscriber::fmt()
+pub enum TraceEvent {
+    NewEvent(models::NewTraceEvent)
+}
+
+fn setup_logging(verbose: u64) -> Result<Receiver<TraceEvent>, Box<dyn Error>> {
+    let fmt_layer = fmt::layer()
         .with_target(true);
 
-    let builder = match verbose {
-        1 => {
-            subscriber_builder.with_env_filter("fuzzy=info")
-        },
-        2 => {
-            subscriber_builder.with_env_filter("fuzzy=debug")
-        },
-        3 => {
-            subscriber_builder.with_env_filter("fuzzy=trace")
-        },
-        _ => {
-            subscriber_builder.with_env_filter("fuzzy=warn")
-        }
-    };
-    let subscriber = builder.finish();
+    let env_filter = EnvFilter::from_default_env()
+        .add_directive(match verbose {
+            1 => "fuzzy=info",
+            2 => "fuzzy=debug",
+            3 => "fuzzy=trace",
+            _ => "fuzzy=warn",
+        }.parse()?);
 
+    let (tx, rx) = tokio::sync::mpsc::channel::<TraceEvent>(50);
+    // Worker related network logging layer
+    let worker_network_layer = crate::worker::log_layer::NetworkLoggingLayer::new(tx);
+
+    let subscriber = Registry::default()
+        .with(env_filter)
+        .with(worker_network_layer)
+        .with(fmt_layer);
     tracing::subscriber::set_global_default(subscriber)?;
-    Ok(())
+
+    Ok(rx)
 }
 
 fn main() {
@@ -52,19 +64,11 @@ fn main() {
 
     // Enable debug logging as per -vvv
     let verbose_count = arg_matches.occurrences_of("verbose");
-    // let logfile_path = arg_matches.value_of("logfile").unwrap_or("fuzzy.log");
-    let global_span = span!(Level::TRACE, "fuzzy");
+    // let global_span = span!(Level::TRACE, "fuzzy");
     // This guard will only be dropped once application exits
-    let _guard = global_span.enter();
+    // let _guard = global_span.enter();
 
-    if let Err(e) = setup_logging(verbose_count) {
-        panic!("Error while setting up logging: {}", e);
-    }
-    /*
-    if let Err(e) = setup_logging(verbose_count, logfile_path) {
-        panic!("Error while setting up logging: {}", e);
-    }
-    */
+    let trace_rx = setup_logging(verbose_count).expect("Error while setting up logging");
 
     debug!("Matching subcommand and will launch appropriate main()");
     match arg_matches.subcommand() {
@@ -72,7 +76,7 @@ fn main() {
             master::main(sub_matches);
         }
         ("worker", Some(sub_matches)) => {
-            worker::main(sub_matches);
+            worker::main(sub_matches,trace_rx);
         }
         ("cli", Some(sub_matches)) => {
             cli::main(sub_matches);

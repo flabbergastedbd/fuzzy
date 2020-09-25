@@ -5,11 +5,12 @@ use heim::{cpu, memory, units::information};
 use tracing::{error, trace, warn};
 use tokio::sync::mpsc::Receiver;
 
+use crate::TraceEvent;
 use crate::common::intervals::WORKER_HEARTBEAT_INTERVAL;
 use crate::common::xpc::get_orchestrator_client;
-use crate::models::{NewSysStat, Worker, NewTraceEvent};
+use crate::models::{NewSysStat, Worker};
 
-pub async fn heartbeat(worker: Worker, mut tracing_rx: Receiver<NewTraceEvent>) -> Result<(), Box<dyn std::error::Error>> {
+pub async fn heartbeat(worker: Worker, mut tracing_rx: Receiver<TraceEvent>) -> Result<(), Box<dyn std::error::Error>> {
     let worker_id = worker.id;
 
     let mut interval = tokio::time::interval(WORKER_HEARTBEAT_INTERVAL);
@@ -25,20 +26,21 @@ pub async fn heartbeat(worker: Worker, mut tracing_rx: Receiver<NewTraceEvent>) 
             },
             result = send_trace_events(&mut tracing_rx) => {
                 if let Err(e) = result {
-                    error!("Tracing event sender exited first: {}", e);
+                    warn!("Tracing event sender exited first, probably : {}", e);
                 }
             }
         }
-        warn!("Will try to restart stat and log collection in {:?}", interval);
         interval.tick().await;
     }
 }
 
-async fn send_trace_events(tracing_rx: &mut Receiver<NewTraceEvent>) -> Result<(), Box<dyn Error>> {
+async fn send_trace_events(tracing_rx: &mut Receiver<TraceEvent>) -> Result<(), Box<dyn Error>> {
     // This loop should exit for entire length of program
     let mut client = get_orchestrator_client().await?;
     while let Some(event) = tracing_rx.recv().await {
-        client.submit_trace_event(tonic::Request::new(event)).await?;
+        match event {
+            TraceEvent::NewEvent(e) => client.submit_trace_event(tonic::Request::new(e)).await?,
+        };
     }
     Err(Box::new(io::Error::new(ErrorKind::InvalidData, "Trace logging channel closed on sender side")))
 }

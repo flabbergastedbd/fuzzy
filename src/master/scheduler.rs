@@ -1,5 +1,5 @@
 use std::error::Error;
-use std::time::SystemTime;
+use std::time::{Duration, SystemTime};
 
 use diesel::dsl::sum;
 use diesel::prelude::*;
@@ -8,7 +8,7 @@ use tracing::{debug, error, trace, warn};
 use crate::common::profiles::construct_profile;
 use crate::db::DbBroker;
 use crate::models::{Task, Worker, WorkerTask};
-use crate::schema::{sys_stats, tasks, worker_tasks, workers};
+use crate::schema::{trace_events, sys_stats, tasks, worker_tasks, workers};
 
 #[derive(Clone)]
 pub struct Scheduler {
@@ -245,6 +245,25 @@ impl Scheduler {
         // Allocate tasks
         self.allocate_tasks()?;
 
+        // Do cleaning at last ot prevent errors in here spoiling scheduling
+        self.clean_db()?;
+
+        Ok(())
+    }
+
+    /// Use this to clean up any old data, like super old sys stat, error logs data
+    fn clean_db(&self) -> Result<(), Box<dyn Error>> {
+        let conn = self.db_broker.get_conn();
+
+        let now_7 = SystemTime::now() - Duration::from_secs(7 * 24 * 60 * 60);
+
+        let query = sys_stats::table
+            .filter(sys_stats::created_at.le(now_7));
+        diesel::delete(query).execute(&conn)?;
+
+        let query = trace_events::table
+            .filter(trace_events::created_at.le(now_7));
+        diesel::delete(query).execute(&conn)?;
         Ok(())
     }
 

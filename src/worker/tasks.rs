@@ -6,7 +6,6 @@ use tokio::{
     sync::oneshot::{self, error::TryRecvError},
     task::JoinHandle,
 };
-use tracing_futures::Instrument;
 
 use crate::common::intervals::WORKER_TASK_REFRESH_INTERVAL;
 use crate::fuzz_driver::{self, FuzzConfig};
@@ -67,7 +66,7 @@ impl TaskManager {
         info!("Spawning new task: {:#?}", wtask);
 
         let driver_handle = tokio::spawn(async move {
-            if let Err(e) = driver.start(rx, dead_tx).in_current_span().await {
+            if let Err(e) = driver.start(rx, dead_tx).await {
                 error!("Driver exited with error: {}", e);
             }
         });

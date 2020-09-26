@@ -6,8 +6,9 @@ use std::path::Path;
 use tokio::sync::mpsc::Receiver;
 use clap::ArgMatches;
 use heim::units::information;
-use tracing::{debug, error, info, warn};
+use tracing::{trace_span, debug, error, info, warn};
 use tokio::signal::unix::{signal, SignalKind};
+use tracing_futures::Instrument;
 use uuid::Uuid;
 
 use crate::TraceEvent;
@@ -126,11 +127,15 @@ pub async fn main_loop(mut new_worker: NewWorker, trace_rx: Receiver<TraceEvent>
         }
     });
 
+    // Set worker.id
+    let span = trace_span!("worker", worker_id=worker.id);
+    let _guard = span.enter();
+
     // Launch task manager
     let mut task_manager = tasks::TaskManager::new();
     info!("Launching task manager task");
     let task_manager_handle = tokio::spawn(async move {
-        if let Err(e) = task_manager.spawn(worker).await {
+        if let Err(e) = task_manager.spawn(worker).in_current_span().await {
             error!("Task manager exited with error: {}", e);
         }
     });

@@ -24,7 +24,7 @@ pub async fn heartbeat(worker: Worker, mut tracing_rx: Receiver<TraceEvent>) -> 
                     error!("System stat collection failed: {}", e);
                 }
             },
-            result = send_trace_events(&mut tracing_rx) => {
+            result = send_trace_events(worker_id, &mut tracing_rx) => {
                 if let Err(e) = result {
                     warn!("Tracing event sender exited first, probably : {}", e);
                 }
@@ -34,12 +34,16 @@ pub async fn heartbeat(worker: Worker, mut tracing_rx: Receiver<TraceEvent>) -> 
     }
 }
 
-async fn send_trace_events(tracing_rx: &mut Receiver<TraceEvent>) -> Result<(), Box<dyn Error>> {
+async fn send_trace_events(worker_id: i32, tracing_rx: &mut Receiver<TraceEvent>) -> Result<(), Box<dyn Error>> {
     // This loop should exit for entire length of program
     let mut client = get_orchestrator_client().await?;
     while let Some(event) = tracing_rx.recv().await {
         match event {
-            TraceEvent::NewEvent(e) => client.submit_trace_event(tonic::Request::new(e)).await?,
+            TraceEvent::NewEvent(mut e) => {
+                // Unable to get worker_id from span data, need to set it here for now
+                e.worker_id = worker_id;
+                client.submit_trace_event(tonic::Request::new(e)).await?
+            }
         };
     }
     Err(Box::new(io::Error::new(ErrorKind::InvalidData, "Trace logging channel closed on sender side")))

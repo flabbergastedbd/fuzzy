@@ -1,9 +1,9 @@
 use std::fmt;
 
 use tokio::sync::mpsc::Sender;
-use tracing::{field::{Visit, Field}, Subscriber};
+use tracing::field::{Visit, Field};
 use tracing_core::{Event, Level};
-use tracing_subscriber::{registry::LookupSpan, layer::{Context, Layer}};
+use tracing_subscriber::{registry::Registry, layer::{Context, Layer}};
 
 use crate::{trace::TraceEvent, models::NewTraceEvent};
 
@@ -31,11 +31,8 @@ impl Visit for NewTraceEvent {
     }
 }
 
-impl<S> Layer<S> for NetworkLoggingLayer
-where
-     S: Subscriber + for<'span> LookupSpan<'span>
-{
-    fn on_event(&self, event: &Event<'_>, _ctx: Context<'_, S>) {
+impl Layer<Registry> for NetworkLoggingLayer {
+    fn on_event(&self, event: &Event<'_>, _ctx: Context<'_, Registry>) {
         let metadata = event.metadata();
 
         let level = match *metadata.level() {

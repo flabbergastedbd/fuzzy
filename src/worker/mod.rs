@@ -117,9 +117,10 @@ pub async fn main_loop(mut new_worker: NewWorker, tracer: Tracer) -> Result<(), 
     new_worker.update_self().await;
     let worker = new_worker.get_worker_info().await?;
 
-    // Setup logging queue
+    // Setup global logging writes to TraceEvent channel
     let (tx, rx) = channel::<TraceEvent>(50);
-    tracer.set_global_with_network_layer(tx)?;
+    let log_layer = crate::trace::network_layer::NetworkLoggingLayer::new(tx);
+    tracer.set_global_with_layer(log_layer)?;
 
     // Launch periodic heartbeat dispatcher
     info!("Launching heartbeat task");

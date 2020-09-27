@@ -1,17 +1,16 @@
 use std::error::Error;
 
-use tokio::sync::mpsc::Sender;
 use tracing_subscriber::{
     self,
     fmt,
     registry::Registry,
-    layer::SubscriberExt,
+    layer::{Layer, SubscriberExt},
     EnvFilter
 };
 
 use crate::models;
 
-mod network_layer;
+pub mod network_layer;
 
 pub enum TraceEvent {
     NewEvent(models::NewTraceEvent)
@@ -21,13 +20,16 @@ pub struct Tracer {
     verbose_n: u64
 }
 
-/// Heavy code dedup, fix this
+/// Heavy code dedup, fix this when implementing db tracing layer
 impl Tracer {
     pub fn new(verbose_n: u64) -> Self {
         Self { verbose_n }
     }
 
-    pub fn set_global_with_network_layer(self, tx: Sender<TraceEvent>) -> Result<(), Box<dyn Error>> {
+    pub fn set_global_with_layer<L>(self, layer: L) -> Result<(), Box<dyn Error>>
+    where
+        L: Layer<Registry> + Send + Sync + Sized
+    {
         let fmt_layer = fmt::layer()
             .with_target(true);
 
@@ -39,11 +41,9 @@ impl Tracer {
                 _ => "fuzzy=warn",
             }.parse()?);
 
-        let log_layer = network_layer::NetworkLoggingLayer::new(tx);
-
         let subscriber = Registry::default()
+            .with(layer)
             .with(env_filter)
-            .with(log_layer)
             .with(fmt_layer);
 
         tracing::subscriber::set_global_default(subscriber)?;

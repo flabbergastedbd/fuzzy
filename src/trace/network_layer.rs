@@ -5,7 +5,7 @@ use tracing::{field::{Visit, Field}, Subscriber};
 use tracing_core::{Event, Level};
 use tracing_subscriber::{registry::LookupSpan, layer::{Context, Layer}};
 
-use crate::{TraceEvent, models::NewTraceEvent};
+use crate::{trace::TraceEvent, models::NewTraceEvent};
 
 pub struct NetworkLoggingLayer {
     tx: Sender<TraceEvent>
@@ -33,7 +33,7 @@ impl Visit for NewTraceEvent {
 
 impl<S> Layer<S> for NetworkLoggingLayer
 where
-    S: Subscriber + for<'span> LookupSpan<'span>
+     S: Subscriber + for<'span> LookupSpan<'span>
 {
     fn on_event(&self, event: &Event<'_>, _ctx: Context<'_, S>) {
         let metadata = event.metadata();
@@ -52,7 +52,7 @@ where
                 message: String::new(),
                 target: metadata.target().to_string(),
                 level,
-                worker_id: 0,
+                worker_id: None
             };
             event.record(&mut new_trace_event);
 

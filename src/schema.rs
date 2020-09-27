@@ -65,7 +65,7 @@ table! {
 table! {
     trace_events (id) {
         id -> Int4,
-        worker_id -> Int4,
+        worker_id -> Nullable<Int4>,
         level -> Int4,
         target -> Varchar,
         message -> Varchar,

@@ -5,7 +5,7 @@ use heim::{cpu, memory, units::information};
 use tracing::{error, trace, warn};
 use tokio::sync::mpsc::Receiver;
 
-use crate::TraceEvent;
+use crate::trace::TraceEvent;
 use crate::common::intervals::WORKER_HEARTBEAT_INTERVAL;
 use crate::common::xpc::get_orchestrator_client;
 use crate::models::{NewSysStat, Worker};
@@ -41,7 +41,7 @@ async fn send_trace_events(worker_id: i32, tracing_rx: &mut Receiver<TraceEvent>
         match event {
             TraceEvent::NewEvent(mut e) => {
                 // Unable to get worker_id from span data, need to set it here for now
-                e.worker_id = worker_id;
+                e.worker_id = Some(worker_id);
                 client.submit_trace_event(tonic::Request::new(e)).await?
             }
         };

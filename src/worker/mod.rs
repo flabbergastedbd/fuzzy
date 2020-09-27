@@ -3,7 +3,7 @@ use std::fmt;
 use std::fs;
 use std::path::Path;
 
-use tokio::sync::mpsc::Receiver;
+use tokio::sync::mpsc::channel;
 use clap::ArgMatches;
 use heim::units::information;
 use tracing::{trace_span, debug, error, info, warn};
@@ -11,14 +11,13 @@ use tokio::signal::unix::{signal, SignalKind};
 use tracing_futures::Instrument;
 use uuid::Uuid;
 
-use crate::TraceEvent;
+use crate::trace::{Tracer, TraceEvent};
 use crate::common::cli::{parse_global_settings, parse_volume_map_settings};
 use crate::models::{NewWorker, Worker};
 use crate::xpc::collector_client::CollectorClient;
 
 mod dispatcher;
 mod tasks;
-pub mod log_layer;
 
 const METADATA_PATH: &str = ".fuzzy_worker.yaml";
 
@@ -112,17 +111,21 @@ impl fmt::Display for NewWorker {
 }
 
 #[tokio::main]
-pub async fn main_loop(mut new_worker: NewWorker, trace_rx: Receiver<TraceEvent>) -> Result<(), Box<dyn Error>> {
+pub async fn main_loop(mut new_worker: NewWorker, tracer: Tracer) -> Result<(), Box<dyn Error>> {
     // Launch a cpu update task, because of well `heim` and async only
     // Then get worker info struct
     new_worker.update_self().await;
     let worker = new_worker.get_worker_info().await?;
 
+    // Setup logging queue
+    let (tx, rx) = channel::<TraceEvent>(50);
+    tracer.set_global_with_network_layer(tx)?;
+
     // Launch periodic heartbeat dispatcher
     info!("Launching heartbeat task");
     let worker_clone = worker.clone();
     let heartbeat_handle = tokio::spawn(async move {
-        if let Err(e) = dispatcher::heartbeat(worker_clone, trace_rx).await {
+        if let Err(e) = dispatcher::heartbeat(worker_clone, rx).await {
             error!("Dispatcher exited with error: {}", e);
         }
     });
@@ -162,7 +165,7 @@ pub async fn main_loop(mut new_worker: NewWorker, trace_rx: Receiver<TraceEvent>
 }
 
 // Called from main if woker subcommand found, parameters can be seen in src/cli.yml
-pub fn main(arg_matches: &ArgMatches, trace_rx: Receiver<TraceEvent>) {
+pub fn main(arg_matches: &ArgMatches, tracer: Tracer) {
     debug!("Worker main function launched");
 
     match arg_matches.subcommand() {
@@ -180,7 +183,7 @@ pub fn main(arg_matches: &ArgMatches, trace_rx: Receiver<TraceEvent>) {
             parse_volume_map_settings(sub_matches);
 
             // Start main loop
-            if let Err(e) = main_loop(w, trace_rx) {
+            if let Err(e) = main_loop(w, tracer) {
                 error!("{}", e);
                 panic!("Failed to start main loop")
             }

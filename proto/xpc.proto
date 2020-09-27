@@ -232,7 +232,7 @@ message NewSysStat {
 // 5 - Debug
 // 6 - Trace
 message NewTraceEvent {
-    required int32 worker_id = 1;
+    optional int32 worker_id = 1;
     required int32 level     = 2;
     required string target     = 3;
     required string message = 4;
